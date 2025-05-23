@@ -1,0 +1,3 @@
+ONLY LINK TO MIT LICENSE IN OFFICIAL REPOSITORIUM
+
+https://github.com/laravel/laravel

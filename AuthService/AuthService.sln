@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuthService", "AuthService\AuthService.csproj", "{93B3C7E1-C40A-4D97-BBFB-0249AEF97994}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharedObjects", "..\SharedObjects\SharedObjects\SharedObjects.csproj", "{718C5EBF-A1B7-41D2-A495-AD4DAF53D190}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{93B3C7E1-C40A-4D97-BBFB-0249AEF97994}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93B3C7E1-C40A-4D97-BBFB-0249AEF97994}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93B3C7E1-C40A-4D97-BBFB-0249AEF97994}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93B3C7E1-C40A-4D97-BBFB-0249AEF97994}.Release|Any CPU.Build.0 = Release|Any CPU
+		{718C5EBF-A1B7-41D2-A495-AD4DAF53D190}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{718C5EBF-A1B7-41D2-A495-AD4DAF53D190}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{718C5EBF-A1B7-41D2-A495-AD4DAF53D190}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{718C5EBF-A1B7-41D2-A495-AD4DAF53D190}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
