@@ -1,6 +1,7 @@
 using DatabaseManager.Seeders;
 using Microsoft.EntityFrameworkCore;
 using SharedObjects.AppDbContext;
+using DatabaseManager.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,7 +67,7 @@ if (pendingMigrations.Count != 0)
     {
         context.Database.Migrate();
         Console.WriteLine("Migrations completed successfully.");
-        DatabaseSeeder.SeedFromSqlFile(context, "Data/data.sql");
+        DatabaseSeeder.SeedFromSqlFile(context, Constants.FilePath);
     }
     catch (Exception ex)
     {

@@ -31,11 +31,11 @@ public static class DatabaseSeeder
         {
             Console.WriteLine($"Error executing seed SQL: {ex.Message}");
             transaction.Rollback();
+            throw;
         }
         finally
         {
             transaction.Dispose();
         }
-
     }
 }
