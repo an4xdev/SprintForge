@@ -40,8 +40,8 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProjectDTO>> updateProject(@PathVariable UUID id, @RequestBody CreateProjectDTO createProjectDTO) {
-        // TODO: implement updateProject
+    public ResponseEntity<ApiResponse<ProjectDTO>> updateProject(@PathVariable UUID id,
+            @RequestBody CreateProjectDTO createProjectDTO) {
         var project = projectService.updateProject(id, createProjectDTO);
         return project.toResponseEntity();
     }

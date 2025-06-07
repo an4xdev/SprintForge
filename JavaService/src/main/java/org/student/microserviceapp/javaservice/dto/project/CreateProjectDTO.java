@@ -15,7 +15,6 @@ public class CreateProjectDTO {
     @NotNull
     private String name;
 
-    // TODO: add custom validation for startDate and endDate, startDate < endDate
     @NotNull
     @FutureOrPresent
     private LocalDate startDate;
