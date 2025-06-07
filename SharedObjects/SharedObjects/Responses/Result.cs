@@ -17,7 +17,7 @@ public class Result<T>
 
     public static Result<T> Created(T value, string message) => new(value, message, ResultStatus.Created);
 
-    public static Result<T?> NoContent() => new(default, null, ResultStatus.NoContent);
+    public static Result<T?> NoContent() => new(default, string.Empty, ResultStatus.NoContent);
 
     public static Result<T> BadRequest(string message = "Bad Request") => new(default, message, ResultStatus.BadRequest);
 
