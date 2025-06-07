@@ -5,8 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Responses\ApiResponse;
 use App\Models\Task;
+use App\Models\TaskStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 
 class TaskController extends Controller
 {
@@ -28,9 +30,21 @@ class TaskController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:255',
-            'status_id' => 'required|exists:task_statuses,id',
         ]);
-        $task = Task::create($request->all());
+
+        $statusId = TaskStatus::where('Name', 'Created')->value('Id');
+
+        $taskData = [
+            'Id' => Str::uuid()->toString(),
+            'Name' => $request->input('name'),
+            'Description' => $request->input('description', null),
+            'TaskTypeId' => $request->input('task_type_id'),
+            'TaskStatusId' => $statusId,
+            'DeveloperId' => $request->input('developer_id', null),
+            'SprintId' => null,
+        ];
+
+        $task = Task::create($taskData);
         $response = ApiResponse::Created('Task created successfully', $task);
         return response()->json($response, Response::HTTP_CREATED);
     }
@@ -48,6 +62,8 @@ class TaskController extends Controller
         return response()->json($response);
     }
 
+    // TODO: method for assigning a task to a developer by manager
+
     /**
      * Update the specified resource in storage.
      */
@@ -60,7 +76,6 @@ class TaskController extends Controller
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'description' => 'sometimes|nullable|string|max:255',
-            'status_id' => 'sometimes|required|exists:task_statuses,id',
         ]);
         $task->update($request->all());
 
