@@ -1,6 +1,7 @@
 package org.student.microserviceapp.javaservice.services.project;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.student.microserviceapp.javaservice.dto.project.CreateProjectDTO;
 import org.student.microserviceapp.javaservice.dto.project.ProjectDTO;
 import org.student.microserviceapp.javaservice.repositories.ProjectRepository;
@@ -21,6 +22,7 @@ public class ProjectService implements IProjectService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Result<ProjectDTO> getProjectById(UUID id) {
         var project = projectRepository.findById(id);
         return project
@@ -29,6 +31,7 @@ public class ProjectService implements IProjectService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Result<List<ProjectDTO>> getAllProjects() {
         var projects = projectRepository.findAll();
         if (projects.isEmpty()) {
@@ -41,11 +44,17 @@ public class ProjectService implements IProjectService {
     }
 
     @Override
+    @Transactional
     public Result<UUID> createProject(CreateProjectDTO createProjectDTO) {
         var company = companyService.getCompanyById(createProjectDTO.getCompanyId());
-        if(company.isEmpty()) {
+        if (company.isEmpty()) {
             return Result.notFound("Company not found");
         }
+
+        if (createProjectDTO.getStartDate().isAfter(createProjectDTO.getEndDate())) {
+            return Result.badRequest("Start date cannot be after end date");
+        }
+
         var project = createProjectDTO.toProject();
         project.setId(UUID.randomUUID());
         project.setCompany(company.get());
@@ -54,14 +63,54 @@ public class ProjectService implements IProjectService {
     }
 
     @Override
+    @Transactional
     public Result<ProjectDTO> updateProject(UUID id, CreateProjectDTO createProjectDTO) {
-        return null;
+        var project = projectRepository.findById(id);
+        if (project.isEmpty()) {
+            return Result.notFound("Project not found");
+        }
+        var existingProject = project.get();
+
+        if (createProjectDTO.getName() != null && !createProjectDTO.getName().isBlank()) {
+            existingProject.setName(createProjectDTO.getName());
+        }
+
+        if (createProjectDTO.getStartDate() != null && createProjectDTO.getEndDate() != null) {
+            if (createProjectDTO.getStartDate().isAfter(createProjectDTO.getEndDate())) {
+                return Result.badRequest("Start date cannot be after end date");
+            }
+            existingProject.setStartDate(createProjectDTO.getStartDate());
+            existingProject.setEndDate(createProjectDTO.getEndDate());
+        } else if (createProjectDTO.getStartDate() != null) {
+            if (createProjectDTO.getStartDate().isAfter(existingProject.getEndDate())) {
+                return Result.badRequest("Start date cannot be after existing end date");
+            }
+            existingProject.setStartDate(createProjectDTO.getStartDate());
+        } else if (createProjectDTO.getEndDate() != null) {
+            if (createProjectDTO.getEndDate().isBefore(existingProject.getStartDate())) {
+                return Result.badRequest("End date cannot be before existing start date");
+            }
+            existingProject.setEndDate(createProjectDTO.getEndDate());
+        }
+
+        if (createProjectDTO.getCompanyId() != null) {
+            var company = companyService.getCompanyById(createProjectDTO.getCompanyId());
+            if (company.isEmpty()) {
+                return Result.notFound("Company not found");
+            }
+            existingProject.setCompany(company.get());
+        }
+
+        projectRepository.save(existingProject);
+        var projectDTO = new ProjectDTO(existingProject);
+        return Result.success(projectDTO, "Project updated successfully");
     }
 
     @Override
+    @Transactional
     public Result<Void> deleteProject(UUID id) {
         var project = projectRepository.findById(id);
-        if(project.isEmpty()) {
+        if (project.isEmpty()) {
             return Result.notFound("Project not found");
         }
         projectRepository.delete(project.get());

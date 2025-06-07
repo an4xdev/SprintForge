@@ -40,8 +40,8 @@ public class TeamController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<TeamDTO>> updateTeam(@PathVariable UUID id, @RequestBody CreateTeamDTO createTeamDTO) {
-        // TODO: implement updateTeam
+    public ResponseEntity<ApiResponse<TeamDTO>> updateTeam(@PathVariable UUID id,
+            @RequestBody CreateTeamDTO createTeamDTO) {
         var team = teamService.updateTeam(id, createTeamDTO);
         return team.toResponseEntity();
     }
