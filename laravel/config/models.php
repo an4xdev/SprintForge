@@ -183,7 +183,7 @@ return [
         |
         */
 
-        'snake_attributes' => true,
+        'snake_attributes' => false,
 
         /*
         |--------------------------------------------------------------------------
@@ -300,6 +300,7 @@ return [
             'TaskStatuses',
             'Sprints',
             'Users',
+            'TaskTypes',
         ],
 
         /*

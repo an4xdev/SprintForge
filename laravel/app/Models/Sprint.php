@@ -35,6 +35,7 @@ class Sprint extends Model
 	protected $primaryKey = 'Id';
 	public $incrementing = false;
 	public $timestamps = false;
+	public static $snakeAttributes = false;
 
 	protected $casts = [
 		'Id' => 'string',

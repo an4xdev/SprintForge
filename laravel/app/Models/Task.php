@@ -17,12 +17,12 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $Description
  * @property int $TaskTypeId
  * @property int $TaskStatusId
- * @property uuid $DeveloperId
+ * @property uuid|null $DeveloperId
  * @property uuid|null $SprintId
  * 
- * @property TaskType $task_type
- * @property TaskStatus $task_status
- * @property User $user
+ * @property TaskType $taskType
+ * @property TaskStatus $taskStatus
+ * @property User|null $user
  * @property Sprint|null $sprint
  * @property Collection|TaskHistory[] $task_histories
  *
@@ -35,6 +35,7 @@ class Task extends Model
 	protected $primaryKey = 'Id';
 	public $incrementing = false;
 	public $timestamps = false;
+	public static $snakeAttributes = false;
 
 	protected $casts = [
 		'Id' => 'string',
@@ -53,8 +54,12 @@ class Task extends Model
 		'SprintId'
 	];
 
+	public function taskType()
+	{
+		return $this->belongsTo(TaskType::class, 'TaskTypeId');
+	}
 
-	public function task_status()
+	public function taskStatus()
 	{
 		return $this->belongsTo(TaskStatus::class, 'TaskStatusId');
 	}

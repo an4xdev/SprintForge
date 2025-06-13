@@ -11,22 +11,20 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-static string GetRequiredEnvironmentVariable(string name)
+
+var dbHost = GetRequiredEnvironmentVariable("DB_HOST", builder.Environment.IsProduction());
+var dbDatabase = GetRequiredEnvironmentVariable("DB_DATABASE", builder.Environment.IsProduction());
+var dbUsername = GetRequiredEnvironmentVariable("DB_USERNAME", builder.Environment.IsProduction());
+var dbPassword = GetRequiredEnvironmentVariable("DB_PASSWORD", builder.Environment.IsProduction());
+
+
+if (builder.Environment.IsDevelopment())
 {
-    var value = Environment.GetEnvironmentVariable(name);
-    if (string.IsNullOrEmpty(value))
-    {
-        throw new InvalidOperationException($"{name} environment variable is required");
-    }
-    return value;
+    dbHost ??= "database";
+    dbDatabase ??= "project";
+    dbUsername ??= "postgres";
+    dbPassword ??= "P@ssword123!";
 }
-
-
-var dbHost = GetRequiredEnvironmentVariable("DB_HOST");
-var dbDatabase = GetRequiredEnvironmentVariable("DB_DATABASE");
-var dbUsername = GetRequiredEnvironmentVariable("DB_USERNAME");
-var dbPassword = GetRequiredEnvironmentVariable("DB_PASSWORD");
-
 
 var connectionString = $"Host={dbHost};Database={dbDatabase};Username={dbUsername};Password={dbPassword}";
 
@@ -86,3 +84,15 @@ else
 app.MapHealthChecks("/health");
 
 app.Run();
+return;
+
+static string? GetRequiredEnvironmentVariable(string name, bool isProduction)
+{
+    var value = Environment.GetEnvironmentVariable(name);
+    if (!string.IsNullOrEmpty(value)) return value;
+    if (isProduction)
+    {
+        throw new InvalidOperationException($"{name} environment variable is required");
+    }
+    return value;
+}
