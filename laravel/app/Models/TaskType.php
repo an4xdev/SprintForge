@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Class TaskStatus
+ * Class TaskType
  * 
  * @property int $Id
  * @property string $Name
@@ -19,9 +19,9 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package App\Models
  */
-class TaskStatus extends Model
+class TaskType extends Model
 {
-	protected $table = 'TaskStatuses';
+	protected $table = 'TaskTypes';
 	protected $primaryKey = 'Id';
 	public $timestamps = false;
 	public static $snakeAttributes = false;
@@ -32,6 +32,6 @@ class TaskStatus extends Model
 
 	public function tasks()
 	{
-		return $this->hasMany(Task::class, 'TaskStatusId');
+		return $this->hasMany(Task::class, 'TaskTypeId');
 	}
 }

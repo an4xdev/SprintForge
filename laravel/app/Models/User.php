@@ -24,7 +24,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property uuid|null $TeamId
  * 
  * @property Team|null $team
- * @property Collection|Team[] $teams
  * @property Collection|Task[] $tasks
  * @property Collection|Sprint[] $sprints
  *
@@ -32,11 +31,11 @@ use Illuminate\Database\Eloquent\Model;
  */
 class User extends Model
 {
-	protected $keyType = 'string';
 	protected $table = 'Users';
 	protected $primaryKey = 'Id';
 	public $incrementing = false;
 	public $timestamps = false;
+	public static $snakeAttributes = false;
 
 	protected $casts = [
 		'Id' => 'string',
