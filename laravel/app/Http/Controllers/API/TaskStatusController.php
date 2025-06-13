@@ -30,7 +30,10 @@ class TaskStatusController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:255',
         ]);
-        $taskStatus = TaskStatus::create($request->all());
+        $taskStatus = TaskStatus::create([
+            'Name' => $request->input('name'),
+            'Description' => $request->input('description', null),
+        ]);
         $response = ApiResponse::Created('Task Status created successfully', $taskStatus);
         return response()->json($response, Response::HTTP_CREATED);
     }
@@ -61,7 +64,10 @@ class TaskStatusController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'description' => 'sometimes|nullable|string|max:255',
         ]);
-        $taskStatus->update($request->all());
+        $taskStatus->update([
+            'Name' => $request->input('name', $taskStatus->Name),
+            'Description' => $request->input('description', $taskStatus->Description),
+        ]);
         $response = ApiResponse::Success('Task Status updated successfully', $taskStatus);
         return response()->json($response);
     }
