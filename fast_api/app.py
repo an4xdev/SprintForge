@@ -2,11 +2,14 @@ from fastapi import FastAPI, Depends, Request, Response
 from uuid import UUID
 from fastapi.responses import JSONResponse
 from sqlmodel import Session, desc, select
+from datetime import datetime
+import uuid
+from fastapi.exceptions import RequestValidationError
 from database import get_db, check_db_connection
 from api_exception import ApiException
 from api_response import ApiResponse
-from models import *
-from datetime import datetime
+from models import Tasks, TaskHistories, TaskStatuses, Sprints, Users, \
+    Teams, Projects, SprintCreate
 from rabbit_mq_config import RabbitMQConfig
 
 app = FastAPI()
@@ -53,6 +56,23 @@ async def api_exception_handler(_: Request, exc: ApiException):
     return JSONResponse(
         status_code=exc.status_code,
         content=ApiResponse(message=exc.message).model_dump()
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_: Request, exc: RequestValidationError):
+    error_details = []
+    for error in exc.errors():
+        error_details.append({
+            "msg": error.get("msg", ""),
+        })
+    
+    return JSONResponse(
+        status_code=422,
+        content=ApiResponse(
+            message="Validation error",
+            data={"errors": error_details}
+        ).model_dump()
     )
 
 
@@ -162,13 +182,40 @@ def pause_task(task_id: UUID, db: Session=Depends(get_db)):
 
     
 # Sprint management
+@app.get("/api/sprints/")
+def get_sprints(db: Session=Depends(get_db)):
+    statement = select(Sprints).order_by(desc(Sprints.StartDate))
+    sprints = db.exec(statement).all()
+    return ApiResponse(message="Sprints retrieved", data=sprints).model_dump()
+
+
 @app.post("/api/sprints/")
-def create_sprint(sprint: Sprints, db: Session=Depends(get_db)):
+def create_sprint(sprint: SprintCreate, db: Session=Depends(get_db)):
     try:
-        db.add(sprint)
+        user = db.exec(select(Users).where(Users.Id == sprint.ManagerId)).first()
+        if not user:
+            raise ApiException(status_code=404, message="Manager not found")
+        if user.Role != "manager":
+            raise ApiException(status_code=403, message="User is not a manager")
+        team = db.exec(select(Teams).where(Teams.Id == sprint.TeamId)).first()
+        if not team:
+            raise ApiException(status_code=404, message="Team not found")
+        project = db.exec(select(Projects).where(Projects.Id == sprint.ProjectId)).first()
+        if not project:
+            raise ApiException(status_code=404, message="Project not found")
+        new_sprint = Sprints(
+            Id=uuid.uuid4(),
+            Name=sprint.Name,
+            StartDate=sprint.StartDate,
+            EndDate=sprint.EndDate,
+            ManagerId=sprint.ManagerId,
+            TeamId=sprint.TeamId,
+            ProjectId=sprint.ProjectId
+        )
+        db.add(new_sprint)
         db.commit()
-        db.refresh(sprint)
-        return ApiResponse(message="Sprint created", data=sprint).model_dump()
+        db.refresh(new_sprint)
+        return ApiResponse(message="Sprint created", data=new_sprint).model_dump()
     except Exception as e:
         db.rollback()
         raise ApiException(status_code=500, message=str(e))
