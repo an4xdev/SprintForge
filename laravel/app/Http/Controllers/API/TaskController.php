@@ -125,27 +125,20 @@ class TaskController extends Controller
      */
     public function assignDeveloper(Request $request, Task $task)
     {
-        if ($request->has('developer_id')) {
-
-            if (!$task) {
-                $response = ApiResponse::NotFound('Task not found');
-                return response()->json($response, Response::HTTP_NOT_FOUND);
-            }
-            $request->validate([
-                'developer_id' => 'required|uuid|exists:Users,Id',
-            ]);
-
-            $task->DeveloperId = $request->input('developer_id');
-            $task->save();
-
-            $response = ApiResponse::Success('Developer assigned to task successfully', $task);
-            return response()->json($response);
+        if (!$task) {
+            $response = ApiResponse::NotFound('Task not found');
+            return response()->json($response, Response::HTTP_NOT_FOUND);
         }
 
-        return response()->json(
-            ApiResponse::BadRequest('No developer_id provided'),
-            Response::HTTP_BAD_REQUEST
-        );
+        $request->validate([
+            'developer_id' => 'required|uuid|exists:Users,Id',
+        ]);
+
+        $task->DeveloperId = $request->input('developer_id');
+        $task->save();
+
+        $response = ApiResponse::Success('Developer assigned to task successfully', $task);
+        return response()->json($response);
     }
 
     /**

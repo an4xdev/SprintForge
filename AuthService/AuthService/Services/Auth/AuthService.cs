@@ -13,9 +13,9 @@ using SharedObjects.Responses;
 
 namespace AuthService.Services.Auth;
 
-public class AuthService(AppDbContext context, IConfiguration configuration) : IAuthService
+public class AuthService(AppDbContext context) : IAuthService
 {
-    public async Task<Result<TokenResponseDto>>LoginAsync(UserLoginDto request)
+    public async Task<Result<TokenResponseDto>> LoginAsync(UserLoginDto request)
     {
         var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
         if (user is null || new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash,
@@ -87,7 +87,7 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
 
     public async Task<Result<object?>> ChangePassword(ChangePasswordDto request)
     {
-        var user = await context.Users.Where(u=>u.Id == request.UserId).FirstOrDefaultAsync();
+        var user = await context.Users.Where(u => u.Id == request.UserId).FirstOrDefaultAsync();
 
         if (user is null)
         {
@@ -108,7 +108,7 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
 
         await context.SaveChangesAsync();
 
-        return Result<object?>.Success(null,"Successfully changed password");
+        return Result<object?>.Success(null, "Successfully changed password");
     }
 
     private async Task<User?> ValidateRefreshTokenAsync(Guid userId, string refreshToken)
@@ -150,13 +150,13 @@ public class AuthService(AppDbContext context, IConfiguration configuration) : I
         };
 
         var key = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(configuration.GetValue<string>("Jwt:Token")!));
+            Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_TOKEN")!));
 
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha512);
 
         var tokenDescriptor = new JwtSecurityToken(
-            issuer: configuration.GetValue<string>("Jwt:Issuer"),
-            audience: configuration.GetValue<string>("Jwt:Audience"),
+            issuer: Environment.GetEnvironmentVariable("JWT_ISSUER"),
+            audience: Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
             claims: claims,
             expires: DateTime.UtcNow.AddDays(1),
             signingCredentials: credentials

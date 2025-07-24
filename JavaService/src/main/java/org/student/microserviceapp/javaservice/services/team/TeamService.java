@@ -10,6 +10,7 @@ import org.student.microserviceapp.javaservice.responses.Result;
 import org.student.microserviceapp.javaservice.services.user.IUserService;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -56,7 +57,7 @@ public class TeamService implements ITeamService {
 
         var existingUser = user.get();
 
-        if (existingUser.getRole() != Roles.MANAGER) {
+        if (!Objects.equals(existingUser.getRole(), Roles.MANAGER)) {
             return Result.badRequest("User is not a manager");
         }
 
@@ -84,7 +85,7 @@ public class TeamService implements ITeamService {
                 return Result.notFound("User not found");
             }
             var existingUser = user.get();
-            if (existingUser.getRole() != Roles.MANAGER) {
+            if (!Objects.equals(existingUser.getRole(), Roles.MANAGER)) {
                 return Result.badRequest("User is not a manager");
             }
             existingTeam.setManager(existingUser);

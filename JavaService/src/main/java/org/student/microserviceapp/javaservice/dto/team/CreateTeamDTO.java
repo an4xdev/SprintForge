@@ -12,11 +12,11 @@ import java.util.UUID;
 @Setter
 public class CreateTeamDTO {
 
-    @NotNull
+    @NotNull(message = "Manager ID is required")
     public UUID managerId;
 
-    @NotNull
-    @NotBlank
+    @NotNull(message = "Team name is required")
+    @NotBlank(message = "Team name cannot be blank")
     public String name;
 
     public Team toTeam() {
