@@ -1,25 +1,26 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SharedObjects.AppDbContext;
-using SharedObjects.DTOs;
+using SharedObjects.DTOs.Responses;
+using SharedObjects.Responses;
 
 namespace AuthService.Services.Profile;
 
 public class ProfileService(AppDbContext context) : IProfileService
 {
-    public async Task<ProfileDto?> Get(Guid id)
+    public async Task<Result<ProfileResponse?>> Get(Guid id)
     {
         var user = await context.Users.FindAsync(id);
         if (user == null)
         {
-            return null;
+            return Result<ProfileResponse?>.NotFound("User not found");
         }
 
-        return new ProfileDto
+        return Result<ProfileResponse?>.Success(new ProfileResponse
         {
             Id = user.Id,
             Avatar = user.Avatar,
             Username = user.Username,
-        };
+        }, "Successfully retrieved profile");
     }
 
     public Task<bool> IsUserInDatabase(Guid id)

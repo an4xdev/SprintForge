@@ -3,11 +3,11 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SharedObjects.AppDbContext;
-using SharedObjects.DTOs;
+using SharedObjects.DTOs.Requests;
+using SharedObjects.DTOs.Responses;
 using SharedObjects.Models;
 using SharedObjects.Responses;
 
@@ -15,35 +15,42 @@ namespace AuthService.Services.Auth;
 
 public class AuthService(AppDbContext context) : IAuthService
 {
-    public async Task<Result<TokenResponseDto>> LoginAsync(UserLoginDto request)
+    public async Task<Result<LoginResponse>> LoginAsync(UserLoginRequest request)
     {
         var user = await context.Users.FirstOrDefaultAsync(u => u.Username == request.Username);
         if (user is null || new PasswordHasher<User>().VerifyHashedPassword(user, user.PasswordHash,
                 user.PasswordSalt + request.Password)
             == PasswordVerificationResult.Failed)
         {
-            return Result<TokenResponseDto>.BadRequest("Invalid username or password");
+            return Result<LoginResponse>.BadRequest("Invalid username or password");
         }
 
-        var result = await CreateTokenResponse(user);
+        var tokenResponse = await CreateTokenResponse(user);
 
-        return Result<TokenResponseDto>.Success(result, "Login Successful");
+        var result = new LoginResponse
+        {
+            AccessToken = tokenResponse.AccessToken,
+            RefreshToken = tokenResponse.RefreshToken,
+            NeedResetPassword = user.NeedResetPassword
+        };
+
+        return Result<LoginResponse>.Success(result, "Login Successful");
     }
 
-    private async Task<TokenResponseDto> CreateTokenResponse(User user)
+    private async Task<TokenResponse> CreateTokenResponse(User user)
     {
-        return new TokenResponseDto
+        return new TokenResponse
         {
             AccessToken = CreateToken(user),
             RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)
         };
     }
 
-    public async Task<Result<User>> RegisterAsync(AdminRegisterDto request)
+    public async Task<Result<object?>> RegisterAsync(AdminRegisterRequest request)
     {
         if (await context.Users.AnyAsync(u => u.Username == request.Username))
         {
-            return Result<User>.BadRequest("Username already exists.");
+            return Result<object?>.BadRequest("Username already exists.");
         }
 
         var salt = GenerateSalt();
@@ -52,7 +59,7 @@ public class AuthService(AppDbContext context) : IAuthService
             Username = request.Username,
             PasswordHash = string.Empty,
             PasswordSalt = salt,
-            Role = request.Role,
+            Role = request.Role
         };
         var hashedPassword = new PasswordHasher<User>()
             .HashPassword(user, salt + request.Password);
@@ -62,7 +69,7 @@ public class AuthService(AppDbContext context) : IAuthService
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
-        return Result<User>.Success(user, "Registration Successful");
+        return Result<object?>.Success(null, "Registration Successful");
     }
 
     private static string GenerateSalt()
@@ -73,19 +80,19 @@ public class AuthService(AppDbContext context) : IAuthService
         return Convert.ToBase64String(saltBytes);
     }
 
-    public async Task<Result<TokenResponseDto>> RefreshTokensAsync(RefreshTokenRequestDto request)
+    public async Task<Result<TokenResponse>> RefreshTokensAsync(RefreshTokenRequestDto request)
     {
         var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);
         if (user is null)
         {
-            return Result<TokenResponseDto>.BadRequest("Invalid refresh token");
+            return Result<TokenResponse>.BadRequest("Invalid refresh token");
         }
 
         var result = await CreateTokenResponse(user);
-        return Result<TokenResponseDto>.Success(result, "Refresh Tokens Successful");
+        return Result<TokenResponse>.Success(result, "Refresh Tokens Successful");
     }
 
-    public async Task<Result<object?>> ChangePassword(ChangePasswordDto request)
+    public async Task<Result<object?>> ChangePassword(ChangePasswordRequest request)
     {
         var user = await context.Users.Where(u => u.Id == request.UserId).FirstOrDefaultAsync();
 
@@ -105,6 +112,11 @@ public class AuthService(AppDbContext context) : IAuthService
             .HashPassword(user, user.PasswordSalt + request.NewPassword);
 
         user.PasswordHash = hashedPassword;
+
+        if (user.NeedResetPassword)
+        {
+            user.NeedResetPassword = false;
+        }
 
         await context.SaveChangesAsync();
 

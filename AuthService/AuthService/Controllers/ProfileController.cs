@@ -1,7 +1,8 @@
 ﻿using AuthService.Services.File;
 using AuthService.Services.Profile;
 using Microsoft.AspNetCore.Mvc;
-using SharedObjects.DTOs;
+using SharedObjects.DTOs.Responses;
+using SharedObjects.Responses;
 
 namespace AuthService.Controllers;
 
@@ -10,11 +11,11 @@ namespace AuthService.Controllers;
 public class ProfileController(IProfileService profileService, IFileService fileService) : ControllerBase
 {
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ProfileDto>> Get(Guid id)
+    public async Task<ActionResult<ApiResponse<ProfileResponse?>>> Get(Guid id)
     {
         var profile = await profileService.Get(id);
 
-        return profile != null ? Ok(profile) : NotFound();
+        return profile.ToActionResult();
     }
 
     [HttpPost("avatar")]
