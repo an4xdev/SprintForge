@@ -1,6 +1,6 @@
-﻿namespace SharedObjects.DTOs;
+﻿namespace SharedObjects.DTOs.Responses;
 
-public class ProfileDto
+public class ProfileResponse
 {
     public Guid Id { get; set; }
 

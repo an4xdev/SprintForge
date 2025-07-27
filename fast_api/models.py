@@ -40,7 +40,6 @@ class Users(SQLModel, table=True):
     )
 
     Id: uuid.UUID = Field(primary_key=True)
-    Username: str = Field()
     Role: str = Field()
 
 

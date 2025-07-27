@@ -1,10 +1,12 @@
 ﻿using SharedObjects.DTOs;
+using SharedObjects.DTOs.Responses;
+using SharedObjects.Responses;
 
 namespace AuthService.Services.Profile;
 
 public interface IProfileService
 {
-    Task<ProfileDto?> Get(Guid id);
+    Task<Result<ProfileResponse?>> Get(Guid id);
 
     Task<bool> IsUserInDatabase(Guid id);
 

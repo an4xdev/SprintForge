@@ -1,4 +1,4 @@
-﻿namespace SharedObjects.DTOs;
+﻿namespace SharedObjects.DTOs.Responses;
 
 public class AvatarResponse
 {

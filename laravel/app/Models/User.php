@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $Avatar
  * @property string $PasswordSalt
  * @property uuid|null $TeamId
+ * @property bool $NeedsPasswordChange
  * 
  * @property Team|null $team
  * @property Collection|Task[] $tasks
@@ -58,7 +59,8 @@ class User extends Model
 		'RefreshTokenExpiryTime',
 		'Avatar',
 		'PasswordSalt',
-		'TeamId'
+		'TeamId',
+		'NeedsPasswordChange'
 	];
 
 	public function tasks()

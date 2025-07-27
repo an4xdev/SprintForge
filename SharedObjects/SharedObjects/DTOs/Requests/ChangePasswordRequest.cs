@@ -1,6 +1,6 @@
-﻿namespace SharedObjects.DTOs;
+﻿namespace SharedObjects.DTOs.Requests;
 
-public class ChangePasswordDto
+public class ChangePasswordRequest
 {
     public Guid UserId { get; set; }
 

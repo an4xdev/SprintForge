@@ -1,8 +1,7 @@
 ﻿using System.Net.Http.Headers;
 using ApiGateway.Services;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SharedObjects.DTOs;
+using SharedObjects.DTOs.Responses;
 using SharedObjects.Responses;
 
 namespace ApiGateway.Controllers;
@@ -13,9 +12,9 @@ namespace ApiGateway.Controllers;
 public class ProfileController(ISendRequestService requestService) : ControllerBase
 {
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<ProfileDto>>> Get(Guid id)
+    public async Task<ActionResult<ApiResponse<ProfileResponse>>> Get(Guid id)
     {
-        return await requestService.SendRequestAsync<ApiResponse<ProfileDto>>(HttpMethod.Get, $"/profile/{id}",
+        return await requestService.SendRequestAsync<ApiResponse<ProfileResponse>>(HttpMethod.Get, $"/profile/{id}",
             ServiceType.AuthService);
     }
 

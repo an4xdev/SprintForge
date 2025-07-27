@@ -1,15 +1,14 @@
-using Microsoft.AspNetCore.Mvc;
-using SharedObjects.DTOs;
-using SharedObjects.Models;
+using SharedObjects.DTOs.Requests;
+using SharedObjects.DTOs.Responses;
 using SharedObjects.Responses;
 
 namespace AuthService.Services.Auth;
 
 public interface IAuthService
 {
-    Task<Result<User>> RegisterAsync(AdminRegisterDto request);
-    Task<Result<TokenResponseDto>> LoginAsync(UserLoginDto request);
-    Task<Result<TokenResponseDto>> RefreshTokensAsync(RefreshTokenRequestDto request);
+    Task<Result<object?>> RegisterAsync(AdminRegisterRequest request);
+    Task<Result<LoginResponse>> LoginAsync(UserLoginRequest request);
+    Task<Result<TokenResponse>> RefreshTokensAsync(RefreshTokenRequestDto request);
 
-    Task<Result<object?>> ChangePassword(ChangePasswordDto request);
+    Task<Result<object?>> ChangePassword(ChangePasswordRequest request);
 }
