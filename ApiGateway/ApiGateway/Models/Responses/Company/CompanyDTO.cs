@@ -1,6 +1,12 @@
-﻿namespace ApiGateway.Models.Responses.Company;
+﻿using System.Text.Json.Serialization;
 
-public class CompanyDTO
+namespace ApiGateway.Models.Responses.Company;
+
+public class CompanyDto
 {
-    
+    [JsonPropertyName("Id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("Name")]
+    public string Name { get; set; }
 }

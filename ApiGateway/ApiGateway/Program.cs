@@ -15,15 +15,12 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(frontendUrl)
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
-builder.Services.Configure<FormOptions>(options =>
-{
-    options.MultipartBodyLengthLimit = 104857600;
-});
+builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLengthLimit = 104857600; });
 
 // TODO: think later on minimal api?
 builder.Services.AddControllers();
@@ -37,6 +34,7 @@ static string GetRequiredEnvironmentVariable(string name)
     {
         throw new InvalidOperationException($"{name} environment variable is required");
     }
+
     return value;
 }
 
@@ -65,7 +63,6 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<ISendRequestService, SendRequestService>();
 
-
 // https://thecodeman.net/posts/hybrid-cache-in-aspnet-core
 builder.Services.AddHybridCache(options =>
 {
@@ -78,10 +75,7 @@ builder.Services.AddHybridCache(options =>
     };
 });
 
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = redisConnectionString;
-});
+builder.Services.AddStackExchangeRedisCache(options => { options.Configuration = redisConnectionString; });
 
 builder.Services.AddHealthChecks()
     .AddRedis(redisConnectionString);

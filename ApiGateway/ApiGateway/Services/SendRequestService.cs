@@ -1,9 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Net;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Hybrid;
 
 namespace ApiGateway.Services;
 
-public class SendRequestService(IHttpClientFactory httpClientFactory, HybridCache hybridCache) : ISendRequestService
+public class SendRequestService(
+    IHttpClientFactory httpClientFactory,
+    HybridCache hybridCache,
+    ILogger<SendRequestService> logger)
+    : ISendRequestService
 {
     private HttpClient GetHttpClient() => httpClientFactory.CreateClient();
 
@@ -16,6 +22,9 @@ public class SendRequestService(IHttpClientFactory httpClientFactory, HybridCach
         HttpContent? content = null,
         object? body = null)
     {
+        logger.LogInformation("[INFO]: Sending request to {S}", endpoint);
+        logger.LogInformation("[INFO]: Method: {Method}", method);
+        logger.LogInformation("[INFO]: Service: {Service}", serviceType);
         try
         {
             var fullUrl = CombinePath(serviceType, endpoint);
@@ -23,7 +32,7 @@ public class SendRequestService(IHttpClientFactory httpClientFactory, HybridCach
             {
                 return await hybridCache.GetOrCreateAsync(
                     key: fullUrl,
-                    factory: async (cancellationToken) =>
+                    factory: async cancellationToken =>
                     {
                         var httpClient = GetHttpClient();
                         using var requestMessage = new HttpRequestMessage(HttpMethod.Get, fullUrl);
@@ -31,7 +40,8 @@ public class SendRequestService(IHttpClientFactory httpClientFactory, HybridCach
 
                         if (!response.IsSuccessStatusCode)
                         {
-                            var errorContent = await response.Content.ReadFromJsonAsync<dynamic>(cancellationToken);
+                            var errorContent =
+                                await response.Content.ReadFromJsonAsync<dynamic>(cancellationToken);
                             return new ObjectResult(errorContent)
                             {
                                 StatusCode = (int)response.StatusCode
@@ -42,6 +52,7 @@ public class SendRequestService(IHttpClientFactory httpClientFactory, HybridCach
                         return new OkObjectResult(responseData);
                     });
             }
+
             var httpClient = GetHttpClient();
 
             using var requestMessage = new HttpRequestMessage(method, fullUrl);
@@ -56,8 +67,9 @@ public class SendRequestService(IHttpClientFactory httpClientFactory, HybridCach
                 {
                     return new ObjectResult("Request body not allowed for GET or DELETE methods.") { StatusCode = 400 };
                 }
-                var co = JsonContent.Create(body);
-                Console.WriteLine($"[DEBUG]: SendRequestService to JSON: {co.Value}");
+
+                var serializedBody = JsonSerializer.Serialize(body);
+                logger.LogDebug("[DEBUG]: SendRequestService to JSON: {SerializedBody}", serializedBody);
                 requestMessage.Content = JsonContent.Create(body);
             }
 
@@ -70,7 +82,33 @@ public class SendRequestService(IHttpClientFactory httpClientFactory, HybridCach
                     { StatusCode = (int)response.StatusCode };
             }
 
+            if (response.StatusCode == HttpStatusCode.NoContent) return new NoContentResult();
+
             var responseData = await response.Content.ReadFromJsonAsync<T>();
+
+            logger.LogInformation("[INFO]: Status code: {sc}", response.StatusCode);
+
+            switch (response.StatusCode)
+            {
+                case HttpStatusCode.OK:
+                    break;
+                case HttpStatusCode.Created:
+                    return new CreatedResult(fullUrl, responseData);
+                case HttpStatusCode.BadRequest:
+                    return new BadRequestResult();
+                case HttpStatusCode.NotFound:
+                    return new NotFoundResult();
+                case HttpStatusCode.InternalServerError:
+                {
+                    var errorContent1 = await response.Content.ReadFromJsonAsync<dynamic>();
+                    return new ObjectResult(errorContent1)
+                    {
+                        StatusCode = StatusCodes.Status500InternalServerError
+                    };
+                }
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
 
             return new OkObjectResult(responseData);
         }

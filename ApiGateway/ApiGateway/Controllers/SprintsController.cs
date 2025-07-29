@@ -8,7 +8,7 @@ namespace ApiGateway.Controllers;
 [Route("[controller]")]
 [Authorize(AuthenticationSchemes = "Bearer")]
 [Authorize(Roles = "manager")]
-public class SprintController(ISendRequestService requestService) : ControllerBase
+public class SprintsController(ISendRequestService requestService) : ControllerBase
 {
     // TODO: implement
 }

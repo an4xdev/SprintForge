@@ -8,7 +8,7 @@ namespace ApiGateway.Controllers;
 [Route("[controller]")]
 [Authorize(AuthenticationSchemes = "Bearer")]
 [Authorize(Roles = "admin")]
-public class TaskStatusController(ISendRequestService requestService) : ControllerBase
+public class TaskStatusesController(ISendRequestService requestService) : ControllerBase
 {
     // TODO: implement
 }

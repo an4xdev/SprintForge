@@ -8,7 +8,7 @@ namespace ApiGateway.Controllers;
 [Route("[controller]")]
 [Authorize(AuthenticationSchemes = "Bearer")]
 [Authorize(Roles = "admin")]
-public class TeamController(ISendRequestService requestService) : ControllerBase
+public class TeamsController(ISendRequestService requestService) : ControllerBase
 {
     // TODO: implement
 }
