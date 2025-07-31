@@ -4,9 +4,7 @@ namespace ApiGateway.Models;
 
 public class CompanyDto
 {
-    [JsonPropertyName("Id")]
-    public int Id { get; set; }
+    [JsonPropertyName("Id")] public int Id { get; set; }
 
-    [JsonPropertyName("Name")]
-    public string Name { get; set; }
+    [JsonPropertyName("Name")] public string Name { get; set; }
 }

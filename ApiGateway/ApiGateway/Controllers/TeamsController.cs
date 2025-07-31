@@ -11,7 +11,6 @@ namespace ApiGateway.Controllers;
 [Authorize(AuthenticationSchemes = "Bearer")]
 public class TeamsController(ISendRequestService sendRequestService) : ControllerBase
 {
-    // TODO: implement
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<TeamDto>>>> GetAllTeams()
     {
