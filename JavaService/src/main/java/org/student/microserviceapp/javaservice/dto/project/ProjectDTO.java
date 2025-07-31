@@ -16,19 +16,15 @@ public class ProjectDTO {
 
     private UUID id;
 
-
     private String name;
-
 
     private LocalDate startDate;
 
-
     private LocalDate endDate;
-
 
     private CompanyDTO companyDto;
 
-    public ProjectDTO(Project project){
+    public ProjectDTO(Project project) {
         id = project.getId();
         name = project.getName();
         startDate = project.getStartDate();
