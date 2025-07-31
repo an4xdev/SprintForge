@@ -35,4 +35,12 @@ public class AuthController(ISendRequestService sendRequestService) : Controller
         return await sendRequestService.SendRequestAsync<ApiResponse<TokenResponse>>(HttpMethod.Post,
             "/auth/refresh-token", ServiceType.AuthService, body: request);
     }
+
+    [HttpPost("change-password")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
+    public async Task<ActionResult<ApiResponse<object?>>> ChangePassword(ChangePasswordRequest request)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Post,
+            "/auth/change-password", ServiceType.AuthService, body: request);
+    }
 }

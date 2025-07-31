@@ -13,7 +13,7 @@ namespace ApiGateway.Controllers;
 public class ProfileController(ISendRequestService requestService) : ControllerBase
 {
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<ProfileResponse>>> Get(Guid id)
+    public async Task<ActionResult<ApiResponse<ProfileResponse>>> GetProfile(Guid id)
     {
         return await requestService.SendRequestAsync<ApiResponse<ProfileResponse>>(HttpMethod.Get, $"/profile/{id}",
             ServiceType.AuthService);
