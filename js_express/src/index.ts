@@ -97,10 +97,10 @@ app.get("/api/taskTypes", async (_req, res) => {
 
 app.post("/api/taskTypes", async (req, res) => {
   const { TaskTypes } = models;
-  const { name } = req.body;
+  const { Name } = req.body;
   try {
     const taskType = await TaskTypes.create({
-      Name: name
+      Name: Name
     });
     let response = ApiResponse.Created("Task type created successfully", taskType);
     res.status(201).json(response);
@@ -133,7 +133,7 @@ app.get("/api/taskTypes/:id", async (req, res) => {
 app.put("/api/taskTypes/:id", async (req, res) => {
   const { TaskTypes } = models;
   const { id } = req.params;
-  const { name } = req.body;
+  const { Name } = req.body;
   try {
     const taskType = await TaskTypes.findByPk(id);
     if (!taskType) {
@@ -141,7 +141,7 @@ app.put("/api/taskTypes/:id", async (req, res) => {
       res.status(404).json(response);
       return;
     }
-    taskType.Name = name;
+    taskType.Name = Name;
     await taskType.save();
     let response = ApiResponse.Success("Task type updated successfully", taskType);
     res.status(200).json(response);

@@ -1,4 +1,4 @@
-﻿using ApiGateway.Models.Responses.Company;
+﻿using ApiGateway.Models;
 using ApiGateway.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,7 +9,6 @@ namespace ApiGateway.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Authorize(AuthenticationSchemes = "Bearer")]
-[Authorize(Roles = "admin")]
 public class CompaniesController(ISendRequestService sendRequestService) : ControllerBase
 {
     [HttpGet]
@@ -27,6 +26,7 @@ public class CompaniesController(ISendRequestService sendRequestService) : Contr
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<CompanyDto>>> Create(CompanyDto companyDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<CompanyDto>>(HttpMethod.Post, "/companies",
@@ -34,6 +34,7 @@ public class CompaniesController(ISendRequestService sendRequestService) : Contr
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<CompanyDto>>> Update(int id, CompanyDto companyDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<CompanyDto>>(HttpMethod.Put, $"/companies/{id}",
@@ -41,6 +42,7 @@ public class CompaniesController(ISendRequestService sendRequestService) : Contr
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<object?>> Delete(int id)
     {
         return await sendRequestService.SendRequestAsync<object?>(HttpMethod.Delete, $"/companies/{id}",

@@ -1,12 +1,11 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace ApiGateway.Models.Responses.Company;
+namespace ApiGateway.Models;
 
-public class CompanyDto
+public class TaskTypeDto
 {
     [JsonPropertyName("Id")]
     public int Id { get; set; }
-
     [JsonPropertyName("Name")]
     public string Name { get; set; }
 }

@@ -30,8 +30,4 @@
     <ProjectReference Include="..\..\SharedObjects\SharedObjects\SharedObjects.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Models\Requests\" />
-  </ItemGroup>
-
 </Project>

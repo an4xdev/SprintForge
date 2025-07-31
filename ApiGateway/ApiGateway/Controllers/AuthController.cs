@@ -12,9 +12,8 @@ namespace ApiGateway.Controllers;
 [Route("[controller]")]
 public class AuthController(ISendRequestService sendRequestService) : ControllerBase
 {
-    [Authorize(AuthenticationSchemes = "Bearer")]
-    [Authorize(Roles = "admin")]
     [HttpPost("register")]
+    [Authorize(Roles = "admin", AuthenticationSchemes = "Bearer")]
     public async Task<ActionResult<ApiResponse<User>>> Register(AdminRegisterRequest request)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<User>>(HttpMethod.Post, "/auth/register",
@@ -22,6 +21,7 @@ public class AuthController(ISendRequestService sendRequestService) : Controller
     }
 
     [HttpPost("login")]
+    [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<TokenResponse>>> Login(UserLoginRequest request)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TokenResponse>>(HttpMethod.Post, "/auth/login",
@@ -29,6 +29,7 @@ public class AuthController(ISendRequestService sendRequestService) : Controller
     }
 
     [HttpPost("refresh-token")]
+    [AllowAnonymous]
     public async Task<ActionResult<ApiResponse<TokenResponse>>> RefreshToken(RefreshTokenRequestDto request)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TokenResponse>>(HttpMethod.Post,
