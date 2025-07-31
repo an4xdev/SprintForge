@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using ApiGateway.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedObjects.DTOs.Responses;
 using SharedObjects.Responses;
@@ -8,7 +9,7 @@ namespace ApiGateway.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-// [Authorize(AuthenticationSchemes = "Bearer")]
+[Authorize(AuthenticationSchemes = "Bearer")]
 public class ProfileController(ISendRequestService requestService) : ControllerBase
 {
     [HttpGet("{id:guid}")]
