@@ -1,7 +1,9 @@
+using System.Text.Json.Serialization;
+
 namespace SharedObjects.DTOs.Requests;
 
 public class UserLoginRequest
 {
-    public string Username { get; set; } = string.Empty;
-    public string Password { get; set; } = string.Empty;
+    [JsonPropertyName("username")] public string Username { get; set; } = string.Empty;
+    [JsonPropertyName("password")] public string Password { get; set; } = string.Empty;
 }

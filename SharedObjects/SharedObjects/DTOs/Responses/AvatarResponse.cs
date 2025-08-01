@@ -1,6 +1,8 @@
-﻿namespace SharedObjects.DTOs.Responses;
+﻿using System.Text.Json.Serialization;
+
+namespace SharedObjects.DTOs.Responses;
 
 public class AvatarResponse
 {
-    public string Path { get; set; }
+    [JsonPropertyName("path")] public string Path { get; set; }
 }

@@ -1,6 +1,8 @@
-﻿namespace SharedObjects.DTOs.Requests;
+﻿using System.Text.Json.Serialization;
+
+namespace SharedObjects.DTOs.Requests;
 
 public class AdminRegisterRequest : UserLoginRequest
 {
-    public string Role { get; set; } = string.Empty;
+    [JsonPropertyName("role")] public string Role { get; set; } = string.Empty;
 }

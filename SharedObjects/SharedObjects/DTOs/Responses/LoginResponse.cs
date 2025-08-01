@@ -1,6 +1,8 @@
-﻿namespace SharedObjects.DTOs.Responses;
+﻿using System.Text.Json.Serialization;
+
+namespace SharedObjects.DTOs.Responses;
 
 public class LoginResponse : TokenResponse
 {
-    public bool NeedResetPassword { get; set; }
+    [JsonPropertyName("needResetPassword")] public bool NeedResetPassword { get; set; }
 }

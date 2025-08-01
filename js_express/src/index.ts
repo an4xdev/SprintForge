@@ -97,10 +97,10 @@ app.get("/api/taskTypes", async (_req, res) => {
 
 app.post("/api/taskTypes", async (req, res) => {
   const { TaskTypes } = models;
-  const { Name } = req.body;
+  const { name } = req.body;
   try {
     const taskType = await TaskTypes.create({
-      Name: Name
+      Name: name
     });
     let response = ApiResponse.Created("Task type created successfully", taskType);
     res.status(201).json(response);
@@ -133,7 +133,7 @@ app.get("/api/taskTypes/:id", async (req, res) => {
 app.put("/api/taskTypes/:id", async (req, res) => {
   const { TaskTypes } = models;
   const { id } = req.params;
-  const { Name } = req.body;
+  const { name } = req.body;
   try {
     const taskType = await TaskTypes.findByPk(id);
     if (!taskType) {
@@ -141,7 +141,7 @@ app.put("/api/taskTypes/:id", async (req, res) => {
       res.status(404).json(response);
       return;
     }
-    taskType.Name = Name;
+    taskType.Name = name;
     await taskType.save();
     let response = ApiResponse.Success("Task type updated successfully", taskType);
     res.status(200).json(response);
@@ -212,10 +212,10 @@ app.get("/api/companies/:id", async (req, res) => {
 
 app.post("/api/companies", async (req, res) => {
   const { Companies } = models;
-  const { Name } = req.body;
+  const { name } = req.body;
   try {
     const company = await Companies.create({
-      Name: Name
+      Name: name
     });
     let response = ApiResponse.Created("Company created successfully", company);
     res.status(201).json(response);
@@ -229,7 +229,7 @@ app.post("/api/companies", async (req, res) => {
 app.put("/api/companies/:id", async (req, res) => {
   const { Companies } = models;
   const { id } = req.params;
-  const { Name } = req.body;
+  const { name } = req.body;
   try {
     const company = await Companies.findByPk(id);
     if (!company) {
@@ -237,7 +237,7 @@ app.put("/api/companies/:id", async (req, res) => {
       res.status(404).json(response);
       return;
     }
-    company.Name = Name;
+    company.Name = name;
     await company.save();
     let response = ApiResponse.Success("Company updated successfully", company);
     res.status(200).json(response);

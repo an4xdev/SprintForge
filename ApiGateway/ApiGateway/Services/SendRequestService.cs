@@ -68,9 +68,13 @@ public class SendRequestService(
                     return new ObjectResult("Request body not allowed for GET or DELETE methods.") { StatusCode = 400 };
                 }
 
-                var serializedBody = JsonSerializer.Serialize(body);
+                var serializedBody = JsonSerializer.Serialize(body, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
                 logger.LogInformation("[DEBUG]: SendRequestService to JSON: {SerializedBody}", serializedBody);
-                requestMessage.Content = JsonContent.Create(body);
+                requestMessage.Content =
+                    new StringContent(serializedBody, System.Text.Encoding.UTF8, "application/json");
             }
 
             var response = await httpClient.SendAsync(requestMessage);

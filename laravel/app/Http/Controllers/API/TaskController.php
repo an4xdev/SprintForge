@@ -34,7 +34,7 @@ class TaskController extends Controller
             'description' => 'nullable|string|max:255',
         ]);
 
-        if ($request->has('task_status_id')) {
+        if ($request->has('taskStatusId')) {
             $response = ApiResponse::BadRequest('Task status ID automatically assigned to `Created` status. Do not provide it in the request.');
             return response()->json($response, Response::HTTP_BAD_REQUEST);
         }
@@ -45,15 +45,15 @@ class TaskController extends Controller
             return response()->json($response, Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
-        if ($request->has('developer_id') && $request->input('developer_id') !== null) {
-            if (User::where('Id', $request->input('developer_id'))->doesntExist()) {
+        if ($request->has('developerId') && $request->input('developerId') !== null) {
+            if (User::where('Id', $request->input('developerId'))->doesntExist()) {
                 $response = ApiResponse::BadRequest('Developer not found');
                 return response()->json($response, Response::HTTP_BAD_REQUEST);
             }
         }
 
-        if ($request->has('sprint_id') && $request->input('sprint_id') !== null) {
-            if (Sprint::where('Id', $request->input('sprint_id'))->doesntExist()) {
+        if ($request->has('sprintId') && $request->input('sprintId') !== null) {
+            if (Sprint::where('Id', $request->input('sprintId'))->doesntExist()) {
                 $response = ApiResponse::BadRequest('Sprint not found');
                 return response()->json($response, Response::HTTP_BAD_REQUEST);
             }
@@ -63,9 +63,9 @@ class TaskController extends Controller
             'Id' => Str::uuid()->toString(),
             'Name' => $request->input('name'),
             'Description' => $request->input('description', null),
-            'TaskTypeId' => $request->input('task_type_id'),
+            'TaskTypeId' => $request->input('taskTypeId'),
             'TaskStatusId' => $statusId,
-            'DeveloperId' => $request->input('developer_id', null),
+            'DeveloperId' => $request->input('developerId', null),
             'SprintId' => null,
         ];
 
@@ -101,16 +101,16 @@ class TaskController extends Controller
         $request->validate([
             'name' => 'sometimes|required|string|max:255',
             'description' => 'sometimes|nullable|string|max:255',
-            'task_type_id' => 'sometimes|required|integer|exists:TaskTypes,Id',
+            'taskTypeId' => 'sometimes|required|integer|exists:TaskTypes,Id',
         ]);
 
-        if ($request->has('developer_id')) {
-            $response = ApiResponse::BadRequest('Cannot update developer_id directly. Use assign task to developer method.');
+        if ($request->has('developerId')) {
+            $response = ApiResponse::BadRequest('Cannot update developerId directly. Use assign task to developer method.');
             return response()->json($response, Response::HTTP_BAD_REQUEST);
         }
 
-        if ($request->has('sprint_id')) {
-            $response = ApiResponse::BadRequest('Cannot update sprint_id directly. Use move task to another sprint method.');
+        if ($request->has('sprintId')) {
+            $response = ApiResponse::BadRequest('Cannot update sprintId directly. Use move task to another sprint method.');
             return response()->json($response, Response::HTTP_BAD_REQUEST);
         }
 
@@ -131,10 +131,10 @@ class TaskController extends Controller
         }
 
         $request->validate([
-            'developer_id' => 'required|uuid|exists:Users,Id',
+            'developerId' => 'required|uuid|exists:Users,Id',
         ]);
 
-        $task->DeveloperId = $request->input('developer_id');
+        $task->DeveloperId = $request->input('developerId');
         $task->save();
 
         $response = ApiResponse::Success('Developer assigned to task successfully', $task);
@@ -152,10 +152,10 @@ class TaskController extends Controller
         }
 
         $request->validate([
-            'sprint_id' => 'required|uuid|exists:Sprints,Id',
+            'sprintId' => 'required|uuid|exists:Sprints,Id',
         ]);
 
-        $sprintId = $request->input('sprint_id');
+        $sprintId = $request->input('sprintId');
         $task->SprintId = $sprintId;
         $task->save();
 

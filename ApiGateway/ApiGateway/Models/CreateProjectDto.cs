@@ -4,11 +4,11 @@ namespace ApiGateway.Models;
 
 public class CreateProjectDto
 {
-    [JsonPropertyName("Name")] public string? Name { get; set; }
+    [JsonPropertyName("name")] public string? Name { get; set; }
 
-    [JsonPropertyName("StartDate")] public DateOnly? StartDate { get; set; }
+    [JsonPropertyName("startDate")] public DateOnly? StartDate { get; set; }
 
-    [JsonPropertyName("EndDate")] public DateOnly? EndDate { get; set; }
+    [JsonPropertyName("endDate")] public DateOnly? EndDate { get; set; }
 
-    [JsonPropertyName("CompanyId")] public int? CompanyId { get; set; }
+    [JsonPropertyName("companyId")] public int? CompanyId { get; set; }
 }
