@@ -16,6 +16,7 @@ RUN apk add --no-cache \
     libpq \
     libzip \
     postgresql-dev \
+    netcat-openbsd \
     && apk add --no-cache --virtual .build-deps \
     libpng-dev \
     libjpeg-turbo-dev \
@@ -35,14 +36,18 @@ RUN echo "memory_limit=256M" > /usr/local/etc/php/conf.d/memory-limit.ini \
 
 COPY --from=build /app /var/www
 
+COPY docker/www.conf /usr/local/etc/php-fpm.d/www.conf
+COPY docker/start.sh /usr/local/bin/start.sh
+
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
-    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache \
+    && chmod +x /usr/local/bin/start.sh
 
 USER www-data
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=30s --retries=3 \
-    CMD php artisan --version || exit 1
+    CMD php-fpm -t && php artisan --version || exit 1
 
 EXPOSE 9000
 
-CMD ["php-fpm"]
+CMD ["/usr/local/bin/start.sh"]
