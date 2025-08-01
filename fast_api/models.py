@@ -139,6 +139,9 @@ class TaskHistories(SQLModel, table=True):
 
 
 class SprintCreate(SQLModel):
+
+    model_config = {"alias_generator": lambda field_name: field_name[0].lower() + field_name[1:]}
+
     Name: str
     StartDate: date
     EndDate: date
@@ -163,8 +166,7 @@ class SprintCreate(SQLModel):
     @model_validator(mode='after')
     @classmethod
     def validateDatesNotInPast(cls, model):
-        today = date.today()
-        if model.StartDate < today or model.EndDate < today:
+        if model.StartDate < date.today() or model.EndDate < date.today():
             raise ValueError('Start and end dates cannot be in the past')
         return model
 

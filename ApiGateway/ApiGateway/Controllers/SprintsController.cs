@@ -1,14 +1,51 @@
-﻿using ApiGateway.Services;
+﻿using ApiGateway.Models;
+using ApiGateway.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedObjects.Responses;
 
 namespace ApiGateway.Controllers;
 
 [ApiController]
 [Route("[controller]")]
 [Authorize(AuthenticationSchemes = "Bearer")]
-[Authorize(Roles = "manager")]
-public class SprintsController(ISendRequestService requestService) : ControllerBase
+public class SprintsController(ISendRequestService sendRequestService) : ControllerBase
 {
-    // TODO: implement
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<List<SprintDto>>>> GetSprints()
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<SprintDto>>>(HttpMethod.Get, "/sprints",
+            ServiceType.FastApiService);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<SprintDto>>> GetSprint(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<SprintDto>>(HttpMethod.Get, $"/sprints/{id}",
+            ServiceType.FastApiService);
+    }
+
+    [HttpPost]
+    [Authorize(Roles = "admin,manager")]
+    public async Task<ActionResult<ApiResponse<SprintDto>>> CreateSprint(CreateSprintDto sprintDto)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<SprintDto>>(HttpMethod.Post, "/sprints",
+            ServiceType.FastApiService, body: sprintDto);
+    }
+
+    [HttpPut("{id:guid}")]
+    [Authorize(Roles = "admin,manager")]
+    public async Task<ActionResult<ApiResponse<SprintDto>>> UpdateSprint(Guid id, EditSprintDto sprintDto)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<SprintDto>>(HttpMethod.Put, $"/sprints/{id}",
+            ServiceType.FastApiService, body: sprintDto);
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "admin,manager")]
+    public async Task<ActionResult<ApiResponse<object?>>> DeleteSprint(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Delete, $"/sprints/{id}",
+            ServiceType.FastApiService);
+    }
 }

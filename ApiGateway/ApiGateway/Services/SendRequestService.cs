@@ -69,7 +69,7 @@ public class SendRequestService(
                 }
 
                 var serializedBody = JsonSerializer.Serialize(body);
-                logger.LogDebug("[DEBUG]: SendRequestService to JSON: {SerializedBody}", serializedBody);
+                logger.LogInformation("[DEBUG]: SendRequestService to JSON: {SerializedBody}", serializedBody);
                 requestMessage.Content = JsonContent.Create(body);
             }
 
