@@ -163,7 +163,7 @@ def update_task_status(task_id: UUID, new_status: str, db: Session):
     except Exception as e:
         print(f"Failed to send RabbitMQ message: {e}")
     
-    return {"status": f"Task {new_status.lower()}", "task_id": str(task_id)}
+    return {"status": f"Task {new_status.lower()}", "taskId": str(task_id)}
 
 
 @app.put("/api/tasks/{task_id}/start")
