@@ -7,6 +7,7 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Sprint;
 use App\Models\Task;
 use App\Models\TaskStatus;
+use App\Models\TaskType;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -48,6 +49,13 @@ class TaskController extends Controller
         if ($request->has('developerId') && $request->input('developerId') !== null) {
             if (User::where('Id', $request->input('developerId'))->doesntExist()) {
                 $response = ApiResponse::BadRequest('Developer not found');
+                return response()->json($response, Response::HTTP_BAD_REQUEST);
+            }
+        }
+
+        if ($request->has('taskTypeId') && $request->input('taskTypeId') !== null) {
+            if (!TaskType::where('Id', $request->input('taskTypeId'))->exists()) {
+                $response = ApiResponse::BadRequest('Task Type not found');
                 return response()->json($response, Response::HTTP_BAD_REQUEST);
             }
         }
@@ -99,9 +107,9 @@ class TaskController extends Controller
             return response()->json($response, Response::HTTP_NOT_FOUND);
         }
         $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'description' => 'sometimes|nullable|string|max:255',
-            'taskTypeId' => 'sometimes|required|integer|exists:TaskTypes,Id',
+            'name' => 'nullable|string|max:255',
+            'description' => 'nullable|string|max:255',
+            'taskTypeId' => 'nullable|integer|exists:TaskTypes,Id',
         ]);
 
         if ($request->has('developerId')) {
@@ -114,7 +122,13 @@ class TaskController extends Controller
             return response()->json($response, Response::HTTP_BAD_REQUEST);
         }
 
-        $task->update($request->all());
+        $task->update(
+            [
+                'Name' => $request->input('name', $task->Name),
+                'Description' => $request->input('description', $task->Description),
+                'TaskTypeId' => $request->input('taskTypeId', $task->TaskTypeId),
+            ]
+        );
 
         $response = ApiResponse::Success('Task updated successfully', $task);
         return response()->json($response);
