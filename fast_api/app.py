@@ -1,3 +1,4 @@
+import json
 from fastapi import FastAPI, Depends, Request, Response
 from uuid import UUID
 from fastapi.responses import JSONResponse
@@ -23,6 +24,45 @@ def check_rabbitmq_connection():
         return rabbitmq.is_connected()
     except Exception:
         return False
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    print(f"\n{'='*50}")
+    print(f"REQUEST DEBUG - {datetime.now()}")
+    print(f"{'='*50}")
+    print(f"Method: {request.method}")
+    print(f"URL: {request.url}")
+    print(f"Path: {request.url.path}")
+    print(f"Query params: {dict(request.query_params)}")
+    
+    print(f"\nHEADERS:")
+    for name, value in request.headers.items():
+        print(f"  {name}: {value}")
+    
+    body = None
+    if request.method in ["POST", "PUT", "PATCH"]:
+        body = await request.body()
+        print(f"\nRAW BODY ({len(body)} bytes):")
+        print(f"Raw bytes: {body.decode('utf-8', errors='replace')}")
+        
+        if body:
+            try:
+                body_str = body.decode('utf-8')
+                print(f"Decoded string: {repr(body_str)}")
+                
+                try:
+                    json_data = json.loads(body_str)
+                    print(f"Parsed JSON:")
+                    print(json.dumps(json_data, indent=2, ensure_ascii=False))
+                except json.JSONDecodeError as e:
+                    print(f"JSON Parse Error: {e}")
+            except UnicodeDecodeError as e:
+                print(f"Unicode Decode Error: {e}")
+    
+    print(f"{'='*50}\n")
+    
+    response = await call_next(request)
+    return response
 
 
 @app.get("/health")
@@ -123,7 +163,7 @@ def update_task_status(task_id: UUID, new_status: str, db: Session):
     except Exception as e:
         print(f"Failed to send RabbitMQ message: {e}")
     
-    return {"status": f"Task {new_status.lower()}", "task_id": str(task_id)}
+    return {"status": f"Task {new_status.lower()}", "taskId": str(task_id)}
 
 
 @app.put("/api/tasks/{task_id}/start")
@@ -166,14 +206,14 @@ def stop_task(task_id: UUID, db: Session=Depends(get_db)):
 
 
 # Sprint management
-@app.get("/api/sprints/")
+@app.get("/api/sprints")
 def get_sprints(db: Session=Depends(get_db)):
     statement = select(Sprints).order_by(desc(Sprints.StartDate))
     sprints = db.exec(statement).all()
     return ApiResponse(message="Sprints retrieved", data=sprints).model_dump()
 
 
-@app.post("/api/sprints/")
+@app.post("/api/sprints")
 def create_sprint(sprint: SprintCreate, db: Session=Depends(get_db)):
     try:
         user = db.exec(select(Users).where(Users.Id == sprint.ManagerId)).first()

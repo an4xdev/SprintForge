@@ -1,10 +1,12 @@
-﻿namespace SharedObjects.DTOs.Requests;
+﻿using System.Text.Json.Serialization;
+
+namespace SharedObjects.DTOs.Requests;
 
 public class ChangePasswordRequest
 {
-    public Guid UserId { get; set; }
+    [JsonPropertyName("userId")] public Guid UserId { get; set; }
 
-    public string OldPassword { get; set; } = string.Empty;
+    [JsonPropertyName("oldPassword")] public string OldPassword { get; set; } = string.Empty;
 
-    public string NewPassword { get; set; } = string.Empty;
+    [JsonPropertyName("newPassword")] public string NewPassword { get; set; } = string.Empty;
 }

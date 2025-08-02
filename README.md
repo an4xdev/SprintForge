@@ -2,18 +2,16 @@
 
 ## Used technologies
 
-- C# - ASP.NET Core
-- Java - Spring Boot
-- Python - FastAPI
-- JavaScript - Express.js
-- Go
-- PHP - Laravel
-- Vue.js
-- Docker
-- PostgreSQL
-- Redis
-- RabbitMQ
-- MinIO
+- ASP.NET Core (MIT/Apache 2.0)
+- Spring Boot (Apache 2.0)
+- FastAPI (MIT)
+- Express.js (MIT)
+- Laravel (MIT)
+- Vue.js (MIT)
+- PostgreSQL (PostgreSQL License)
+- Redis (BSD 3-Clause)
+- RabbitMQ (MPL 2.0)
+- MinIO (AGPL 3.0)
 
 ## Status
 

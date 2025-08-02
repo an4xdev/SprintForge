@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using ApiGateway.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SharedObjects.DTOs.Responses;
 using SharedObjects.Responses;
@@ -8,13 +9,13 @@ namespace ApiGateway.Controllers;
 
 [ApiController]
 [Route("[controller]")]
-// [Authorize(AuthenticationSchemes = "Bearer")]
-public class ProfileController(ISendRequestService requestService) : ControllerBase
+[Authorize(AuthenticationSchemes = "Bearer")]
+public class ProfileController(ISendRequestService sendRequestService) : ControllerBase
 {
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<ProfileResponse>>> Get(Guid id)
+    public async Task<ActionResult<ApiResponse<ProfileResponse>>> GetProfile(Guid id)
     {
-        return await requestService.SendRequestAsync<ApiResponse<ProfileResponse>>(HttpMethod.Get, $"/profile/{id}",
+        return await sendRequestService.SendRequestAsync<ApiResponse<ProfileResponse>>(HttpMethod.Get, $"/profile/{id}",
             ServiceType.AuthService);
     }
 
@@ -38,7 +39,7 @@ public class ProfileController(ISendRequestService requestService) : ControllerB
 
         content.Add(new StringContent(userId.ToString()), "userId");
 
-        var response = await requestService.SendRequestAsync<AvatarResponse>(HttpMethod.Post, "/profile/avatar", ServiceType.AuthService, content: content);
+        var response = await sendRequestService.SendRequestAsync<AvatarResponse>(HttpMethod.Post, "/profile/avatar", ServiceType.AuthService, content: content);
 
         if (response.Result != null)
             return response.Result;

@@ -30,6 +30,14 @@ class TaskStatus extends Model
 		'Name'
 	];
 
+	public function toArray()
+	{
+		return [
+			'id' => $this->Id,
+			'name' => $this->Name,
+		];
+	}
+
 	public function tasks()
 	{
 		return $this->hasMany(Task::class, 'TaskStatusId');

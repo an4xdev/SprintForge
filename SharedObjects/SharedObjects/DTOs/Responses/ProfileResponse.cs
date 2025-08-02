@@ -1,10 +1,12 @@
-﻿namespace SharedObjects.DTOs.Responses;
+﻿using System.Text.Json.Serialization;
+
+namespace SharedObjects.DTOs.Responses;
 
 public class ProfileResponse
 {
-    public Guid Id { get; set; }
+    [JsonPropertyName("id")] public Guid Id { get; set; }
 
-    public string Username { get; set; } = string.Empty;
+    [JsonPropertyName("username")] public string Username { get; set; } = string.Empty;
 
-    public string? Avatar { get; set; }
+    [JsonPropertyName("avatar")] public string? Avatar { get; set; }
 }

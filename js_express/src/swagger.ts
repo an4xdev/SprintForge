@@ -18,7 +18,7 @@
  *       required:
  *         - Name
  *       properties:
- *         id:
+ *         Id:
  *           type: integer
  *           description: The auto-generated ID of the company
  *         Name:
