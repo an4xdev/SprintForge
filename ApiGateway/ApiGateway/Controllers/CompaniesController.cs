@@ -12,14 +12,14 @@ namespace ApiGateway.Controllers;
 public class CompaniesController(ISendRequestService sendRequestService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<CompanyDto>>>> GetAll()
+    public async Task<ActionResult<ApiResponse<List<CompanyDto>>>> GetAllCompanies()
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<List<CompanyDto>>>(HttpMethod.Get, "/companies",
             ServiceType.ExpressService);
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<ApiResponse<CompanyDto>>> Get(int id)
+    public async Task<ActionResult<ApiResponse<CompanyDto>>> GetCompany(int id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<CompanyDto>>(HttpMethod.Get, $"/companies/{id}",
             ServiceType.ExpressService);
@@ -27,7 +27,7 @@ public class CompaniesController(ISendRequestService sendRequestService) : Contr
 
     [HttpPost]
     [Authorize(Roles = "admin")]
-    public async Task<ActionResult<ApiResponse<CompanyDto>>> Create(CompanyDto companyDto)
+    public async Task<ActionResult<ApiResponse<CompanyDto>>> CreateCompany(CompanyDto companyDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<CompanyDto>>(HttpMethod.Post, "/companies",
             ServiceType.ExpressService, body: companyDto);
@@ -35,7 +35,7 @@ public class CompaniesController(ISendRequestService sendRequestService) : Contr
 
     [HttpPut("{id:int}")]
     [Authorize(Roles = "admin")]
-    public async Task<ActionResult<ApiResponse<CompanyDto>>> Update(int id, CompanyDto companyDto)
+    public async Task<ActionResult<ApiResponse<CompanyDto>>> UpdateCompany(int id, CompanyDto companyDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<CompanyDto>>(HttpMethod.Put, $"/companies/{id}",
             ServiceType.ExpressService, body: companyDto);
@@ -43,7 +43,7 @@ public class CompaniesController(ISendRequestService sendRequestService) : Contr
 
     [HttpDelete("{id:int}")]
     [Authorize(Roles = "admin")]
-    public async Task<ActionResult<object?>> Delete(int id)
+    public async Task<ActionResult<object?>> DeleteCompany(int id)
     {
         return await sendRequestService.SendRequestAsync<object?>(HttpMethod.Delete, $"/companies/{id}",
             ServiceType.ExpressService);

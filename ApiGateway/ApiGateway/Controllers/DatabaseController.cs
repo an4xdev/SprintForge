@@ -12,7 +12,7 @@ namespace ApiGateway.Controllers;
 public class DatabaseController(ISendRequestService sendRequestService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<bool>>> Register()
+    public async Task<ActionResult<ApiResponse<bool>>> UpdateDatabase()
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<bool>>(HttpMethod.Get, "/database",
             ServiceType.DatabaseManager);

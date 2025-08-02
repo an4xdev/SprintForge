@@ -12,7 +12,7 @@ namespace ApiGateway.Controllers;
 public class SprintsController(ISendRequestService sendRequestService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<SprintDto>>>> GetSprints()
+    public async Task<ActionResult<ApiResponse<List<SprintDto>>>> GetAllSprints()
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<List<SprintDto>>>(HttpMethod.Get, "/sprints",
             ServiceType.FastApiService);

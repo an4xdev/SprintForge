@@ -12,7 +12,7 @@ namespace ApiGateway.Controllers;
 public class TasksController(ISendRequestService sendRequestService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<TaskDto>>>> GetTasks()
+    public async Task<ActionResult<ApiResponse<List<TaskDto>>>> GetAllTasks()
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>>>(HttpMethod.Get,
             "/tasks",
@@ -28,7 +28,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpPost]
-    public async Task<ActionResult<ApiResponse<TaskDto>>> PostTask(CreateTaskDto createTaskDto)
+    public async Task<ActionResult<ApiResponse<TaskDto>>> CreateTask(CreateTaskDto createTaskDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TaskDto>>(HttpMethod.Post,
             "/tasks",
@@ -36,7 +36,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpPut("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<TaskDto>>> PutTask(Guid id, EditTaskDto editTaskDto)
+    public async Task<ActionResult<ApiResponse<TaskDto>>> UpdateTask(Guid id, EditTaskDto editTaskDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TaskDto>>(HttpMethod.Put,
             $"/tasks/{id}",

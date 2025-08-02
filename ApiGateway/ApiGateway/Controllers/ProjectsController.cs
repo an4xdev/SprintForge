@@ -12,7 +12,7 @@ namespace ApiGateway.Controllers;
 public class ProjectsController(ISendRequestService sendRequestService) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<ApiResponse<List<ProjectDto>>>> GetProjects()
+    public async Task<ActionResult<ApiResponse<List<ProjectDto>>>> GetAllProjects()
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<List<ProjectDto>>>(HttpMethod.Get, "/projects",
             ServiceType.SpringService);
