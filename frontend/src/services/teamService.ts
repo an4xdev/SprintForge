@@ -1,0 +1,63 @@
+import { teamLogger } from '@/utils/logger';
+import apiService from './apiService';
+import type { ApiResponse } from '@/types';
+
+interface Team {
+    id: number;
+    name: string;
+    description?: string;
+    companyId: number;
+}
+
+class TeamService {
+    async getTeams(): Promise<Team[]> {
+        try {
+            const response = await apiService.get<ApiResponse<Team[]>>('/teams');
+            return response.data;
+        } catch (error) {
+            teamLogger.error('Error fetching teams:', error);
+            throw new Error('Failed to fetch teams');
+        }
+    }
+
+    async getTeamById(id: number): Promise<Team> {
+        try {
+            const response = await apiService.get<ApiResponse<Team>>(`/teams/${id}`);
+            return response.data;
+        } catch (error) {
+            teamLogger.error('Error fetching team:', error);
+            throw new Error('Failed to fetch team');
+        }
+    }
+
+    async createTeam(team: Omit<Team, 'id'>): Promise<Team> {
+        try {
+            const response = await apiService.post<ApiResponse<Team>>('/teams', team);
+            return response.data;
+        } catch (error) {
+            teamLogger.error('Error creating team:', error);
+            throw new Error('Failed to create team');
+        }
+    }
+
+    async updateTeam(id: number, team: Partial<Team>): Promise<Team> {
+        try {
+            const response = await apiService.put<ApiResponse<Team>>(`/teams/${id}`, team);
+            return response.data;
+        } catch (error) {
+            teamLogger.error('Error updating team:', error);
+            throw new Error('Failed to update team');
+        }
+    }
+
+    async deleteTeam(id: number): Promise<void> {
+        try {
+            await apiService.delete(`/teams/${id}`);
+        } catch (error) {
+            teamLogger.error('Error deleting team:', error);
+            throw new Error('Failed to delete team');
+        }
+    }
+}
+
+export default new TeamService();
