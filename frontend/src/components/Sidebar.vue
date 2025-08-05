@@ -367,7 +367,6 @@ defineExpose({
 }
 
 .mobile-sidebar-content {
-    /* Pusty div w mobile - nagłówek jest już w app bar */
     min-height: 0;
     padding: 0 !important;
 }
@@ -377,17 +376,14 @@ defineExpose({
     animation: anvil-glow 2s ease-in-out infinite alternate;
 }
 
-/* Efekt ognia tylko dla kowadła w rail anvil header */
 .rail-anvil-header .v-btn .v-icon {
     filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.5));
     animation: anvil-glow 2s ease-in-out infinite alternate;
 }
 
-/* Ikona menu bez efektu ognia */
 .rail-menu-header .v-btn .v-icon {
     filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.3));
     color: rgb(var(--v-theme-on-surface)) !important;
-    /* Bez animacji anvil-glow - tylko zwykły cień */
 }
 
 @keyframes anvil-glow {
