@@ -1,4 +1,6 @@
-# Software project management system implemented in microservices on different programming platforms 
+# SprintForge
+
+Software project management system implemented in microservices on different programming platforms 
 
 ## Used technologies
 

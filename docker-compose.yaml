@@ -1,16 +1,14 @@
 services:
-    # frontend:
-    #   build:
-    #     context: ./frontend
-    #     dockerfile: Dockerfile
-    #   ports:
-    #     - 3000:80
-    #   environment:
-    #     - REACT_APP_API_URL=http://localhost/api
-    #   networks:
-    #     - mynetwork
-    #   depends_on:
-    #     - gateway
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        ports:
+            - 3000:80
+        networks:
+            - mynetwork
+        depends_on:
+            - gateway
 
     gateway:
         build:
@@ -30,6 +28,7 @@ services:
             - JWT_AUDIENCE=${JWT_AUDIENCE}
             - REDIS_HOST=${REDIS_HOST}
             - REDIS_PORT=${REDIS_PORT}
+            - FRONTEND_URL=${FRONTEND_URL}
         depends_on:
             auth:
                 condition: service_healthy
