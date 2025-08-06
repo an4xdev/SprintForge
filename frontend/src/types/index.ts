@@ -57,3 +57,11 @@ export interface TaskType {
     id: number;
     name: string;
 }
+
+export interface Project {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+    companyDto: Company;
+}
