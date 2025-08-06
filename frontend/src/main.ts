@@ -70,7 +70,7 @@ import { watch } from 'vue'
 const theme = vuetify.theme
 
 watch(() => themeStore.actualTheme, (newTheme) => {
-    theme.global.name.value = newTheme
+    theme.change(newTheme)
 }, { immediate: true })
 
 app.mount('#app')
