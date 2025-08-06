@@ -1,6 +1,6 @@
-# SprintForge
+![logo](./logo.gif)
 
-Software project management system implemented in microservices on different programming platforms 
+Software project management system implemented in microservices on different programming platforms.
 
 ## Used technologies
 
@@ -17,7 +17,8 @@ Software project management system implemented in microservices on different pro
 
 ## Status
 
-**IN DEVELOPMENT**
+> [!WARNING]
+> This project is in development.
 
 ## Quick start
 
