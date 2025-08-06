@@ -183,9 +183,9 @@ const allMenuItems = [
         roles: ['admin']
     },
     {
-        title: 'Team Management',
+        title: 'Teams',
         to: '/admin/teams',
-        icon: 'mdi-account-tie',
+        icon: 'mdi-account-group',
         roles: ['admin']
     },
     {
@@ -208,9 +208,9 @@ const allMenuItems = [
     },
     // manager
     {
-        title: 'My team Management',
+        title: 'My Teams',
         to: '/manager/teams',
-        icon: 'mdi-account-tie',
+        icon: 'mdi-account-group',
         roles: ['manager']
     },
     {
