@@ -94,5 +94,8 @@ export const routerLogger = new DevelopmentLogger({ prefix: '[Router]' });
 export const apiLogger = new DevelopmentLogger({ prefix: '[ApiService]' });
 export const companyLogger = new DevelopmentLogger({ prefix: '[CompanyService]' });
 export const teamLogger = new DevelopmentLogger({ prefix: '[TeamService]' });
+export const taskStatusesLogger = new DevelopmentLogger({ prefix: '[TaskStatusesService]' });
+export const taskTypesLogger = new DevelopmentLogger({ prefix: '[TaskTypesService]' });
+export const projectsLogger = new DevelopmentLogger({ prefix: '[ProjectsService]' });
 
 export default new DevelopmentLogger();

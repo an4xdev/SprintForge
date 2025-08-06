@@ -1,4 +1,4 @@
-import { companyLogger } from '@/utils/logger';
+import { taskTypesLogger } from '@/utils/logger';
 import apiService from './apiService';
 import type { ApiResponse, TaskType } from '@/types';
 
@@ -8,7 +8,7 @@ class TaskTypesService {
             const response = await apiService.get<ApiResponse<TaskType[]>>('/taskTypes', signal);
             return response.data;
         } catch (error) {
-            companyLogger.error('Error fetching task types:', error);
+            taskTypesLogger.error('Error fetching task types:', error);
             throw new Error('Failed to fetch task types');
         }
     }
@@ -18,7 +18,7 @@ class TaskTypesService {
             const response = await apiService.get<ApiResponse<TaskType>>(`/taskTypes/${id}`, signal);
             return response.data;
         } catch (error) {
-            companyLogger.error('Error fetching task type:', error);
+            taskTypesLogger.error('Error fetching task type:', error);
             throw new Error('Failed to fetch task type');
         }
     }
@@ -28,7 +28,7 @@ class TaskTypesService {
             const response = await apiService.post<ApiResponse<TaskType>>('/taskTypes', taskType, signal);
             return response.data;
         } catch (error) {
-            companyLogger.error('Error creating task type:', error);
+            taskTypesLogger.error('Error creating task type:', error);
             throw new Error('Failed to create task type');
         }
     }
@@ -38,7 +38,7 @@ class TaskTypesService {
             const response = await apiService.put<ApiResponse<TaskType>>(`/taskTypes/${id}`, taskType, signal);
             return response.data;
         } catch (error) {
-            companyLogger.error('Error updating task type:', error);
+            taskTypesLogger.error('Error updating task type:', error);
             throw new Error('Failed to update task type');
         }
     }
@@ -47,7 +47,7 @@ class TaskTypesService {
         try {
             await apiService.delete(`/taskTypes/${id}`, signal);
         } catch (error) {
-            companyLogger.error('Error deleting task type:', error);
+            taskTypesLogger.error('Error deleting task type:', error);
             throw new Error('Failed to delete task type');
         }
     }

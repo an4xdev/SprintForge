@@ -2,7 +2,7 @@ import { teamLogger } from '@/utils/logger';
 import apiService from './apiService';
 import type { ApiResponse, Team } from '@/types';
 
-class TeamService {
+class TeamsService {
     async getTeams(signal?: AbortSignal): Promise<Team[]> {
         try {
             const response = await apiService.get<ApiResponse<Team[]>>('/teams', signal);
@@ -53,4 +53,4 @@ class TeamService {
     }
 }
 
-export default new TeamService();
+export default new TeamsService();
