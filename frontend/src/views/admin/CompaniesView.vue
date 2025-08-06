@@ -23,9 +23,6 @@
                         <div v-if="(!companies || !companies.length) && !loading && !error" class="text-center py-12">
                             <v-icon size="64" color="primary" class="mb-4">mdi-domain</v-icon>
                             <div class="text-h6 mb-2">No companies</div>
-                            <div class="text-body-2 text-medium-emphasis mb-4">
-                                Click the "Refresh List" button to fetch companies from the server
-                            </div>
                         </div>
 
                         <v-progress-linear v-if="loading" indeterminate class="mb-4"></v-progress-linear>

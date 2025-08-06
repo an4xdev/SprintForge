@@ -36,3 +36,14 @@ export interface JwtPayload {
     [key: string]: string | number | boolean;
     exp: number;
 }
+
+export interface MinimalUser {
+    id: string;
+    username: string;
+}
+
+export interface Team {
+    id: string;
+    name: string;
+    manager: MinimalUser;
+}

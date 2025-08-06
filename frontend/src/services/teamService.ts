@@ -1,18 +1,11 @@
 import { teamLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse } from '@/types';
-
-interface Team {
-    id: number;
-    name: string;
-    description?: string;
-    companyId: number;
-}
+import type { ApiResponse, Team } from '@/types';
 
 class TeamService {
-    async getTeams(): Promise<Team[]> {
+    async getTeams(signal?: AbortSignal): Promise<Team[]> {
         try {
-            const response = await apiService.get<ApiResponse<Team[]>>('/teams');
+            const response = await apiService.get<ApiResponse<Team[]>>('/teams', signal);
             return response.data;
         } catch (error) {
             teamLogger.error('Error fetching teams:', error);
