@@ -41,8 +41,8 @@
                             </template>
 
                             <template v-slot:no-data>
-                                <v-btn prepend-icon="mdi-backup-restore" rounded="lg" text="Reset data" variant="text"
-                                    border></v-btn>
+                                <v-btn prepend-icon="mdi-backup-restore" rounded="lg" text="Refresh" variant="text"
+                                    border @click="refreshTeams"></v-btn>
                             </template>
                         </v-data-table>
                     </v-sheet>
@@ -99,7 +99,8 @@
 
 <script setup lang="ts">
 import { useAsyncData } from '@/composables/useAsyncData';
-import teamService from '@/services/teamService';
+import authService from '@/services/authService';
+import teamService from '@/services/teamsService';
 import type { MinimalUser, Team } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref, toRef } from 'vue';
@@ -119,6 +120,7 @@ const headers = [
 
 const {
     data: teams,
+    load: refreshTeams
 } = useAsyncData<Team[]>({
     fetchFunction: (signal) => teamService.getTeams(signal),
     loggerPrefix: '[TeamsView]'
