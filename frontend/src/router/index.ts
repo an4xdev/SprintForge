@@ -36,7 +36,7 @@ const routes = [
   {
     path: '/admin/statuses',
     name: 'AdminStatuses',
-    component: () => import('@/views/admin/StatusesView.vue'),
+    component: () => import('@/views/admin/TaskStatusesView.vue'),
     meta: { requiresAuth: true, roles: ['admin'] }
   },
   {

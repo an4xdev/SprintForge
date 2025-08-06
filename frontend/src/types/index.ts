@@ -47,3 +47,8 @@ export interface Team {
     name: string;
     manager: MinimalUser;
 }
+
+export interface TaskStatus {
+    id: number;
+    name: string;
+}

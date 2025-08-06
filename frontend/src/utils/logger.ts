@@ -88,12 +88,11 @@ class DevelopmentLogger {
 
 export { DevelopmentLogger };
 
-export const authLogger = new DevelopmentLogger({ prefix: '[AuthService]' });
-export const apiLogger = new DevelopmentLogger({ prefix: '[ApiService]' });
 export const appLogger = new DevelopmentLogger({ prefix: '[App]' });
+export const authLogger = new DevelopmentLogger({ prefix: '[AuthService]' });
+export const routerLogger = new DevelopmentLogger({ prefix: '[Router]' });
+export const apiLogger = new DevelopmentLogger({ prefix: '[ApiService]' });
 export const companyLogger = new DevelopmentLogger({ prefix: '[CompanyService]' });
 export const teamLogger = new DevelopmentLogger({ prefix: '[TeamService]' });
-export const routerLogger = new DevelopmentLogger({ prefix: '[Router]' });
-export const viteLogger = new DevelopmentLogger({ prefix: '[Vite]' });
 
 export default new DevelopmentLogger();
