@@ -65,3 +65,13 @@ export interface Project {
     endDate: Date;
     companyDto: Company;
 }
+
+export interface Profile {
+    id: string;
+    username: string;
+    avatar: string | null;
+}
+
+export interface AvatarChangeResponse {
+    path: string;
+}

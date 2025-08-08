@@ -10,7 +10,7 @@ public interface IProfileService
 
     Task<bool> IsUserInDatabase(Guid id);
 
-    Task UpdateAvatar(Guid id, string path);
+    Task<string> UpdateAvatar(Guid id, string path);
 
     string FileServerPath { get; }
 }

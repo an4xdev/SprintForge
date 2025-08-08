@@ -1,6 +1,6 @@
 import { projectsLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, Company, Project } from '@/types';
+import type { ApiResponse, Project } from '@/types';
 
 class ProjectsService {
     async getProjects(signal?: AbortSignal): Promise<Project[]> {
