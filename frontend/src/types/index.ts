@@ -75,3 +75,13 @@ export interface Profile {
 export interface AvatarChangeResponse {
     path: string;
 }
+
+export interface Sprint {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+    teamId: string;
+    managerId: string;
+    projectId: string;
+}
