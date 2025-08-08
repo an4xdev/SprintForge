@@ -5,7 +5,7 @@ using SharedObjects.Responses;
 
 namespace AuthService.Services.Profile;
 
-public class ProfileService(AppDbContext context) : IProfileService
+public class ProfileService(AppDbContext context, IConfiguration configuration) : IProfileService
 {
     public async Task<Result<ProfileResponse?>> Get(Guid id)
     {
@@ -28,14 +28,18 @@ public class ProfileService(AppDbContext context) : IProfileService
         return Task.FromResult(context.Users.Any(u => u.Id == id));
     }
 
-    public async Task UpdateAvatar(Guid id, string path)
+    public async Task<string> UpdateAvatar(Guid id, string path)
     {
         var user = await context.Users.FirstAsync(u => u.Id == id);
 
-        user.Avatar = $"{FileServerPath}/{path}";
+        var avatar = $"{FileServerPath}/{path}";
+
+        user.Avatar = avatar;
 
         await context.SaveChangesAsync();
+
+        return avatar;
     }
 
-    public string FileServerPath => "http://minio:9000/uploads/";
+    public string FileServerPath => $"{configuration["MINIO_PUBLIC_URL"]}/{configuration["MINIO_BUCKET"]}";
 }

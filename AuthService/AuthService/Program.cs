@@ -48,6 +48,9 @@ var minioSecretKey = GetRequiredEnvironmentVariable("MINIO_SECRET_ACCESS_KEY");
 var minioBucket = GetRequiredEnvironmentVariable("MINIO_BUCKET");
 var minioUsePathStyle = GetRequiredEnvironmentVariable("MINIO_USE_PATH_STYLE_ENDPOINT");
 
+_ = GetRequiredEnvironmentVariable("MINIO_PUBLIC_URL");
+
+var enableScalar = bool.Parse(GetRequiredEnvironmentVariable("ENABLE_SCALAR"));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString)
@@ -105,7 +108,7 @@ builder.Services.AddScoped<IFileService, MinioFileService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("ENABLE_SCALAR") == "true")
+if (app.Environment.IsDevelopment() || enableScalar)
 {
     app.MapOpenApi();
     app.MapScalarApiReference();

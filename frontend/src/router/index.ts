@@ -36,7 +36,7 @@ const routes = [
   {
     path: '/admin/statuses',
     name: 'AdminStatuses',
-    component: () => import('@/views/admin/StatusesView.vue'),
+    component: () => import('@/views/admin/TaskStatusesView.vue'),
     meta: { requiresAuth: true, roles: ['admin'] }
   },
   {
@@ -103,6 +103,14 @@ const routes = [
     meta: { requiresAuth: true, roles: ['admin', 'manager', 'developer'] }
   },
 
+  // Error routes
+  {
+    path: '/unauthorized',
+    name: 'Unauthorized',
+    component: () => import('@/views/UnauthorizedView.vue'),
+    meta: { requiresAuth: true }
+  },
+
   // 404 route
   {
     path: '/:pathMatch(.*)*',
@@ -132,9 +140,17 @@ router.beforeEach((to, from, next) => {
     if (to.meta.roles && user && user.role) {
       const hasRequiredRole = (to.meta.roles as string[]).includes(user.role);
       if (!hasRequiredRole) {
-        routerLogger.log('No role, redirecting to /dashboard');
-        if (to.path !== '/dashboard') {
-          next('/dashboard');
+        routerLogger.log('No role access, redirecting to /unauthorized');
+
+        // Przekieruj na stronę unauthorized z informacją o wymaganych rolach
+        if (to.path !== '/unauthorized') {
+          next({
+            path: '/unauthorized',
+            query: {
+              roles: JSON.stringify(to.meta.roles),
+              attempted: to.path
+            }
+          });
           return;
         }
       }
