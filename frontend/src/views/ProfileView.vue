@@ -127,53 +127,56 @@ const getRoleDisplayName = (role?: string): string => {
 }
 
 const loadProfile = async () => {
-    if (!authStore.user?.id) return
+    if (!authStore.user?.id) return;
 
-    isLoading.value = true
-    error.value = null
+    isLoading.value = true;
+    error.value = null;
 
     try {
-        userProfile.value = await profileService.getProfile(authStore.user.id)
+        userProfile.value = await profileService.getProfile(authStore.user.id);
     } catch (err) {
-        error.value = 'Failed to load profile'
-        console.error('Error loading profile:', err)
+        error.value = 'Failed to load profile';
+        console.error('Error loading profile:', err);
     } finally {
-        isLoading.value = false
+        isLoading.value = false;
     }
 }
 
 const handleAvatarUpload = async () => {
-    if (!currentFile.value || !authStore.user?.id) return
+    if (!currentFile.value || !authStore.user?.id) return;
 
-    const { valid } = await avatarForm.value.validate()
-    if (!valid) return
+    const { valid } = await avatarForm.value.validate();
+    if (!valid) return;
 
-    isUploadingAvatar.value = true
-    error.value = null
+    isUploadingAvatar.value = true;
+    error.value = null;
 
     try {
+        await profileService.updateAvatar(
+            currentFile.value,
+            authStore.user.id
+        );
+        await loadProfile();
 
-        await loadProfile()
-
-        selectedFile.value = null
-        successMessage.value = 'Avatar updated successfully!'
-        showSuccess.value = true
+        selectedFile.value = null;
+        successMessage.value = 'Avatar updated successfully!';
+        showSuccess.value = true;
 
         window.dispatchEvent(new CustomEvent('avatar-updated', {
             detail: userProfile.value
-        }))
+        }));
 
-        avatarForm.value.reset()
+        avatarForm.value.reset();
     } catch (err) {
-        error.value = 'Failed to update avatar'
-        console.error('Error updating avatar:', err)
+        error.value = 'Failed to update avatar';
+        console.error('Error updating avatar:', err);
     } finally {
-        isUploadingAvatar.value = false
+        isUploadingAvatar.value = false;
     }
 }
 
 onMounted(() => {
-    loadProfile()
+    loadProfile();
 })
 </script>
 
