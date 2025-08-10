@@ -11,7 +11,6 @@ builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-
 var dbHost = GetRequiredEnvironmentVariable("DB_HOST", builder.Environment.IsProduction());
 var dbDatabase = GetRequiredEnvironmentVariable("DB_DATABASE", builder.Environment.IsProduction());
 var dbUsername = GetRequiredEnvironmentVariable("DB_USERNAME", builder.Environment.IsProduction());
@@ -36,7 +35,6 @@ builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString);
 
 var app = builder.Build();
-
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

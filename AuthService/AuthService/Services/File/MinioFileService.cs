@@ -29,9 +29,9 @@ public class MinioFileService(IMinioClient minioClient, IOptions<MinioSettings> 
 
 public class MinioSettings
 {
-    public string Endpoint { get; set; }
-    public string AccessKey { get; set; }
-    public string SecretKey { get; set; }
-    public string Bucket { get; set; }
+    public required string Endpoint { get; set; }
+    public required string AccessKey { get; set; }
+    public required string SecretKey { get; set; }
+    public required string Bucket { get; set; }
     public bool UsePathStyle { get; set; }
 }

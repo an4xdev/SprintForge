@@ -1,16 +1,37 @@
 import { profileLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, AvatarChangeResponse, Profile } from '@/types';
+import type { ApiResponse, AvatarChangeResponse, Profile, RegisterCredentials } from '@/types';
 import axios from 'axios';
 
-class ProfileService {
+class UsersService {
+
+    async getUsers(signal?: AbortSignal): Promise<Profile[]> {
+        try {
+            const response = await apiService.get<ApiResponse<Profile[]>>('/users', signal);
+            return response.data;
+        } catch (error) {
+            profileLogger.error('Error fetching users:', error);
+            throw new Error('Failed to fetch users');
+        }
+    }
+
     async getProfile(id: string, signal?: AbortSignal): Promise<Profile> {
         try {
-            const response = await apiService.get<ApiResponse<Profile>>(`/profile/${id}`, signal);
+            const response = await apiService.get<ApiResponse<Profile>>(`/users/${id}`, signal);
             return response.data;
         } catch (error) {
             profileLogger.error('Error fetching profile:', error);
             throw new Error('Failed to fetch profile');
+        }
+    }
+
+    async registerUser(credentials: RegisterCredentials, signal?: AbortSignal): Promise<Profile> {
+        try {
+            const response = await apiService.post<ApiResponse<Profile>>('/users', credentials, signal);
+            return response.data;
+        } catch (error) {
+            profileLogger.error('Error registering user:', error);
+            throw new Error('Failed to register user');
         }
     }
 
@@ -24,7 +45,7 @@ class ProfileService {
             const token = localStorage.getItem('token');
 
             const response = await axios.post<ApiResponse<AvatarChangeResponse>>(
-                `${baseURL}/profile/avatar`,
+                `${baseURL}/users/avatar`,
                 formData,
                 {
                     headers: {
@@ -43,4 +64,4 @@ class ProfileService {
     }
 }
 
-export default new ProfileService();
+export default new UsersService();

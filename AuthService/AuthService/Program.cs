@@ -5,12 +5,11 @@ using Scalar.AspNetCore;
 using System.Text;
 using AuthService.Services.Auth;
 using AuthService.Services.File;
-using AuthService.Services.Profile;
+using AuthService.Services.Users;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
 using Minio;
 using SharedObjects.AppDbContext;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -102,7 +101,7 @@ builder.Services.AddSingleton(sp =>
 });
 
 builder.Services.AddScoped<IAuthService, AuthService.Services.Auth.AuthService>();
-builder.Services.AddScoped<IProfileService, ProfileService>();
+builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFileService, MinioFileService>();
 
 var app = builder.Build();
@@ -113,8 +112,6 @@ if (app.Environment.IsDevelopment() || enableScalar)
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
-
-// app.UseHttpsRedirection();
 
 app.UseAuthorization();
 

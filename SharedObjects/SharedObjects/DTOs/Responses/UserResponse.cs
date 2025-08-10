@@ -2,7 +2,7 @@
 
 namespace SharedObjects.DTOs.Responses;
 
-public class ProfileResponse
+public class UserResponse
 {
     [JsonPropertyName("id")] public Guid Id { get; set; }
 

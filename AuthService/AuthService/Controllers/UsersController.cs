@@ -1,6 +1,7 @@
 ﻿using AuthService.Services.File;
-using AuthService.Services.Profile;
+using AuthService.Services.Users;
 using Microsoft.AspNetCore.Mvc;
+using SharedObjects.DTOs.Requests;
 using SharedObjects.DTOs.Responses;
 using SharedObjects.Responses;
 
@@ -8,12 +9,26 @@ namespace AuthService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProfileController(IProfileService profileService, IFileService fileService, IConfiguration configuration) : ControllerBase
+public class UsersController(IUserService userService, IFileService fileService) : ControllerBase
 {
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<ProfileResponse?>>> Get(Guid id)
+    [HttpPost("register")]
+    public async Task<ActionResult<ApiResponse<UserResponse>>> Register(AdminRegisterRequest request)
     {
-        var profile = await profileService.Get(id);
+        var result = await userService.RegisterAsync(request);
+
+        return result.ToActionResult();
+    }
+    [HttpGet]
+    public async Task<ActionResult<ApiResponse<List<UserResponse>>>> GetAllUsers()
+    {
+        var users = await userService.GetAllUsers();
+        return users.ToActionResult();
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<UserResponse?>>> Get(Guid id)
+    {
+        var profile = await userService.Get(id);
 
         return profile.ToActionResult();
     }
@@ -23,7 +38,7 @@ public class ProfileController(IProfileService profileService, IFileService file
         [FromForm] IFormFile file,
         [FromForm] Guid userId)
     {
-        if (await profileService.IsUserInDatabase(userId) == false)
+        if (await userService.IsUserInDatabase(userId) == false)
         {
             return Result<AvatarResponse>.BadRequest("User not found.").ToActionResult();
         }
@@ -46,7 +61,7 @@ public class ProfileController(IProfileService profileService, IFileService file
                 contentType: file.ContentType);
             if (resultUrl != null)
             {
-                fullPath = await profileService.UpdateAvatar(userId, resultUrl);
+                fullPath = await userService.UpdateAvatar(userId, resultUrl);
             }
         }
         catch (Exception ex)

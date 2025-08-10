@@ -2,6 +2,7 @@
 using ApiGateway.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedObjects.DTOs.Requests;
 using SharedObjects.DTOs.Responses;
 using SharedObjects.Responses;
 
@@ -10,12 +11,28 @@ namespace ApiGateway.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Authorize(AuthenticationSchemes = "Bearer")]
-public class ProfileController(ISendRequestService sendRequestService) : ControllerBase
+public class UsersController(ISendRequestService sendRequestService) : ControllerBase
 {
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<ProfileResponse>>> GetProfile(Guid id)
+    [HttpGet]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<List<UserResponse>>>> GetAllUsers()
     {
-        return await sendRequestService.SendRequestAsync<ApiResponse<ProfileResponse>>(HttpMethod.Get, $"/profile/{id}",
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<UserResponse>>>(HttpMethod.Get, "/users",
+            ServiceType.AuthService);
+    }
+
+    [HttpPost("register")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<UserResponse>>> Register(AdminRegisterRequest request)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<UserResponse>>(HttpMethod.Post, "/users",
+            ServiceType.AuthService, body: request);
+    }
+
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult<ApiResponse<UserResponse>>> GetProfile(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<UserResponse>>(HttpMethod.Get, $"/users/{id}",
             ServiceType.AuthService);
     }
 
@@ -39,10 +56,11 @@ public class ProfileController(ISendRequestService sendRequestService) : Control
 
         content.Add(new StringContent(userId.ToString()), "userId");
 
-        var response = await sendRequestService.SendRequestAsync<ApiResponse<AvatarResponse>>(HttpMethod.Post, "/profile/avatar",
+        var response = await sendRequestService.SendRequestAsync<ApiResponse<AvatarResponse>>(HttpMethod.Post,
+            "/users/avatar",
             ServiceType.AuthService, content: content);
 
-        await sendRequestService.InvalidateCacheAsync($"/profile/{userId}", ServiceType.AuthService);
+        await sendRequestService.InvalidateCacheAsync($"/users/{userId}", ServiceType.AuthService);
 
         return response;
     }

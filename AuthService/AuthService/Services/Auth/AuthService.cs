@@ -46,40 +46,6 @@ public class AuthService(AppDbContext context) : IAuthService
         };
     }
 
-    public async Task<Result<object?>> RegisterAsync(AdminRegisterRequest request)
-    {
-        if (await context.Users.AnyAsync(u => u.Username == request.Username))
-        {
-            return Result<object?>.BadRequest("Username already exists.");
-        }
-
-        var salt = GenerateSalt();
-        var user = new User
-        {
-            Username = request.Username,
-            PasswordHash = string.Empty,
-            PasswordSalt = salt,
-            Role = request.Role
-        };
-        var hashedPassword = new PasswordHasher<User>()
-            .HashPassword(user, salt + request.Password);
-
-        user.PasswordHash = hashedPassword;
-
-        context.Users.Add(user);
-        await context.SaveChangesAsync();
-
-        return Result<object?>.Success(null, "Registration Successful");
-    }
-
-    private static string GenerateSalt()
-    {
-        var saltBytes = new byte[16];
-        using var rng = RandomNumberGenerator.Create();
-        rng.GetBytes(saltBytes);
-        return Convert.ToBase64String(saltBytes);
-    }
-
     public async Task<Result<TokenResponse>> RefreshTokensAsync(RefreshTokenRequestDto request)
     {
         var user = await ValidateRefreshTokenAsync(request.UserId, request.RefreshToken);

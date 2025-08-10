@@ -56,8 +56,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import profileService from '@/services/profileService'
-import type { AvatarChangeResponse, Profile } from '@/types'
+import profileService from '@/services/usersService'
+import type { Profile } from '@/types'
 
 const authStore = useAuthStore()
 
@@ -152,12 +152,7 @@ const handleAvatarUpload = async () => {
     error.value = null
 
     try {
-        const updatedProfile = await profileService.updateAvatar(
-            currentFile.value,
-            authStore.user.id
-        )
 
-        // Pobierz aktualny profil z backend po udanej zmianie awatara
         await loadProfile()
 
         selectedFile.value = null
