@@ -119,7 +119,7 @@ import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
-import profileService from '@/services/profileService'
+import profileService from '@/services/usersService'
 import type { Profile } from '@/types'
 
 const router = useRouter()

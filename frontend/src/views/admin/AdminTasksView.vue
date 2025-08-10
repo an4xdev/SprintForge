@@ -21,7 +21,7 @@
                                 </v-toolbar>
                             </template>
 
-                            <template v-slot:item.title="{ value }">
+                            <template v-slot:item.name="{ value }">
                                 <v-chip :text="value" border="thin opacity-25" prepend-icon="mdi-format-list-bulleted"
                                     label>
                                     <template v-slot:prepend>
@@ -48,7 +48,7 @@
                     </v-sheet>
 
                     <v-dialog v-model="newEditDialog" max-width="500">
-                        <v-card :title="`${isEditing ? 'Edit' : 'Add'} a Team`">
+                        <v-card :title="`${isEditing ? 'Edit' : 'Add'} a Task`">
                             <template v-slot:text>
                                 <v-row>
                                     <v-col cols="12">

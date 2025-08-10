@@ -21,7 +21,7 @@
                                 </v-toolbar>
                             </template>
 
-                            <template v-slot:item.title="{ value }">
+                            <template v-slot:item.name="{ value }">
                                 <v-chip :text="value" border="thin opacity-25" prepend-icon="mdi-folder-multiple" label>
                                     <template v-slot:prepend>
                                         <v-icon color="medium-emphasis"></v-icon>

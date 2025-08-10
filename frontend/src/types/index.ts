@@ -27,6 +27,10 @@ export interface LoginCredentials {
     password: string;
 }
 
+export interface RegisterCredentials extends LoginCredentials {
+    role: 'admin' | 'manager' | 'developer' | '';
+}
+
 export interface Company {
     id: number;
     name: string;

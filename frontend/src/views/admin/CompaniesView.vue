@@ -4,77 +4,85 @@
             <v-container fluid class="pa-6">
                 <h1 class="text-h4 mb-6">Company Management</h1>
 
-                <v-card>
-                    <v-card-title class="text-h5 d-flex align-center">
-                        Company List
-                        <v-spacer></v-spacer>
-                        <v-btn color="primary" @click="addNewCompany" prepend-icon="mdi-plus">
-                            Add Company
-                        </v-btn>
-                    </v-card-title>
+                <div class="py-1">
+                    <v-sheet border rounded>
+                        <v-data-table :headers="headers"
+                            :hide-default-footer="companies !== null && companies.length < 11" :items="companies ?? []">
+                            <template v-slot:top>
+                                <v-toolbar flat>
+                                    <v-toolbar-title>
+                                        <v-icon color="medium-emphasis" icon="mdi-domain" size="x-small" start></v-icon>
+                                        Companies
+                                    </v-toolbar-title>
 
-                    <v-divider></v-divider>
+                                    <v-btn class="me-2" prepend-icon="mdi-plus" rounded="lg" text="Add a Company" border
+                                        @click="addNewCompany"></v-btn>
+                                </v-toolbar>
+                            </template>
 
-                    <v-card-text>
-                        <v-alert v-if="error" type="error" class="mb-4" closable @click:close="error = ''">
-                            {{ error }}
-                        </v-alert>
+                            <template v-slot:item.name="{ value }">
+                                <v-chip :text="value" border="thin opacity-25" prepend-icon="mdi-domain" label>
+                                    <template v-slot:prepend>
+                                        <v-icon color="medium-emphasis"></v-icon>
+                                    </template>
+                                </v-chip>
+                            </template>
 
-                        <div v-if="(!companies || !companies.length) && !loading && !error" class="text-center py-12">
-                            <v-icon size="64" color="primary" class="mb-4">mdi-domain</v-icon>
-                            <div class="text-h6 mb-2">No companies</div>
-                        </div>
+                            <template v-slot:item.actions="{ item }">
+                                <div class="d-flex ga-2 justify-end">
+                                    <v-icon color="medium-emphasis" icon="mdi-pencil" size="small"
+                                        @click="editCompany(item.id)"></v-icon>
 
-                        <v-progress-linear v-if="loading" indeterminate class="mb-4"></v-progress-linear>
+                                    <v-icon color="medium-emphasis" icon="mdi-delete" size="small"
+                                        @click="showDeleteConfirmation(item.id)"></v-icon>
+                                </div>
+                            </template>
 
-                        <v-list v-if="companies && companies.length > 0">
-                            <v-list-item v-for="company in companies" :key="company.id" :title="company.name"
-                                :subtitle="`ID: ${company.id}`" prepend-icon="mdi-domain">
-                                <template v-slot:append>
-                                    <v-btn icon="mdi-pencil" size="small" variant="text"
-                                        @click="editCompany(company.id)"></v-btn>
-                                    <v-btn icon="mdi-delete" size="small" variant="text"
-                                        @click="showDeleteConfirmation(company.id)"></v-btn>
-                                </template>
-                            </v-list-item>
-                        </v-list>
-                    </v-card-text>
-                </v-card>
+                            <template v-slot:no-data>
+                                <v-btn prepend-icon="mdi-backup-restore" rounded="lg" text="Refresh" variant="text"
+                                    border @click="refreshCompanies"></v-btn>
+                            </template>
+                        </v-data-table>
+                    </v-sheet>
+
+                    <v-dialog v-model="newEditDialog" max-width="500px">
+                        <v-card :title="isEditing ? 'Edit Company' : 'Create New Company'">
+                            <template v-slot:text>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <v-text-field v-model="formModel.name" label="Company Name"
+                                            required></v-text-field>
+                                    </v-col>
+                                </v-row>
+                            </template>
+                            <v-divider></v-divider>
+                            <v-card-actions class="bg-surface-light">
+                                <v-btn text="Cancel" color="danger" @click="newEditDialog = false"></v-btn>
+                                <v-spacer></v-spacer>
+                                <v-btn :prepend-icon="isEditing ? 'mdi-pencil' : 'mdi-plus'" color="primary"
+                                    @click="save">
+                                    {{ isEditing ? 'Update' : 'Create' }}
+                                </v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+
+                    <v-dialog v-model="confirmDeleteDialog" max-width="400px">
+                        <v-card>
+                            <v-card-title class="text-h6">Confirm Deletion</v-card-title>
+                            <v-card-text>Are you sure you want to delete this company?</v-card-text>
+                            <v-text-field v-model="companyNameToDelete" label="Company Name" readonly></v-text-field>
+                            <v-divider></v-divider>
+                            <v-card-actions class="bg-surface-light">
+                                <v-btn text="Cancel" color="success" @click="cancelDelete"></v-btn>
+                                <v-spacer></v-spacer>
+                                <v-btn text="Confirm" color="error" @click="confirmDelete"></v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+                </div>
             </v-container>
         </v-main>
-        <v-dialog v-model="newEditDialog" max-width="500px">
-            <v-card :title="isEditing ? 'Edit Company' : 'Create New Company'">
-                <template v-slot:text>
-                    <v-row>
-                        <v-col cols="12">
-                            <v-text-field v-model="formModel.name" label="Company Name" required></v-text-field>
-                        </v-col>
-                    </v-row>
-                </template>
-                <v-divider></v-divider>
-                <v-card-actions class="bg-surface-light">
-                    <v-btn text="Cancel" color="danger" @click="newEditDialog = false"></v-btn>
-                    <v-spacer></v-spacer>
-                    <v-btn :prepend-icon="isEditing ? 'mdi-pencil' : 'mdi-plus'" color="primary" @click="save">
-                        {{ isEditing ? 'Update' : 'Create' }}
-                    </v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
-
-        <v-dialog v-model="confirmDeleteDialog" max-width="400px">
-            <v-card>
-                <v-card-title class="text-h6">Confirm Deletion</v-card-title>
-                <v-card-text>Are you sure you want to delete this company?</v-card-text>
-                <v-text-field v-model="companyNameToDelete" label="Company Name" readonly></v-text-field>
-                <v-divider></v-divider>
-                <v-card-actions class="bg-surface-light">
-                    <v-btn text="Cancel" color="success" @click="cancelDelete"></v-btn>
-                    <v-spacer></v-spacer>
-                    <v-btn text="Confirm" color="error" @click="confirmDelete"></v-btn>
-                </v-card-actions>
-            </v-card>
-        </v-dialog>
     </v-layout>
 </template>
 
@@ -87,10 +95,17 @@ import { ref, toRef } from 'vue';
 
 const logger = new DevelopmentLogger({ prefix: '[CompaniesView]' });
 
+const headers = [
+    { title: 'Name', key: 'name', align: "start" as const },
+    { title: 'ID', key: 'id' },
+    { title: 'Actions', key: 'actions', align: 'end' as const, sortable: false }
+];
+
 const {
     data: companies,
     loading,
-    error
+    error,
+    load: refreshCompanies
 } = useAsyncData<Company[]>({
     fetchFunction: (signal) => companyService.getCompanies(signal),
     loggerPrefix: '[CompaniesView]'
