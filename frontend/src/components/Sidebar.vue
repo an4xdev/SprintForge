@@ -28,7 +28,10 @@
             <v-list-item>
                 <template v-slot:prepend>
                     <v-avatar color="primary">
-                        <v-icon>mdi-account</v-icon>
+                        <v-img v-if="userProfile?.avatar" :src="userProfile.avatar" :alt="user?.username" cover />
+                        <span v-else class="text-h6 font-weight-bold" :style="{ color: 'white' }">
+                            {{ getInitials(user?.username) }}
+                        </span>
                     </v-avatar>
                 </template>
                 <v-list-item-title v-if="!rail || isMobile" class="text-h6">
@@ -111,11 +114,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
+import profileService from '@/services/profileService'
+import type { Profile } from '@/types'
 
 const router = useRouter()
 const { mobile } = useDisplay()
@@ -123,6 +128,7 @@ const authStore = useAuthStore()
 const themeStore = useThemeStore()
 const drawer = ref(true)
 const rail = ref(false)
+const userProfile = ref<Profile | null>(null)
 
 const isMobile = computed(() => mobile.value)
 
@@ -183,9 +189,9 @@ const allMenuItems = [
         roles: ['admin']
     },
     {
-        title: 'Team Management',
+        title: 'Teams',
         to: '/admin/teams',
-        icon: 'mdi-account-tie',
+        icon: 'mdi-account-group',
         roles: ['admin']
     },
     {
@@ -208,9 +214,9 @@ const allMenuItems = [
     },
     // manager
     {
-        title: 'My team Management',
+        title: 'My Teams',
         to: '/manager/teams',
-        icon: 'mdi-account-tie',
+        icon: 'mdi-account-group',
         roles: ['manager']
     },
     {
@@ -262,13 +268,45 @@ const getRoleDisplayName = (role?: string): string => {
     }
 }
 
+const getInitials = (username?: string): string => {
+    if (!username) return 'U'
+    return username.charAt(0).toUpperCase()
+}
+
+const loadUserProfile = async () => {
+    if (!user.value?.id) return
+
+    try {
+        userProfile.value = await profileService.getProfile(user.value.id)
+    } catch (error) {
+        console.error('Error loading user profile in sidebar:', error)
+    }
+}
+
 const logout = async () => {
     await authStore.logout()
     router.push('/login')
 }
 
+let avatarUpdateHandler: ((event: CustomEvent) => void) | null = null
+
 onMounted(() => {
     initializeMobileState()
+    loadUserProfile()
+
+    avatarUpdateHandler = (event: CustomEvent) => {
+        if (event.detail) {
+            userProfile.value = event.detail
+        }
+    }
+
+    window.addEventListener('avatar-updated', avatarUpdateHandler as EventListener)
+})
+
+onBeforeUnmount(() => {
+    if (avatarUpdateHandler) {
+        window.removeEventListener('avatar-updated', avatarUpdateHandler as EventListener)
+    }
 })
 
 defineExpose({

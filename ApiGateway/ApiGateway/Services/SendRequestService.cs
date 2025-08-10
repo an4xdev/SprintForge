@@ -104,8 +104,8 @@ public class SendRequestService(
                     return new NotFoundResult();
                 case HttpStatusCode.InternalServerError:
                 {
-                    var errorContent1 = await response.Content.ReadFromJsonAsync<dynamic>();
-                    return new ObjectResult(errorContent1)
+                    var errorContent = await response.Content.ReadFromJsonAsync<dynamic>();
+                    return new ObjectResult(errorContent)
                     {
                         StatusCode = StatusCodes.Status500InternalServerError
                     };
@@ -126,5 +126,12 @@ public class SendRequestService(
             return new ObjectResult($"An unexpected error occurred: {ex.Message}")
                 { StatusCode = 500 };
         }
+    }
+
+    public async Task InvalidateCacheAsync(string endpoint, ServiceType serviceType)
+    {
+        var fullUrl = CombinePath(serviceType, endpoint);
+        await hybridCache.RemoveAsync(fullUrl);
+        logger.LogInformation("[INFO]: Cache invalidated for key: {Key}", fullUrl);
     }
 }

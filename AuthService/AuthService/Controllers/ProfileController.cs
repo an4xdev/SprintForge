@@ -8,7 +8,7 @@ namespace AuthService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProfileController(IProfileService profileService, IFileService fileService) : ControllerBase
+public class ProfileController(IProfileService profileService, IFileService fileService, IConfiguration configuration) : ControllerBase
 {
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ApiResponse<ProfileResponse?>>> Get(Guid id)
@@ -19,44 +19,45 @@ public class ProfileController(IProfileService profileService, IFileService file
     }
 
     [HttpPost("avatar")]
-    public async Task<ActionResult> UpdateAvatar(
+    public async Task<ActionResult<ApiResponse<AvatarResponse>>> UpdateAvatar(
         [FromForm] IFormFile file,
         [FromForm] Guid userId)
     {
-
         if (await profileService.IsUserInDatabase(userId) == false)
         {
-            return BadRequest("No user found.");
+            return Result<AvatarResponse>.BadRequest("User not found.").ToActionResult();
         }
+
         if (file.Length == 0)
-            return BadRequest("No file uploaded.");
+        {
+            return Result<AvatarResponse>.BadRequest("No file uploaded.").ToActionResult();
+        }
 
         var ext = Path.GetExtension(file.FileName);
         var blobName = $"{userId}/{DateTime.UtcNow:yyyyMMddHHmmss}_{Guid.NewGuid()}{ext}";
 
         await using var stream = file.OpenReadStream();
-
-        string? resultUrl;
+        string? fullPath = null;
         try
         {
-            resultUrl = await fileService.UploadFileAsync(
+            var resultUrl = await fileService.UploadFileAsync(
                 objectName: blobName,
                 fileStream: stream,
                 contentType: file.ContentType);
-
             if (resultUrl != null)
             {
-                await profileService.UpdateAvatar(userId, resultUrl);
+                fullPath = await profileService.UpdateAvatar(userId, resultUrl);
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine(ex.Message);
-            return StatusCode(500, "Can't upload avatar.");
+            return Result<AvatarResponse>.InternalError("Can't upload avatar.").ToActionResult();
         }
 
-        return resultUrl == null ?
-            StatusCode(502, "Storage service is unavailable.") :
-            Ok(new AvatarResponse{ Path = $"{profileService.FileServerPath}/{resultUrl}"});
+        return fullPath == null
+            ? Result<AvatarResponse>.InternalError("Storage service is unavailable.").ToActionResult()
+            : Result<AvatarResponse>.Success(new AvatarResponse { Path = fullPath }, "Successfully updated avatar.")
+                .ToActionResult();
     }
 }

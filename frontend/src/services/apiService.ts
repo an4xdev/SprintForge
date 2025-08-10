@@ -121,27 +121,32 @@ class ApiService {
     }
 
     async get<T>(url: string, signal?: AbortSignal): Promise<T> {
-        const response = await this.api.get(url, { signal });
+        const config = signal ? { signal } : {};
+        const response = await this.api.get(url, config);
         return response.data;
     }
 
     async post<T>(url: string, data?: any, signal?: AbortSignal): Promise<T> {
-        const response = await this.api.post(url, data, { signal });
+        const config = signal ? { signal } : {};
+        const response = await this.api.post(url, data, config);
         return response.data;
     }
 
     async put<T>(url: string, data?: any, signal?: AbortSignal): Promise<T> {
-        const response = await this.api.put(url, data, { signal });
+        const config = signal ? { signal } : {};
+        const response = await this.api.put(url, data, config);
         return response.data;
     }
 
     async delete<T>(url: string, signal?: AbortSignal): Promise<T> {
-        const response = await this.api.delete(url, { signal });
+        const config = signal ? { signal } : {};
+        const response = await this.api.delete(url, config);
         return response.data;
     }
 
     async patch<T>(url: string, data?: any, signal?: AbortSignal): Promise<T> {
-        const response = await this.api.patch(url, data, { signal });
+        const config = signal ? { signal } : {};
+        const response = await this.api.patch(url, data, config);
         return response.data;
     }
 

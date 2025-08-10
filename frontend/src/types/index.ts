@@ -36,3 +36,62 @@ export interface JwtPayload {
     [key: string]: string | number | boolean;
     exp: number;
 }
+
+export interface MinimalUser {
+    id: string;
+    username: string;
+}
+
+export interface Team {
+    id: string;
+    name: string;
+    manager: MinimalUser;
+}
+
+export interface TaskStatus {
+    id: number;
+    name: string;
+}
+
+export interface TaskType {
+    id: number;
+    name: string;
+}
+
+export interface Project {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+    companyDto: Company;
+}
+
+export interface Profile {
+    id: string;
+    username: string;
+    avatar: string | null;
+}
+
+export interface AvatarChangeResponse {
+    path: string;
+}
+
+export interface Sprint {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+    teamId: string;
+    managerId: string;
+    projectId: string;
+}
+
+export interface Task {
+    id: string;
+    name: string;
+    description: string;
+    developerId: string | null;
+    sprintId: string | null;
+    taskStatusId: number;
+    taskTypeId: number;
+}

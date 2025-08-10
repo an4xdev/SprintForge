@@ -29,7 +29,7 @@
       <router-view />
     </v-main>
 
-    <v-overlay :model-value="isLoading" class="align-center justify-center logout-overlay"
+    <v-overlay :model-value="overlayActive" class="align-center justify-center logout-overlay"
       :class="{ 'logout-active': authStore.isLoggingOut }">
       <div class="text-center logout-content">
         <v-progress-circular v-if="authStore.isLoggingOut" color="white" indeterminate size="80" width="6">
@@ -82,8 +82,10 @@ const isAuthenticated = computed(() => {
   return authStore.isAuthenticated && route.path !== '/login'
 })
 
-const isLoading = computed(() => {
-  return loading.value || authStore.isLoading || authStore.isLoggingOut
+const overlayActive = computed(() => {
+  if (authStore.isLoggingOut) return true
+  const isLoginRoute = route.path === '/login'
+  return loading.value || (!isLoginRoute && authStore.isLoading)
 })
 
 const isMobile = computed(() => mobile.value)

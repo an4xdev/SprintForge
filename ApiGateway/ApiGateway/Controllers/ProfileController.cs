@@ -20,12 +20,12 @@ public class ProfileController(ISendRequestService sendRequestService) : Control
     }
 
     [HttpPost("avatar")]
-    public async Task<ActionResult<ApiResponse<object?>>> UpdateAvatar([FromForm] IFormFile? file,
-    [FromForm] Guid userId)
+    public async Task<ActionResult<ApiResponse<AvatarResponse>>> UpdateAvatar([FromForm] IFormFile? file,
+        [FromForm] Guid userId)
     {
         if (file == null || file.Length == 0)
         {
-            return BadRequest("No file uploaded.");
+            return Result<AvatarResponse>.BadRequest("No file uploaded.").ToActionResult();
         }
 
         using var ms = new MemoryStream();
@@ -39,16 +39,11 @@ public class ProfileController(ISendRequestService sendRequestService) : Control
 
         content.Add(new StringContent(userId.ToString()), "userId");
 
-        var response = await sendRequestService.SendRequestAsync<AvatarResponse>(HttpMethod.Post, "/profile/avatar", ServiceType.AuthService, content: content);
+        var response = await sendRequestService.SendRequestAsync<ApiResponse<AvatarResponse>>(HttpMethod.Post, "/profile/avatar",
+            ServiceType.AuthService, content: content);
 
-        if (response.Result != null)
-            return response.Result;
+        await sendRequestService.InvalidateCacheAsync($"/profile/{userId}", ServiceType.AuthService);
 
-        if (response.Value == null)
-            return StatusCode(
-                StatusCodes.Status502BadGateway,
-                "Auth Service returned bad response.");
-
-        return Ok(response.Value.Path);
+        return response;
     }
 }
