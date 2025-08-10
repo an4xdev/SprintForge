@@ -99,5 +99,6 @@ export const taskTypesLogger = new DevelopmentLogger({ prefix: '[TaskTypesServic
 export const projectsLogger = new DevelopmentLogger({ prefix: '[ProjectsService]' });
 export const profileLogger = new DevelopmentLogger({ prefix: '[ProfileService]' });
 export const sprintsLogger = new DevelopmentLogger({ prefix: '[SprintsService]' });
+export const tasksLogger = new DevelopmentLogger({ prefix: '[TasksService]' });
 
 export default new DevelopmentLogger();

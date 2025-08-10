@@ -85,3 +85,13 @@ export interface Sprint {
     managerId: string;
     projectId: string;
 }
+
+export interface Task {
+    id: string;
+    name: string;
+    description: string;
+    developerId: string | null;
+    sprintId: string | null;
+    taskStatusId: number;
+    taskTypeId: number;
+}
