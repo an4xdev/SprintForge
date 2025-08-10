@@ -23,24 +23,7 @@ else
 fi
 
 echo "Setting public policy for 'uploads' bucket..."
-
-cat > /tmp/policy.json << EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": ["*"]
-            },
-            "Action": ["s3:GetObject"],
-            "Resource": ["arn:aws:s3:::uploads/*"]
-        }
-    ]
-}
-EOF
-
-mc policy set-json /tmp/policy.json local/uploads
+mc anonymous set public local/uploads
 
 if mc ls local/uploads > /dev/null 2>&1; then
     echo "'uploads' bucket is available and configured as public"
@@ -50,7 +33,6 @@ else
     exit 1
 fi
 
-rm -f /tmp/policy.json
 mc alias remove local
 
 echo "=== MinIO initialization completed ==="
