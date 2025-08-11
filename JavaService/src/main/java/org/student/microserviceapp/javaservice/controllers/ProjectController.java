@@ -27,6 +27,12 @@ public class ProjectController {
         return projects.toResponseEntity();
     }
 
+    @GetMapping("/active-count")
+    public ResponseEntity<ApiResponse<Long>> getProjectCount() {
+        var count = projectService.getActiveProjectCount();
+        return count.toResponseEntity();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ProjectDTO>> getProject(@PathVariable UUID id) {
         var project = projectService.getProjectById(id);

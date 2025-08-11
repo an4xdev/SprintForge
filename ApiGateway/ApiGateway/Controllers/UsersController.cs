@@ -36,6 +36,13 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
             ServiceType.AuthService);
     }
 
+    [HttpGet("count")]
+    public async Task<ActionResult<ApiResponse<int>>> GetUserCount()
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<int>>(HttpMethod.Get, "/users/count",
+            ServiceType.AuthService);
+    }
+
     [HttpPost("avatar")]
     public async Task<ActionResult<ApiResponse<AvatarResponse>>> UpdateAvatar([FromForm] IFormFile? file,
         [FromForm] Guid userId)

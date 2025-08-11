@@ -33,6 +33,14 @@ public class UsersController(IUserService userService, IFileService fileService)
         return profile.ToActionResult();
     }
 
+    [HttpGet("count")]
+    public async Task<ActionResult<ApiResponse<int>>> GetCount()
+    {
+        var count = await userService.GetCount();
+
+        return count.ToActionResult();
+    }
+
     [HttpPost("avatar")]
     public async Task<ActionResult<ApiResponse<AvatarResponse>>> UpdateAvatar(
         [FromForm] IFormFile file,

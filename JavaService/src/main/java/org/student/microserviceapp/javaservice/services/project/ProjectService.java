@@ -8,6 +8,7 @@ import org.student.microserviceapp.javaservice.repositories.ProjectRepository;
 import org.student.microserviceapp.javaservice.responses.Result;
 import org.student.microserviceapp.javaservice.services.company.ICompanyService;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -115,5 +116,12 @@ public class ProjectService implements IProjectService {
         }
         projectRepository.delete(project.get());
         return Result.noContent();
+    }
+
+    @Override
+    public Result<Long> getActiveProjectCount() {
+        var projectCount = projectRepository.countByStartDateBeforeAndEndDateAfter(
+                LocalDate.now(), LocalDate.now());
+        return Result.success(projectCount, "Project count retrieved successfully");
     }
 }

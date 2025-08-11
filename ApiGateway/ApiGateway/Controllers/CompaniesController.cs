@@ -25,6 +25,12 @@ public class CompaniesController(ISendRequestService sendRequestService) : Contr
             ServiceType.ExpressService);
     }
 
+    [HttpGet("count")]
+    public async Task<ActionResult<ApiResponse<int>>> GetAllCompaniesCount()
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<int>>(HttpMethod.Get, "/companies/count", ServiceType.ExpressService);
+    }
+
     [HttpPost]
     [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<CompanyDto>>> CreateCompany(CompanyDto companyDto)

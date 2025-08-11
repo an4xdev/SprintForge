@@ -17,4 +17,6 @@ public interface IProjectService {
     Result<ProjectDTO> updateProject(UUID id, CreateProjectDTO createProjectDTO);
 
     Result<Void> deleteProject(UUID id);
+
+    Result<Long> getActiveProjectCount();
 }
