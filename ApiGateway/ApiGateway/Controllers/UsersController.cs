@@ -21,7 +21,7 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
             ServiceType.AuthService);
     }
 
-    [HttpPost("register")]
+    [HttpPost]
     [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<UserResponse>>> Register(AdminRegisterRequest request)
     {

@@ -11,7 +11,7 @@ namespace AuthService.Controllers;
 [Route("api/[controller]")]
 public class UsersController(IUserService userService, IFileService fileService) : ControllerBase
 {
-    [HttpPost("register")]
+    [HttpPost]
     public async Task<ActionResult<ApiResponse<UserResponse>>> Register(AdminRegisterRequest request)
     {
         var result = await userService.RegisterAsync(request);
