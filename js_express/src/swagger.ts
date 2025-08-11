@@ -598,3 +598,42 @@
  *                 data:
  *                   type: null
  */
+
+/**
+ * @swagger
+ * /api/companies/count:
+ *   get:
+ *     summary: Get the total number of companies
+ *     description: Returns the total count of companies in the database
+ *     tags: [Companies]
+ *     responses:
+ *       200:
+ *         description: Company count retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Companies count fetched successfully
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     count:
+ *                       type: integer
+ *                       description: The total number of companies
+ *                       example: 1
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Internal server error
+ *                 data:
+ *                   type: null
+ */
