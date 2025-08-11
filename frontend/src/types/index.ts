@@ -99,3 +99,10 @@ export interface Task {
     taskStatusId: number;
     taskTypeId: number;
 }
+
+export interface AdminDashboard {
+    companiesCount: number;
+    usersCount: number;
+    projectsCount: number;
+    teamsCount: number;
+}

@@ -7,7 +7,7 @@
                 <v-card class="text-center">
                     <v-card-text>
                         <v-icon size="48" color="primary" class="mb-2">mdi-domain</v-icon>
-                        <div class="text-h4 font-weight-bold">12</div>
+                        <div class="text-h4 font-weight-bold">{{ dashboardData?.companiesCount }}</div>
                         <div class="text-caption">Number of companies</div>
                     </v-card-text>
                 </v-card>
@@ -16,7 +16,7 @@
                 <v-card class="text-center">
                     <v-card-text>
                         <v-icon size="48" color="success" class="mb-2">mdi-folder-multiple</v-icon>
-                        <div class="text-h4 font-weight-bold">45</div>
+                        <div class="text-h4 font-weight-bold">{{ dashboardData?.projectsCount }}</div>
                         <div class="text-caption">Active projects</div>
                     </v-card-text>
                 </v-card>
@@ -25,7 +25,7 @@
                 <v-card class="text-center">
                     <v-card-text>
                         <v-icon size="48" color="info" class="mb-2">mdi-account-group</v-icon>
-                        <div class="text-h4 font-weight-bold">312</div>
+                        <div class="text-h4 font-weight-bold">{{ dashboardData?.usersCount }}</div>
                         <div class="text-caption">Users</div>
                     </v-card-text>
                 </v-card>
@@ -34,7 +34,7 @@
                 <v-card class="text-center">
                     <v-card-text>
                         <v-icon size="48" color="warning" class="mb-2">mdi-account-multiple</v-icon>
-                        <div class="text-h4 font-weight-bold">24</div>
+                        <div class="text-h4 font-weight-bold">{{ dashboardData?.teamsCount }}</div>
                         <div class="text-caption">Teams</div>
                     </v-card-text>
                 </v-card>
@@ -73,4 +73,17 @@
 </template>
 
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import adminDashboardService from '@/services/adminDashboardService';
+import type { AdminDashboard } from '@/types';
+
+const dashboardData = ref<AdminDashboard | null>(null);
+
+onMounted(async () => {
+    try {
+        dashboardData.value = await adminDashboardService.getDashboardInfo();
+    } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+    }
+});
 </script>
