@@ -172,6 +172,19 @@ app.delete("/api/taskTypes/:id", async (req, res) => {
 
 // Companies
 
+app.get("/api/companies/count", async (_req, res) => {
+  const { Companies } = models;
+  try {
+    const count = await Companies.count();
+    let response = ApiResponse.Success("Companies count fetched successfully", count);
+    res.status(200).json(response);
+  } catch (error) {
+    console.error("Error fetching companies count:", error);
+    let response = ApiResponse.InternalError("Internal server error");
+    res.status(500).json(response);
+  }
+});
+
 app.get("/api/companies", async (_req, res) => {
   const { Companies } = models;
   try {

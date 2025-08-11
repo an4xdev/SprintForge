@@ -80,6 +80,12 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
         }, "Successfully retrieved profile");
     }
 
+    public async Task<Result<int>> GetCount()
+    {
+        var count = await context.Users.CountAsync();
+        return Result<int>.Success(count, "Successfully retrieved count of users");
+    }
+
     public Task<bool> IsUserInDatabase(Guid id)
     {
         return Task.FromResult(context.Users.Any(u => u.Id == id));

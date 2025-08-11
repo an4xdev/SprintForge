@@ -11,7 +11,7 @@ namespace AuthService.Controllers;
 [Route("api/[controller]")]
 public class UsersController(IUserService userService, IFileService fileService) : ControllerBase
 {
-    [HttpPost("register")]
+    [HttpPost]
     public async Task<ActionResult<ApiResponse<UserResponse>>> Register(AdminRegisterRequest request)
     {
         var result = await userService.RegisterAsync(request);
@@ -31,6 +31,14 @@ public class UsersController(IUserService userService, IFileService fileService)
         var profile = await userService.Get(id);
 
         return profile.ToActionResult();
+    }
+
+    [HttpGet("count")]
+    public async Task<ActionResult<ApiResponse<int>>> GetCount()
+    {
+        var count = await userService.GetCount();
+
+        return count.ToActionResult();
     }
 
     [HttpPost("avatar")]

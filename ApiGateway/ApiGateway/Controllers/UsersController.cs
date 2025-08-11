@@ -21,7 +21,7 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
             ServiceType.AuthService);
     }
 
-    [HttpPost("register")]
+    [HttpPost]
     [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<UserResponse>>> Register(AdminRegisterRequest request)
     {
@@ -33,6 +33,13 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
     public async Task<ActionResult<ApiResponse<UserResponse>>> GetProfile(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<UserResponse>>(HttpMethod.Get, $"/users/{id}",
+            ServiceType.AuthService);
+    }
+
+    [HttpGet("count")]
+    public async Task<ActionResult<ApiResponse<int>>> GetUserCount()
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<int>>(HttpMethod.Get, "/users/count",
             ServiceType.AuthService);
     }
 

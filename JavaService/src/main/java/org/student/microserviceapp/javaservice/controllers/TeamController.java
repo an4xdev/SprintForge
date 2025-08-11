@@ -27,6 +27,12 @@ public class TeamController {
         return teams.toResponseEntity();
     }
 
+    @GetMapping("/count")
+    public ResponseEntity<ApiResponse<Long>> getTeamCount() {
+        var count = teamService.getCount();
+        return count.toResponseEntity();
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<TeamDTO>> getTeam(@PathVariable UUID id) {
         var team = teamService.getTeamById(id);

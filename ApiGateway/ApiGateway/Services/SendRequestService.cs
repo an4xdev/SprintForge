@@ -30,7 +30,7 @@ public class SendRequestService(
             var fullUrl = CombinePath(serviceType, endpoint);
             if (method == HttpMethod.Get)
             {
-                return await hybridCache.GetOrCreateAsync(
+                var cachedData = await hybridCache.GetOrCreateAsync(
                     key: fullUrl,
                     factory: async cancellationToken =>
                     {
@@ -40,17 +40,14 @@ public class SendRequestService(
 
                         if (!response.IsSuccessStatusCode)
                         {
-                            var errorContent =
-                                await response.Content.ReadFromJsonAsync<dynamic>(cancellationToken);
-                            return new ObjectResult(errorContent)
-                            {
-                                StatusCode = (int)response.StatusCode
-                            };
+                            throw new HttpRequestException($"Request failed with status code: {response.StatusCode}");
                         }
 
                         var responseData = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
-                        return new OkObjectResult(responseData);
+                        return responseData;
                     });
+                
+                return new OkObjectResult(cachedData);
             }
 
             var httpClient = GetHttpClient();

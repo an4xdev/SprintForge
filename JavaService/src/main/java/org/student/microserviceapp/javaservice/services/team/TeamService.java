@@ -111,4 +111,10 @@ public class TeamService implements ITeamService {
         teamRepository.delete(team.get());
         return Result.noContent();
     }
+
+    @Override
+    public Result<Long> getCount() {
+        var count = teamRepository.count();
+        return Result.success(count, "Total teams count retrieved successfully");
+    }
 }

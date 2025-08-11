@@ -17,4 +17,6 @@ public interface ITeamService {
     Result<TeamDTO> updateTeam(UUID id, CreateTeamDTO createTeamDTO);
 
     Result<Void> deleteTeam(UUID id);
+
+    Result<Long> getCount();
 }

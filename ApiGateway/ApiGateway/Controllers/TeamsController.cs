@@ -25,6 +25,13 @@ public class TeamsController(ISendRequestService sendRequestService) : Controlle
             ServiceType.SpringService);
     }
 
+    [HttpGet("count")]
+    public async Task<ActionResult<ApiResponse<long>>> GetTeamsCount()
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<long>>(HttpMethod.Get, "/teams/count",
+            ServiceType.SpringService);
+    }
+
     [HttpPost]
     [Authorize(Roles = "admin,manager")]
     public async Task<ActionResult<ApiResponse<Guid>>> CreateTeam(CreateTeamDto createTeamDto)

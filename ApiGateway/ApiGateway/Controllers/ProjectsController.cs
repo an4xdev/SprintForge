@@ -25,6 +25,13 @@ public class ProjectsController(ISendRequestService sendRequestService) : Contro
             ServiceType.SpringService);
     }
 
+    [HttpGet("active-count")]
+    public async Task<ActionResult<ApiResponse<long>>> GetActiveProjectCount()
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<long>>(HttpMethod.Get, "/projects/active-count",
+            ServiceType.SpringService);
+    }
+
     [HttpPost]
     [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<Guid>>> CreateProject(CreateProjectDto projectDto)

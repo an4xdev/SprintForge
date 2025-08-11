@@ -10,6 +10,8 @@ public interface IUserService
     Task<Result<List<UserResponse>>> GetAllUsers();
     Task<Result<UserResponse?>> Get(Guid id);
 
+    Task<Result<int>> GetCount();
+
     Task<bool> IsUserInDatabase(Guid id);
 
     Task<string> UpdateAvatar(Guid id, string path);
