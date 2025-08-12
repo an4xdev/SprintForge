@@ -70,7 +70,8 @@ VALUES
     ('Assigned'),
     ('Started'),
     ('Paused'),
-    ('Stopped');
+    ('Stopped'),
+    ('Completed');
 
 
 INSERT INTO public."TaskTypes"
@@ -99,14 +100,14 @@ VALUES
     ('5b1a4edd-fd0a-480c-af14-8a0063f277c1', 'Task 3', 'Description for Task 3', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Improvement'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Started'), '0195e20a-ebc0-7b68-ba97-26bdd43964db', '6407002c-e35a-4b18-a5a1-8a886d0c3b78'),
     ('59edc273-6696-474c-854b-f1b7927bd3e9', 'Task 4', 'Description for Task 4', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Research'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Paused'), '0195e20a-fb84-747f-9e4d-356496149d8f', '6407002c-e35a-4b18-a5a1-8a886d0c3b78'),
     ('410bd848-09ef-4442-97b4-03f3bfc3bd2b', 'Task 5', 'Description for Task 5', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Task'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Stopped'), '0195e20b-0b19-7715-86b9-77cd57423373', '6407002c-e35a-4b18-a5a1-8a886d0c3b78'),
-    ('4e9f18d4-45f5-474b-86e7-570a6ee94c34', 'Task 6', 'Description for Task 6', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Feature'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Created'), '0195e20b-1bfc-7c5b-889d-ac6238b88dd8', '6407002c-e35a-4b18-a5a1-8a886d0c3b78'),
+    ('4e9f18d4-45f5-474b-86e7-570a6ee94c34', 'Task 6', 'Description for Task 6', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Feature'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Completed'), '0195e20b-1bfc-7c5b-889d-ac6238b88dd8', '6407002c-e35a-4b18-a5a1-8a886d0c3b78'),
     ('62494fc4-4cf8-4ab0-b9f4-ce3201370d80', 'Task 7', 'Description for Task 7', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Bug'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Assigned'), '0195e20b-2bb7-77ba-80a5-b5d1364c0774', '6407002c-e35a-4b18-a5a1-8a886d0c3b78'),
     ('7d578d1a-d1dc-465a-af32-9846e375d79d', 'Task 8', 'Description for Task 8', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Improvement'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Started'), '0195e20a-c2a2-7f9a-8719-e007bf497889', '6407002c-e35a-4b18-a5a1-8a886d0c3b78'),
     ('f17c4006-6f6e-45c5-a2c9-d93e88af980b', 'Task 9', 'Description for Task 9', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Research'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Paused'), '0195e20a-d6c9-7cdc-ae6e-750db8a3b69f', 'ee5cc4ce-a7a9-4a78-9706-8658e2e72947'),
     ('9295bf35-fcf5-4d14-97fc-369bb71f9a3e', 'Task 10', 'Description for Task 10', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Task'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Stopped'), '0195e20a-ebc0-7b68-ba97-26bdd43964db', 'ee5cc4ce-a7a9-4a78-9706-8658e2e72947'),
     ('8617f470-d577-4860-bd15-2d831cde6e53', 'Task 11', 'Description for Task 11', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Feature'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Created'), '0195e20a-fb84-747f-9e4d-356496149d8f', 'ee5cc4ce-a7a9-4a78-9706-8658e2e72947'),
     ('92019240-9719-4488-9aca-dcfe488b28f0', 'Task 12', 'Description for Task 12', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Bug'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Assigned'), '0195e20b-0b19-7715-86b9-77cd57423373', 'ee5cc4ce-a7a9-4a78-9706-8658e2e72947'),
-    ('6a58849a-9be7-4c78-89cb-96811e0a7857', 'Task 13', 'Description for Task 13', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Improvement'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Started'), '0195e20b-1bfc-7c5b-889d-ac6238b88dd8', NULL),
+    ('6a58849a-9be7-4c78-89cb-96811e0a7857', 'Task 13', 'Description for Task 13', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Improvement'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Completed'), '0195e20b-1bfc-7c5b-889d-ac6238b88dd8', 'ee5cc4ce-a7a9-4a78-9706-8658e2e72947'),
     ('cccc9bc9-e0d4-430a-ad9e-ef115a64101f', 'Task 14', 'Description for Task 14', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Bug'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Paused'), '0195e20b-2bb7-77ba-80a5-b5d1364c0774', NULL),
     ('64e5e60a-756a-49e8-8aa7-5877e4432aae', 'Task 15', 'Description for Task 15', (SELECT "Id" FROM public."TaskTypes" WHERE "Name" = 'Task'), (SELECT "Id" FROM public."TaskStatuses" WHERE "Name" = 'Stopped'), '0195e20a-c2a2-7f9a-8719-e007bf497889', NULL);
 

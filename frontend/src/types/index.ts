@@ -106,3 +106,25 @@ export interface AdminDashboard {
     projectsCount: number;
     teamsCount: number;
 }
+
+export interface ManagerDashboardInfoDto {
+    sprints: ManagerSprintDto[];
+    isActive: boolean;
+    tasksBySprint: ManagerTasksBySprintDto[];
+}
+
+export interface ManagerTasksBySprintDto {
+    sprintId: string;
+    tasks: ManagerTaskDto[];
+}
+
+export interface ManagerSprintDto {
+    id: string;
+    name: string;
+}
+
+export interface ManagerTaskDto {
+    statusId: number;
+    statusName: string;
+    count: number;
+}

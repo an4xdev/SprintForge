@@ -101,5 +101,6 @@ export const profileLogger = new DevelopmentLogger({ prefix: '[ProfileService]' 
 export const sprintsLogger = new DevelopmentLogger({ prefix: '[SprintsService]' });
 export const tasksLogger = new DevelopmentLogger({ prefix: '[TasksService]' });
 export const adminDashboardLogger = new DevelopmentLogger({ prefix: '[AdminDashboardService]' });
+export const managerDashboardLogger = new DevelopmentLogger({ prefix: '[ManagerDashboardService]' });
 
 export default new DevelopmentLogger();

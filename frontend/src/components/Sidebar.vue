@@ -114,13 +114,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '@/stores/auth'
 import { useThemeStore, type ThemeMode } from '@/stores/theme'
 import profileService from '@/services/usersService'
 import type { Profile } from '@/types'
+
+const emit = defineEmits<{
+    sidebarWidthChanged: [width: number]
+}>()
 
 const router = useRouter()
 const { mobile } = useDisplay()
@@ -133,6 +137,12 @@ const userProfile = ref<Profile | null>(null)
 const isMobile = computed(() => mobile.value)
 
 const user = computed(() => authStore.user)
+
+const sidebarWidth = computed(() => {
+    if (isMobile.value) return 0;
+    if (rail.value) return 8;
+    return 16;
+})
 
 const themeOptions = [
     { value: 'light' as ThemeMode, title: 'Light', icon: 'mdi-white-balance-sunny' },
@@ -290,6 +300,10 @@ const logout = async () => {
 
 let avatarUpdateHandler: ((event: CustomEvent) => void) | null = null
 
+watch(sidebarWidth, (newWidth) => {
+    emit('sidebarWidthChanged', newWidth)
+}, { immediate: true })
+
 onMounted(() => {
     initializeMobileState()
     loadUserProfile()
@@ -320,6 +334,24 @@ defineExpose({
 <style scoped>
 .dashboard-sidebar {
     border-right: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    height: 100vh !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 1000 !important;
+    overflow-y: auto;
+    transition: width 0.2s ease-in-out;
+}
+
+.dashboard-sidebar:deep(.v-navigation-drawer--rail) {
+    width: 64px !important;
+}
+
+.dashboard-sidebar :deep(.v-navigation-drawer__content) {
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .project-header {
@@ -447,6 +479,9 @@ defineExpose({
 @media (max-width: 960px) {
     .dashboard-sidebar {
         z-index: 1005 !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
     }
 
     .dashboard-sidebar :deep(.v-navigation-drawer__content) {
