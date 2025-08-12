@@ -95,8 +95,6 @@ class TaskController extends Controller
         return response()->json($response);
     }
 
-    // TODO: method for assigning a task to a developer by manager
-
     /**
      * Update the specified resource in storage.
      */
@@ -174,6 +172,29 @@ class TaskController extends Controller
         $task->save();
 
         $response = ApiResponse::Success('Task moved to sprint successfully', $task);
+        return response()->json($response);
+    }
+
+    /**
+     * Get count of tasks in a sprint
+     */
+    public function countTasksInSprint(Sprint $sprint)
+    {
+        $counts = $sprint->tasks()
+            ->with('taskStatus')
+            ->get()
+            ->groupBy('TaskStatusId')
+            ->map(function ($tasks, $statusId) {
+                $firstTask = $tasks->first();
+                return [
+                    'statusId' => $statusId,
+                    'statusName' => $firstTask->taskStatus->Name,
+                    'count' => $tasks->count()
+                ];
+            })
+            ->values();
+
+        $response = ApiResponse::Success('Task counts by status retrieved successfully', $counts);
         return response()->json($response);
     }
 
