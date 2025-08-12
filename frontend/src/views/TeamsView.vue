@@ -1,9 +1,8 @@
 <template>
     <v-layout>
-
         <v-main class="min-h-screen">
             <v-container fluid class="pa-6">
-                <h1 class="text-h4 mb-6">Team Management</h1>
+                <h1 class="text-h4 mb-6">{{ pageTitle }}</h1>
 
                 <div class="py-1">
                     <v-sheet border rounded>
@@ -14,7 +13,7 @@
                                     <v-toolbar-title>
                                         <v-icon color="medium-emphasis" icon="mdi-account-group" size="x-small"
                                             start></v-icon>
-                                        Teams
+                                        {{ tableTitle }}
                                     </v-toolbar-title>
 
                                     <v-btn class="me-2" prepend-icon="mdi-plus" rounded="lg" text="Add a Team" border
@@ -103,9 +102,9 @@ import authService from '@/services/authService';
 import teamService from '@/services/teamsService';
 import type { MinimalUser, Team } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
-import { ref, toRef } from 'vue';
+import { ref, toRef, computed } from 'vue';
 
-const logger = new DevelopmentLogger({ prefix: '[AdminTeamsView]' });
+const logger = new DevelopmentLogger({ prefix: '[TeamsView]' });
 
 const headers = [
     { title: 'Name', key: 'name', align: "start" as const },
@@ -118,11 +117,35 @@ const headers = [
     { title: 'Actions', key: 'actions', align: 'end' as const, sortable: false }
 ];
 
+const currentUser = authService.getStoredUser();
+const isAdmin = computed(() => currentUser?.role === 'admin');
+const isManager = computed(() => currentUser?.role === 'manager');
+
+const pageTitle = computed(() => {
+    if (isAdmin.value) return 'Team Management';
+    if (isManager.value) return 'My Teams';
+    return 'Teams';
+});
+
+const tableTitle = computed(() => {
+    if (isAdmin.value) return 'All Teams';
+    if (isManager.value) return 'My Teams';
+    return 'Teams';
+});
+
 const {
     data: teams,
     load: refreshTeams
 } = useAsyncData<Team[]>({
-    fetchFunction: (signal) => teamService.getTeams(signal),
+    fetchFunction: (signal) => {
+        if (isAdmin.value) {
+            return teamService.getTeams(signal);
+        } else if (isManager.value && currentUser?.id) {
+            return teamService.getTeamsByManager(currentUser.id, signal);
+        } else {
+            throw new Error('User not authorized to view teams');
+        }
+    },
     loggerPrefix: '[TeamsView]'
 });
 
@@ -170,7 +193,6 @@ function showDeleteConfirmation(id: string) {
 }
 
 function confirmDelete() {
-
     if (teams.value == null) {
         logger.error('Teams data is not loaded yet.');
         return;

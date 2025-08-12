@@ -200,9 +200,9 @@ const allMenuItems = [
     },
     {
         title: 'Teams',
-        to: '/admin/teams',
+        to: '/teams',
         icon: 'mdi-account-group',
-        roles: ['admin']
+        roles: ['admin', 'manager']
     },
     {
         title: 'Sprints',
@@ -223,12 +223,6 @@ const allMenuItems = [
         roles: ['admin']
     },
     // manager
-    {
-        title: 'My Teams',
-        to: '/manager/teams',
-        icon: 'mdi-account-group',
-        roles: ['manager']
-    },
     {
         title: 'Sprints',
         to: '/manager/sprints',

@@ -55,4 +55,11 @@ public class TeamsController(ISendRequestService sendRequestService) : Controlle
         return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Delete, $"/teams/{id}",
             ServiceType.SpringService);
     }
+
+    [HttpGet("manager/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<TeamDto>>>> GetTeamByManager(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<TeamDto>>>(HttpMethod.Get,
+            $"/teams/manager/{id}", ServiceType.SpringService);
+    }
 }

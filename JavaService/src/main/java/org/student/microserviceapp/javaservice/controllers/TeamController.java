@@ -47,7 +47,7 @@ public class TeamController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<TeamDTO>> updateTeam(@PathVariable UUID id,
-            @RequestBody CreateTeamDTO createTeamDTO) {
+                                                           @RequestBody CreateTeamDTO createTeamDTO) {
         var team = teamService.updateTeam(id, createTeamDTO);
         return team.toResponseEntity();
     }
@@ -56,6 +56,13 @@ public class TeamController {
     public ResponseEntity<ApiResponse<Void>> deleteTeam(@PathVariable UUID id) {
         var result = teamService.deleteTeam(id);
         return result.toResponseEntity();
+    }
+
+    @GetMapping("/manager/{managerId}")
+    public ResponseEntity<ApiResponse<List<TeamDTO>>> getTeamsByManagerId(@PathVariable UUID managerId) {
+        var teams = teamService.getTeamsByManagerId(managerId);
+        return teams.toResponseEntity();
+
     }
 
 }

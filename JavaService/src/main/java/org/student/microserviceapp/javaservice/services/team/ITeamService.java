@@ -19,4 +19,6 @@ public interface ITeamService {
     Result<Void> deleteTeam(UUID id);
 
     Result<Long> getCount();
+
+    Result<List<TeamDTO>> getTeamsByManagerId(UUID managerId);
 }
