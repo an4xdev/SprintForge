@@ -2,7 +2,7 @@ import json
 from fastapi import FastAPI, Depends, Request, Response
 from uuid import UUID
 from fastapi.responses import JSONResponse
-from sqlmodel import Session, desc, select
+from sqlmodel import Session, desc, select, asc
 from datetime import datetime, timezone
 import uuid
 from fastapi.exceptions import RequestValidationError
@@ -208,12 +208,12 @@ def stop_task(task_id: UUID, db: Session=Depends(get_db)):
 # Sprint management
 @app.get("/api/sprints")
 def get_sprints(db: Session=Depends(get_db)):
-    statement = select(Sprints).order_by(desc(Sprints.StartDate))
+    statement = select(Sprints).order_by(asc(Sprints.StartDate), asc(Sprints.EndDate), asc(Sprints.Name))
     sprints = db.exec(statement).all()
     return ApiResponse(message="Sprints retrieved", data=sprints).model_dump()
 
 # active sprints
-@app.get("/api/sprints/active/{managerId}")
+@app.get("/api/sprints/manager/{managerId}/active")
 def get_active_sprints(managerId: UUID, db: Session=Depends(get_db)):
     user = db.exec(select(Users).where(Users.Id == managerId)).first()
     if not user:
@@ -240,7 +240,7 @@ def get_active_sprints(managerId: UUID, db: Session=Depends(get_db)):
     return ApiResponse(message="Active sprints retrieved", data=sprints_data).model_dump()
 
 # last active sprint
-@app.get("/api/sprints/last/active/{managerId}")
+@app.get("/api/sprints/manager/{managerId}/active/last")
 def get_last_active_sprint(managerId: UUID, db: Session=Depends(get_db)):
     user = db.exec(select(Users).where(Users.Id == managerId)).first()
     if not user:
@@ -262,6 +262,19 @@ def get_last_active_sprint(managerId: UUID, db: Session=Depends(get_db)):
         "name": sprint[1]
     }
     return ApiResponse(message="Last sprint retrieved", data=sprint_data).model_dump()
+
+
+@app.get("/api/sprints/manager/{managerId}")
+def get_sprints_by_manager(managerId: UUID, db: Session=Depends(get_db)):
+    user = db.exec(select(Users).where(Users.Id == managerId)).first()
+    if not user:
+        raise ApiException(status_code=404, message="Manager not found")
+    if user.Role != "manager":
+        raise ApiException(status_code=403, message="User is not a manager")
+
+    statement = select(Sprints).where(Sprints.ManagerId == managerId).order_by(asc(Sprints.StartDate), asc(Sprints.EndDate), asc(Sprints.Name))
+    sprints = db.exec(statement).all()
+    return ApiResponse(message="Sprints retrieved", data=sprints).model_dump()
 
 
 @app.post("/api/sprints")

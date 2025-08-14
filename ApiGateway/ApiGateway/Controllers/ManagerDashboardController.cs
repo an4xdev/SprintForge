@@ -20,7 +20,7 @@ public class ManagerDashboardController(
 
         var activeSprintResult =
             await sendRequestService.SendRequestAsync<ApiResponse<List<ManagerSprintDto>>>(HttpMethod.Get,
-                $"/sprints/active/{id}", ServiceType.FastApiService);
+                $"/sprints/manager/{id}/active", ServiceType.FastApiService);
 
         if (!Utils.IsSuccessResult(activeSprintResult))
         {
@@ -41,7 +41,7 @@ public class ManagerDashboardController(
 
             var lastSprintResult =
                 await sendRequestService.SendRequestAsync<ApiResponse<ManagerSprintDto>>(HttpMethod.Get,
-                    $"/sprints/last/active/{id}", ServiceType.FastApiService);
+                    $"/sprints/manager/{id}/active/last", ServiceType.FastApiService);
 
             if (!Utils.IsSuccessResult(lastSprintResult))
             {
