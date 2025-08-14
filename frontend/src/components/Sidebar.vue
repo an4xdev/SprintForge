@@ -200,13 +200,13 @@ const allMenuItems = [
     },
     {
         title: 'Teams',
-        to: '/teams',
+        to: '/admin/teams',
         icon: 'mdi-account-group',
-        roles: ['admin', 'manager']
+        roles: ['admin']
     },
     {
         title: 'Sprints',
-        to: '/admin/sprints',
+        to: '/sprints',
         icon: 'mdi-rocket-launch',
         roles: ['admin']
     },
@@ -224,8 +224,14 @@ const allMenuItems = [
     },
     // manager
     {
+        title: 'Teams',
+        to: '/manager/teams',
+        icon: 'mdi-account-group',
+        roles: ['manager']
+    },
+    {
         title: 'Sprints',
-        to: '/manager/sprints',
+        to: '/sprints',
         icon: 'mdi-rocket-launch',
         roles: ['manager']
     },

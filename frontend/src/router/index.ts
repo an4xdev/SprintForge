@@ -46,10 +46,10 @@ const routes = [
     meta: { requiresAuth: true, roles: ['admin'] }
   },
   {
-    path: '/admin/sprints',
-    name: 'AdminSprints',
-    component: () => import('@/views/admin/AdminSprintsView.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
+    path: '/sprints',
+    name: 'Sprints',
+    component: () => import('@/views/SprintsView.vue'),
+    meta: { requiresAuth: true, roles: ['admin', 'manager'] }
   },
   {
     path: '/admin/tasks',
@@ -64,16 +64,16 @@ const routes = [
     meta: { requiresAuth: true, roles: ['admin'] }
   },
   {
-    path: '/teams',
-    name: 'Teams',
-    component: () => import('@/views/TeamsView.vue'),
-    meta: { requiresAuth: true, roles: ['admin', 'manager'] }
+    path: '/admin/teams',
+    name: 'AdminTeams',
+    component: () => import('@/views/admin/AdminTeamsView.vue'),
+    meta: { requiresAuth: true, roles: ['admin'] }
   },
   // Manager routes
   {
-    path: '/manager/sprints',
-    name: 'ManagerSprints',
-    component: () => import('@/views/manager/ManagerSprintsView.vue'),
+    path: '/manager/teams',
+    name: 'ManagerTeams',
+    component: () => import('@/views/manager/ManagerTeamsView.vue'),
     meta: { requiresAuth: true, roles: ['manager'] }
   },
   {
