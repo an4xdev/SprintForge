@@ -67,8 +67,6 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
             "/users/avatar",
             ServiceType.AuthService, content: content);
 
-        await sendRequestService.InvalidateCacheAsync($"/users/{userId}", ServiceType.AuthService);
-
         return response;
     }
 }

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -63,6 +64,13 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<ISendRequestService, SendRequestService>();
 
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect($"{redisHost}:{redisPort}"));
+
+builder.Services.AddScoped<IDatabase>(sp =>
+{
+    var multiplexer = sp.GetRequiredService<IConnectionMultiplexer>();
+    return multiplexer.GetDatabase();
+});
 // https://thecodeman.net/posts/hybrid-cache-in-aspnet-core
 builder.Services.AddHybridCache(options =>
 {
