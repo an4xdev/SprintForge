@@ -120,7 +120,7 @@ public class TeamService implements ITeamService {
 
     @Override
     @Transactional(readOnly = true)
-    public Result<List<TeamDTO>> getTeamsByManagerId(UUID managerId) {
+    public Result<TeamDTO> getTeamByManagerId(UUID managerId) {
         var user = userService.findById(managerId);
         if (user.isEmpty()) {
             return Result.notFound("User not found");
@@ -131,14 +131,15 @@ public class TeamService implements ITeamService {
             return Result.badRequest("User is not a manager");
         }
 
-        var teams = teamRepository.findTeamsByManager_Id(managerId);
-        if (teams.isEmpty()) {
+        var teamOptional = teamRepository.findTeamByManager_Id(managerId);
+        if (teamOptional.isEmpty()) {
             return Result.notFound("No teams found for this manager");
         }
 
-        var teamDTOs = teams.stream()
-                .map(TeamDTO::new)
-                .toList();
-        return Result.success(teamDTOs, "Teams found for the manager");
+        var team = teamOptional.get();
+
+        var teamDTO = new TeamDTO(team);
+
+        return Result.success(teamDTO, "Teams found for the manager");
     }
 }

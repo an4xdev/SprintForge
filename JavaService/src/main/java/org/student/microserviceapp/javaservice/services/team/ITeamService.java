@@ -20,5 +20,5 @@ public interface ITeamService {
 
     Result<Long> getCount();
 
-    Result<List<TeamDTO>> getTeamsByManagerId(UUID managerId);
+    Result<TeamDTO> getTeamByManagerId(UUID managerId);
 }

@@ -7,5 +7,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 public interface ProjectRepository extends JpaRepository<Project, UUID> {
-    Long countByStartDateBeforeAndEndDateAfter(LocalDate before, LocalDate after);
+    Object findByStartDateAfter(LocalDate startDateAfter);
+
+    Long countByStartDateBeforeAndEndDateAfter(LocalDate now, LocalDate now1);
 }

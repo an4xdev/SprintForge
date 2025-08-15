@@ -59,8 +59,8 @@ public class TeamController {
     }
 
     @GetMapping("/manager/{managerId}")
-    public ResponseEntity<ApiResponse<List<TeamDTO>>> getTeamsByManagerId(@PathVariable UUID managerId) {
-        var teams = teamService.getTeamsByManagerId(managerId);
+    public ResponseEntity<ApiResponse<TeamDTO>> getTeamsByManagerId(@PathVariable UUID managerId) {
+        var teams = teamService.getTeamByManagerId(managerId);
         return teams.toResponseEntity();
 
     }

@@ -5,9 +5,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.student.microserviceapp.javaservice.dto.project.CreateProjectDTO;
 import org.student.microserviceapp.javaservice.dto.project.ProjectDTO;
 import org.student.microserviceapp.javaservice.repositories.ProjectRepository;
+import org.student.microserviceapp.javaservice.repositories.TeamRepository;
 import org.student.microserviceapp.javaservice.responses.Result;
 import org.student.microserviceapp.javaservice.services.company.ICompanyService;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -16,10 +16,13 @@ import java.util.UUID;
 public class ProjectService implements IProjectService {
     private final ProjectRepository projectRepository;
     private final ICompanyService companyService;
+    private final TeamRepository teamRepository;
 
-    public ProjectService(ProjectRepository projectRepository, ICompanyService companyService) {
+    public ProjectService(ProjectRepository projectRepository, ICompanyService companyService,
+            TeamRepository teamRepository) {
         this.projectRepository = projectRepository;
         this.companyService = companyService;
+        this.teamRepository = teamRepository;
     }
 
     @Override
@@ -123,5 +126,15 @@ public class ProjectService implements IProjectService {
         var projectCount = projectRepository.countByStartDateBeforeAndEndDateAfter(
                 LocalDate.now(), LocalDate.now());
         return Result.success(projectCount, "Project count retrieved successfully");
+    }
+
+    @Override
+    public Result<UUID> getCurrentProjectByManagerId(UUID managerId) {
+        var teamOptional = teamRepository.findTeamByManager_Id(managerId);
+        if (teamOptional.isEmpty()) {
+            return Result.notFound("Team not found for the given manager ID");
+        }
+        var team = teamOptional.get();
+        return Result.success(team.getProject().getId(), "Current project ID retrieved successfully");
     }
 }

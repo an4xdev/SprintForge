@@ -16,5 +16,8 @@ public class Sprint
     public Guid TeamId { get; set; }
     public Team Team { get; set; } = null!;
 
+    public Guid ProjectId { get; set; }
+    public Project Project { get; set; } = null!;
+
     public ICollection<Task> Tasks { get; set; } = [];
 }
