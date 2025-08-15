@@ -210,4 +210,22 @@ class TaskController extends Controller
         $task->delete();
         return response(status: Response::HTTP_NO_CONTENT);
     }
+
+    /**
+     * Get unassigned tasks in a project
+     */
+    public function getUnassignedTasksInProject(string $projectId)
+    {
+        $tasks = Task::where('ProjectId', $projectId)
+            ->whereNull('DeveloperId')
+            ->get();
+
+        if ($tasks->isEmpty()) {
+            $response = ApiResponse::NotFound('No unassigned tasks found in this project');
+            return response()->json($response, Response::HTTP_NOT_FOUND);
+        }
+
+        $response = ApiResponse::Success('Unassigned tasks retrieved successfully', $tasks);
+        return response()->json($response);
+    }
 }
