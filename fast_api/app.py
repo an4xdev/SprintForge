@@ -212,35 +212,8 @@ def get_sprints(db: Session=Depends(get_db)):
     sprints = db.exec(statement).all()
     return ApiResponse(message="Sprints retrieved", data=sprints).model_dump()
 
-# active sprints
-@app.get("/api/sprints/manager/{managerId}/active")
-def get_active_sprints(managerId: UUID, db: Session=Depends(get_db)):
-    user = db.exec(select(Users).where(Users.Id == managerId)).first()
-    if not user:
-        raise ApiException(status_code=404, message="Manager not found")
-    if user.Role != "manager":
-        raise ApiException(status_code=403, message="User is not a manager")
-
-    date = datetime.now(timezone.utc)
-    conditions = (
-        Sprints.ManagerId == managerId,
-        Sprints.StartDate <= date,
-        Sprints.EndDate >= date
-    )
-    statement = select(Sprints.Id, Sprints.Name).where(*conditions)
-    sprints = db.exec(statement).all()
-
-    sprints_data = [
-        {
-            "id": str(sprint[0]),
-            "name": sprint[1]
-        }
-        for sprint in sprints
-    ]
-    return ApiResponse(message="Active sprints retrieved", data=sprints_data).model_dump()
-
-# last active sprint
-@app.get("/api/sprints/manager/{managerId}/active/last")
+# active or last active sprint
+@app.get("/api/sprints/manager/{managerId}/dashboard")
 def get_last_active_sprint(managerId: UUID, db: Session=Depends(get_db)):
     user = db.exec(select(Users).where(Users.Id == managerId)).first()
     if not user:
@@ -248,20 +221,25 @@ def get_last_active_sprint(managerId: UUID, db: Session=Depends(get_db)):
     if user.Role != "manager":
         raise ApiException(status_code=403, message="User is not a manager")
 
-    statement = (
-        select(Sprints.Id, Sprints.Name)
-        .where(Sprints.ManagerId == managerId)
-        .order_by(desc(Sprints.EndDate))
-    )
+    statement = select(Sprints).where(Sprints.ManagerId == managerId).order_by(desc(Sprints.EndDate))
+    
     sprint = db.exec(statement).first()
     if not sprint:
         raise ApiException(status_code=404, message="No sprint found")
-    
+
+    active = True
+
+    if sprint.EndDate and sprint.EndDate < datetime.now(timezone.utc).date():
+        active = False
+
     sprint_data = {
-        "id": str(sprint[0]),
-        "name": sprint[1]
+        "id": str(sprint.Id),
+        "name": sprint.Name,
+        "active": active,
+        "startDate": sprint.StartDate,
+        "endDate": sprint.EndDate
     }
-    return ApiResponse(message="Last sprint retrieved", data=sprint_data).model_dump()
+    return ApiResponse(message="Sprint data for dashboard retrieved", data=sprint_data).model_dump()
 
 
 @app.get("/api/sprints/manager/{managerId}")

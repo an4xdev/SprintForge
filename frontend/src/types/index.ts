@@ -108,19 +108,16 @@ export interface AdminDashboard {
 }
 
 export interface ManagerDashboardInfoDto {
-    sprints: ManagerSprintDto[];
-    isActive: boolean;
-    tasksBySprint: ManagerTasksBySprintDto[];
-}
-
-export interface ManagerTasksBySprintDto {
-    sprintId: string;
+    sprint: ManagerSprintDto | null;
     tasks: ManagerTaskDto[];
 }
 
 export interface ManagerSprintDto {
     id: string;
     name: string;
+    active: boolean;
+    startDate: Date;
+    endDate: Date;
 }
 
 export interface ManagerTaskDto {

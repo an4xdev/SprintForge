@@ -1,22 +1,7 @@
-package org.student.microserviceapp.javaservice.models;
+package org.student.microserviceapp.javaservice;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
 @Entity
-@Table(name = "\"Companies\"", schema = "public")
 public class Company {
-    @Id
-    @Column(name = "\"Id\"", nullable = false)
-    private Integer id;
-
-    @Column(name = "\"Name\"", nullable = false, length = Integer.MAX_VALUE)
-    private String name;
-
-}
+  }
