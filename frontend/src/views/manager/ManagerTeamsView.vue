@@ -16,7 +16,6 @@
                                         My Teams
                                     </v-toolbar-title>
 
-                                    <!-- Manager nie może dodawać nowych zespołów -->
                                     <v-chip class="me-2" color="info" variant="tonal">
                                         <v-icon start>mdi-information</v-icon>
                                         View Only - Contact admin to modify teams
@@ -32,7 +31,6 @@
                                 </v-chip>
                             </template>
 
-                            <!-- Manager nie ma żadnych akcji edycji/usuwania -->
                             <template v-slot:item.actions="{ item }">
                                 <div class="d-flex ga-2 justify-end">
                                     <v-icon color="medium-emphasis" icon="mdi-eye" size="small"
@@ -47,7 +45,6 @@
                         </v-data-table>
                     </v-sheet>
 
-                    <!-- Dialog tylko do wyświetlania szczegółów zespołu -->
                     <v-dialog v-model="viewDialog" max-width="500">
                         <v-card title="Team Details">
                             <template v-slot:text>

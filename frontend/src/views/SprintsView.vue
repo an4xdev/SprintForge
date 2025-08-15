@@ -69,13 +69,11 @@
                                             required></v-text-field>
                                     </v-col>
 
-                                    <!-- Pole Manager ID - tylko dla administratora -->
                                     <v-col v-if="isAdmin" cols="12" md="6">
                                         <v-text-field v-model="formModel.managerId" label="Manager ID" required
                                             hint="Select which manager will oversee this sprint"></v-text-field>
                                     </v-col>
 
-                                    <!-- Info dla managera że manager ID jest automatycznie przypisane -->
                                     <v-col v-if="isManager" cols="12" md="6">
                                         <v-text-field :model-value="currentUser?.id" label="Manager ID" readonly
                                             hint="Automatically assigned to you" persistent-hint></v-text-field>
@@ -86,7 +84,6 @@
                                             required></v-text-field>
                                     </v-col>
 
-                                    <!-- Alert dla managera o automatycznym przypisaniu -->
                                     <v-col v-if="isManager && !isEditing" cols="12">
                                         <v-alert type="info" variant="tonal">
                                             <div class="text-subtitle-2 mb-1">Auto Assignment</div>
@@ -110,7 +107,6 @@
                         </v-card>
                     </v-dialog>
 
-                    <!-- Dialog usuwania - tylko dla administratora -->
                     <v-dialog v-if="isAdmin" v-model="confirmDeleteDialog" max-width="400px">
                         <v-card>
                             <v-card-title class="text-h6">Confirm Deletion</v-card-title>
