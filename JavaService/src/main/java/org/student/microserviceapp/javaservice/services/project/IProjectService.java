@@ -19,4 +19,6 @@ public interface IProjectService {
     Result<Void> deleteProject(UUID id);
 
     Result<Long> getActiveProjectCount();
+
+    Result<UUID> getCurrentProjectByManagerId(UUID managerId);
 }

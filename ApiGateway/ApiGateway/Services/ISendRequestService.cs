@@ -11,5 +11,4 @@ public interface ISendRequestService
         HttpContent? content = null,
         object? body = null);
     
-    public Task InvalidateCacheAsync(string endpoint, ServiceType serviceType);
 }

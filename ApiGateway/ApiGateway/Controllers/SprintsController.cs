@@ -42,10 +42,17 @@ public class SprintsController(ISendRequestService sendRequestService) : Control
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<object?>>> DeleteSprint(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Delete, $"/sprints/{id}",
             ServiceType.FastApiService);
+    }
+
+    [HttpGet("manager/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<SprintDto>>>> GetSprintsByManager(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<SprintDto>>>(HttpMethod.Get,
+            $"/sprints/manager/{id}", ServiceType.FastApiService);
     }
 }

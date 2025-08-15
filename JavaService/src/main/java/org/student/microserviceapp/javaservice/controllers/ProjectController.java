@@ -57,4 +57,10 @@ public class ProjectController {
         var response = projectService.deleteProject(id);
         return response.toResponseEntity();
     }
+
+    @GetMapping("/current/{managerId}")
+    public ResponseEntity<ApiResponse<UUID>> getCurrentProjectByManagerId(@PathVariable UUID managerId) {
+        var projectId = projectService.getCurrentProjectByManagerId(managerId);
+        return projectId.toResponseEntity();
+    }
 }

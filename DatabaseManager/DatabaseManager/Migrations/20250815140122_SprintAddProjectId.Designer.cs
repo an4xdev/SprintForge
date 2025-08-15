@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SharedObjects.AppDbContext;
@@ -11,9 +12,11 @@ using SharedObjects.AppDbContext;
 namespace DatabaseManager.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250815140122_SprintAddProjectId")]
+    partial class SprintAddProjectId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -117,9 +120,6 @@ namespace DatabaseManager.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid?>("ProjectId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid?>("SprintId")
                         .HasColumnType("uuid");
 
@@ -132,8 +132,6 @@ namespace DatabaseManager.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("DeveloperId");
-
-                    b.HasIndex("ProjectId");
 
                     b.HasIndex("SprintId");
 
@@ -217,14 +215,9 @@ namespace DatabaseManager.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ManagerId");
-
-                    b.HasIndex("ProjectId");
 
                     b.ToTable("Teams");
                 });
@@ -339,10 +332,6 @@ namespace DatabaseManager.Migrations
                         .WithMany("Tasks")
                         .HasForeignKey("DeveloperId");
 
-                    b.HasOne("SharedObjects.Models.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId");
-
                     b.HasOne("SharedObjects.Models.Sprint", "Sprint")
                         .WithMany("Tasks")
                         .HasForeignKey("SprintId");
@@ -360,8 +349,6 @@ namespace DatabaseManager.Migrations
                         .IsRequired();
 
                     b.Navigation("Developer");
-
-                    b.Navigation("Project");
 
                     b.Navigation("Sprint");
 
@@ -389,15 +376,7 @@ namespace DatabaseManager.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("SharedObjects.Models.Project", "Project")
-                        .WithMany()
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Manager");
-
-                    b.Navigation("Project");
                 });
 
             modelBuilder.Entity("SharedObjects.Models.Developer", b =>

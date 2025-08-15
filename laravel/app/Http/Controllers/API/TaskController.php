@@ -95,8 +95,6 @@ class TaskController extends Controller
         return response()->json($response);
     }
 
-    // TODO: method for assigning a task to a developer by manager
-
     /**
      * Update the specified resource in storage.
      */
@@ -178,6 +176,29 @@ class TaskController extends Controller
     }
 
     /**
+     * Get count of tasks in a sprint
+     */
+    public function countTasksInSprint(Sprint $sprint)
+    {
+        $counts = $sprint->tasks()
+            ->with('taskStatus')
+            ->get()
+            ->groupBy('TaskStatusId')
+            ->map(function ($tasks, $statusId) {
+                $firstTask = $tasks->first();
+                return [
+                    'statusId' => $statusId,
+                    'statusName' => $firstTask->taskStatus->Name,
+                    'count' => $tasks->count()
+                ];
+            })
+            ->values();
+
+        $response = ApiResponse::Success('Task counts by status retrieved successfully', $counts);
+        return response()->json($response);
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(Task $task)
@@ -188,5 +209,23 @@ class TaskController extends Controller
         }
         $task->delete();
         return response(status: Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * Get unassigned tasks in a project
+     */
+    public function getUnassignedTasksInProject(string $projectId)
+    {
+        $tasks = Task::where('ProjectId', $projectId)
+            ->whereNull('DeveloperId')
+            ->get();
+
+        if ($tasks->isEmpty()) {
+            $response = ApiResponse::NotFound('No unassigned tasks found in this project');
+            return response()->json($response, Response::HTTP_NOT_FOUND);
+        }
+
+        $response = ApiResponse::Success('Unassigned tasks retrieved successfully', $tasks);
+        return response()->json($response);
     }
 }
