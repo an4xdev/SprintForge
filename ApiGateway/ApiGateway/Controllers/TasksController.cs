@@ -90,10 +90,25 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
     }
 
     [Authorize(Roles = "manager")]
-    [HttpGet("manager/current")]
-    public async Task<ActionResult<ApiResponse<TaskDto>>> GetCurrentTask()
+    [HttpGet("unassigned/project/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<TaskDto>?>>> GetUnassignedTasksByProject(Guid id)
     {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>?>>(HttpMethod.Get,
+            $"/tasks/unassigned/project/{id}", ServiceType.LaravelService);
+    }
 
-        return null;
+    [Authorize(Roles = "manager")]
+    [HttpGet("unassigned/sprint/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<TaskDto>?>>> GetUnassignedTasksBySprint(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>?>>(HttpMethod.Get, $"/tasks/unassigned/sprint/{id}", ServiceType.LaravelService);
+    }
+
+    [Authorize(Roles = "manager")]
+    [HttpGet("assigned/sprint/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<TaskDto>?>>> GetAssignedTasksBySprint(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>?>>(HttpMethod.Get,
+            $"/tasks/assigned/sprint/{id}", ServiceType.LaravelService);
     }
 }

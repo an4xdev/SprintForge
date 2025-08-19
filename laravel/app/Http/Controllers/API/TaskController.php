@@ -228,4 +228,40 @@ class TaskController extends Controller
         $response = ApiResponse::Success('Unassigned tasks retrieved successfully', $tasks);
         return response()->json($response);
     }
+
+    /**
+     * Get unassigned tasks in sprint
+     */
+    public function getUnassignedTasksInSprint(string $sprintId)
+    {
+        $tasks = Task::where('SprintId', $sprintId)
+            ->whereNull('DeveloperId')
+            ->get();
+
+        if ($tasks->isEmpty()) {
+            $response = ApiResponse::NotFound('No unassigned tasks found in this sprint');
+            return response()->json($response, Response::HTTP_NOT_FOUND);
+        }
+
+        $response = ApiResponse::Success('Unassigned tasks retrieved successfully', $tasks);
+        return response()->json($response);
+    }
+
+    /**
+     * Get tasks assigned to sprint and developer
+     */
+    public function getAssignedTasksInSprintAndDeveloper(string $sprintId)
+    {
+        $tasks = Task::where('SprintId', $sprintId)
+            ->whereNotNull('DeveloperId')
+            ->get();
+
+        if ($tasks->isEmpty()) {
+            $response = ApiResponse::NotFound('No tasks found for this sprint and developer');
+            return response()->json($response, Response::HTTP_NOT_FOUND);
+        }
+
+        $response = ApiResponse::Success('Tasks retrieved successfully', $tasks);
+        return response()->json($response);
+    }
 }
