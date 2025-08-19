@@ -39,31 +39,50 @@ public class SendRequestService(
 
             if (method == HttpMethod.Get)
             {
-                var cachedData = await hybridCache.GetOrCreateAsync(
-                    key: fullUrl,
-                    factory: async cancellationToken =>
+                try
+                {
+                    var cachedData = await hybridCache.GetOrCreateAsync(
+                        key: fullUrl,
+                        factory: async cancellationToken =>
+                        {
+                            var httpClient = GetHttpClient();
+                            using var requestMessage = new HttpRequestMessage(HttpMethod.Get, fullUrl);
+                            var response = await httpClient.SendAsync(requestMessage, cancellationToken);
+
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                throw new HttpRequestException($"Request failed with status code: {response.StatusCode}");
+                            }
+
+                            var responseData = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
+
+                            var group = GetGroupFromEndpoint(endpoint);
+                            if (group != null)
+                            {
+                                await redisDb.SetAddAsync(GetCacheGroupKey(serviceType, group), fullUrl);
+                            }
+
+                            return responseData;
+                        });
+
+                    return new OkObjectResult(cachedData);
+                }
+                catch (HttpRequestException)
+                {
+                    var httpClientNonOk = GetHttpClient();
+                    using var requestMessage = new HttpRequestMessage(HttpMethod.Get, fullUrl);
+                    var response = await httpClientNonOk.SendAsync(requestMessage);
+
+                    if (!response.IsSuccessStatusCode)
                     {
-                        var httpClient = GetHttpClient();
-                        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, fullUrl);
-                        var response = await httpClient.SendAsync(requestMessage, cancellationToken);
+                        var errorContent = await response.Content.ReadFromJsonAsync<dynamic>();
+                        return new ObjectResult(errorContent)
+                        { StatusCode = (int)response.StatusCode };
+                    }
 
-                        if (!response.IsSuccessStatusCode)
-                        {
-                            throw new HttpRequestException($"Request failed with status code: {response.StatusCode}");
-                        }
-
-                        var responseData = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
-
-                        var group = GetGroupFromEndpoint(endpoint);
-                        if (group != null)
-                        {
-                            await redisDb.SetAddAsync(GetCacheGroupKey(serviceType, group), fullUrl);
-                        }
-
-                        return responseData;
-                    });
-
-                return new OkObjectResult(cachedData);
+                    var responseData = await response.Content.ReadFromJsonAsync<T>();
+                    return new OkObjectResult(responseData);
+                }
             }
 
             if (method == HttpMethod.Post || method == HttpMethod.Put || method == HttpMethod.Delete)
