@@ -58,9 +58,9 @@ public class TeamsController(ISendRequestService sendRequestService) : Controlle
 
     [HttpGet("manager/{id:guid}")]
     [Authorize(Roles = "manager")]
-    public async Task<ActionResult<ApiResponse<List<TeamDto>>>> GetTeamByManager(Guid id)
+    public async Task<ActionResult<ApiResponse<TeamDto>>> GetTeamByManager(Guid id)
     {
-        return await sendRequestService.SendRequestAsync<ApiResponse<List<TeamDto>>>(HttpMethod.Get,
+        return await sendRequestService.SendRequestAsync<ApiResponse<TeamDto>>(HttpMethod.Get,
             $"/teams/manager/{id}", ServiceType.SpringService);
     }
 }

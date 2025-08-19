@@ -52,9 +52,9 @@ class TeamsService {
         }
     }
 
-    async getTeamsByManager(managerId: string, signal?: AbortSignal): Promise<Team[]> {
+    async getTeamsByManager(managerId: string, signal?: AbortSignal): Promise<Team> {
         try {
-            const response = await apiService.get<ApiResponse<Team[]>>(`/teams/manager/${managerId}`, signal);
+            const response = await apiService.get<ApiResponse<Team>>(`/teams/manager/${managerId}`, signal);
             return response.data;
         } catch (error) {
             teamLogger.error('Error fetching teams by manager:', error);
