@@ -27,12 +27,44 @@
 
                     <v-tabs-window v-model="activeTab">
                         <v-tabs-window-item value="sprint-with-dev">
-                            <SprintWithDevPanel :loading="sprintWithDevLoading" :tasks="sprintWithDevTasks" />
+                            <div v-if="sprintWithDevLoading" class="pa-6">
+                                <v-progress-linear indeterminate color="success" />
+                            </div>
+
+                            <div v-else-if="noSprintAssigned" class="pa-6">
+                                <v-sheet class="d-flex flex-column align-center pa-8" elevation="1">
+                                    <v-icon size="48" color="primary">mdi-alert-circle-outline</v-icon>
+                                    <h3 class="text-h6 mt-4">No sprint assigned</h3>
+                                    <p class="text-body-2 text-center mt-2">You don't have any active sprint assigned.
+                                    </p>
+                                </v-sheet>
+                            </div>
+
+                            <div v-else-if="sprintWithDevTasks.length === 0" class="pa-6">
+                                <v-sheet class="d-flex flex-column align-center pa-8" elevation="1">
+                                    <v-icon size="48" color="success">mdi-clipboard-check-outline</v-icon>
+                                    <h3 class="text-h6 mt-4">No tasks in sprint</h3>
+                                    <p class="text-body-2 text-center mt-2">There are currently no tasks assigned to
+                                        developers in the active sprint.</p>
+                                </v-sheet>
+                            </div>
+
+                            <div v-else>
+                                <SprintWithDevPanel :loading="sprintWithDevLoading" :tasks="sprintWithDevTasks" />
+                            </div>
                         </v-tabs-window-item>
 
                         <v-tabs-window-item value="sprint-no-dev">
                             <div v-if="sprintWithoutDevLoading" class="pa-6">
                                 <v-progress-linear indeterminate color="primary" />
+                            </div>
+                            <div v-else-if="noSprintAssigned" class="pa-6">
+                                <v-sheet class="d-flex flex-column align-center pa-8" elevation="1">
+                                    <v-icon size="48" color="primary">mdi-alert-circle-outline</v-icon>
+                                    <h3 class="text-h6 mt-4">No sprint assigned</h3>
+                                    <p class="text-body-2 text-center mt-2">You don't have any active sprint assigned.
+                                    </p>
+                                </v-sheet>
                             </div>
 
                             <div v-else-if="sprintWithoutDevTasks.length === 0" class="pa-6">
@@ -73,7 +105,31 @@
                         <v-card-title class="text-h5 bg-success text-white">
                             Tasks in Sprint
                         </v-card-title>
-                        <SprintWithDevPanel :loading="sprintWithDevLoading" :tasks="sprintWithDevTasks" />
+
+                        <div v-if="sprintWithDevLoading" class="pa-6">
+                            <v-progress-linear indeterminate color="success" />
+                        </div>
+
+                        <div v-else-if="noSprintAssigned" class="pa-6">
+                            <v-sheet class="d-flex flex-column align-center pa-8" elevation="1">
+                                <v-icon size="48" color="primary">mdi-alert-circle-outline</v-icon>
+                                <h3 class="text-h6 mt-4">No sprint assigned</h3>
+                                <p class="text-body-2 text-center mt-2">You don't have any active sprint assigned.</p>
+                            </v-sheet>
+                        </div>
+
+                        <div v-else-if="sprintWithDevTasks.length === 0" class="pa-6">
+                            <v-sheet class="d-flex flex-column align-center pa-8" elevation="1">
+                                <v-icon size="48" color="success">mdi-clipboard-check-outline</v-icon>
+                                <h3 class="text-h6 mt-4">No tasks in sprint</h3>
+                                <p class="text-body-2 text-center mt-2">There are currently no tasks assigned to
+                                    developers in the active sprint.</p>
+                            </v-sheet>
+                        </div>
+
+                        <div v-else>
+                            <SprintWithDevPanel :loading="sprintWithDevLoading" :tasks="sprintWithDevTasks" />
+                        </div>
                     </v-card>
 
                     <v-card class="mb-6">
@@ -83,6 +139,15 @@
 
                         <div v-if="sprintWithoutDevLoading" class="pa-6">
                             <v-progress-linear indeterminate color="primary" />
+                        </div>
+
+                        <div v-else-if="noSprintAssigned" class="pa-6">
+                            <v-sheet class="d-flex flex-column align-center pa-8" elevation="1">
+                                <v-icon size="48" color="primary">mdi-alert-circle-outline</v-icon>
+                                <h3 class="text-h6 mt-4">No sprint assigned</h3>
+                                <p class="text-body-2 text-center mt-2">You don't have any active sprint assigned.
+                                </p>
+                            </v-sheet>
                         </div>
 
                         <div v-else-if="sprintWithoutDevTasks.length === 0" class="pa-6">
@@ -131,6 +196,7 @@ import SprintWithoutDevPanel from '@/components/manager/SprintWithoutDevPanel.vu
 import ProjectTasksPanel from '@/components/manager/ProjectTasksPanel.vue'
 import tasksService from '@/services/tasksService'
 import projectsService from '@/services/projectsService'
+import sprintsService from '@/services/sprintsService'
 import authService from '@/services/authService'
 import type { Task } from '@/types'
 
@@ -153,15 +219,18 @@ const projectTasksPanelCards = ref<InstanceType<typeof ProjectTasksPanel> | null
 
 const projectId = ref<string | null>(null);
 const noProjectAssigned = ref(false);
-const tempSprintId = '6407002c-e35a-4b18-a5a1-8a886d0c3b78';
+const currentSprintId = ref<string | null>(null);
+const noSprintAssigned = ref(false);
 
 const loadSprintWithDevTasks = async () => {
+    if (noSprintAssigned.value) return;
+    if (!currentSprintId.value) return;
     if (sprintWithDevTasks.value.length > 0) return;
 
     sprintWithDevLoading.value = true;
     try {
         console.log('Loading sprint with dev tasks...');
-        sprintWithDevTasks.value = await tasksService.getAssignedTasksBySprint(tempSprintId);
+        sprintWithDevTasks.value = await tasksService.getAssignedTasksBySprint(currentSprintId.value);
     } catch (error) {
         console.error('Error loading sprint with dev tasks:', error);
     } finally {
@@ -170,12 +239,14 @@ const loadSprintWithDevTasks = async () => {
 }
 
 const loadSprintWithoutDevTasks = async () => {
+    if (noSprintAssigned.value) return;
+    if (!currentSprintId.value) return;
     if (sprintWithoutDevTasks.value.length > 0) return;
 
     sprintWithoutDevLoading.value = true;
     try {
         console.log('Loading sprint without dev tasks...');
-        sprintWithoutDevTasks.value = await tasksService.getUnassignedTasksBySprint(tempSprintId);
+        sprintWithoutDevTasks.value = await tasksService.getUnassignedTasksBySprint(currentSprintId.value);
     } catch (error) {
         console.error('Error loading sprint without dev tasks:', error);
     } finally {
@@ -237,12 +308,26 @@ onMounted(async () => {
         } else {
             projectId.value = (currentProject as any).id;
         }
+        try {
+            const sprint = await sprintsService.getByManager(currentUser!.id);
+            if (!sprint) {
+                noSprintAssigned.value = true;
+            } else {
+                currentSprintId.value = sprint.id;
+                noSprintAssigned.value = false;
+            }
+        } catch (err) {
+            console.error('Error loading sprints for manager:', err);
+            noSprintAssigned.value = true;
+        }
     } catch (error) {
         console.error('Error loading current project:', error);
         noProjectAssigned.value = true;
     }
 
-    await loadSprintWithDevTasks();
+    if (!noSprintAssigned.value) {
+        await loadSprintWithDevTasks();
+    }
 })
 </script>
 

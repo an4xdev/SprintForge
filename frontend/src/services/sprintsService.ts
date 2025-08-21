@@ -52,9 +52,9 @@ class SprintsService {
         }
     }
 
-    async getByManager(managerId: string, signal?: AbortSignal): Promise<Sprint[]> {
+    async getByManager(managerId: string, signal?: AbortSignal): Promise<Sprint> {
         try {
-            const response = await apiService.get<ApiResponse<Sprint[]>>(`/sprints/manager/${managerId}`, signal);
+            const response = await apiService.get<ApiResponse<Sprint>>(`/sprints/manager/${managerId}`, signal);
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error fetching sprints by manager:', error);

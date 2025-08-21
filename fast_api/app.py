@@ -243,7 +243,7 @@ def get_last_active_sprint(managerId: UUID, db: Session=Depends(get_db)):
 
 
 @app.get("/api/sprints/manager/{managerId}")
-def get_sprints_by_manager(managerId: UUID, db: Session=Depends(get_db)):
+def get_sprint_by_manager(managerId: UUID, db: Session=Depends(get_db)):
     user = db.exec(select(Users).where(Users.Id == managerId)).first()
     if not user:
         raise ApiException(status_code=404, message="Manager not found")
