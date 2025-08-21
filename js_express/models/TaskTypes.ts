@@ -8,7 +8,7 @@ export interface TaskTypesAttributes {
 
 export type TaskTypesPk = "Id";
 export type TaskTypesId = TaskTypes[TaskTypesPk];
-export type TaskTypesCreationAttributes = Optional<TaskTypesAttributes, "Id">;
+export type TaskTypesCreationAttributes = Optional<TaskTypesAttributes, 'Id'>;
 
 export class TaskTypes extends Model<TaskTypesAttributes, TaskTypesCreationAttributes> implements TaskTypesAttributes {
   Id!: number;

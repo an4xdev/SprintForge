@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -25,17 +27,24 @@ builder.Services.Configure<FormOptions>(options => { options.MultipartBodyLength
 // TODO: think later on minimal api?
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+    options.AddDocumentTransformer((document, _, _) =>
+    {
+        document.Servers = new List<OpenApiServer>
+        {
+            new() { Url = "https://localhost", Description = "HTTPS Local" },
+            new() { Url = "http://localhost", Description = "HTTP Local" }
+        };
+        return Task.CompletedTask;
+    });
+});
 
 static string GetRequiredEnvironmentVariable(string name)
 {
     var value = Environment.GetEnvironmentVariable(name);
-    if (string.IsNullOrEmpty(value))
-    {
-        throw new InvalidOperationException($"{name} environment variable is required");
-    }
-
-    return value;
+    return string.IsNullOrEmpty(value) ? throw new InvalidOperationException($"{name} environment variable is required") : value;
 }
 
 var jwtIssuer = GetRequiredEnvironmentVariable("JWT_ISSUER");
@@ -63,6 +72,13 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<ISendRequestService, SendRequestService>();
 
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect($"{redisHost}:{redisPort}"));
+
+builder.Services.AddScoped<IDatabase>(sp =>
+{
+    var multiplexer = sp.GetRequiredService<IConnectionMultiplexer>();
+    return multiplexer.GetDatabase();
+});
 // https://thecodeman.net/posts/hybrid-cache-in-aspnet-core
 builder.Services.AddHybridCache(options =>
 {
@@ -88,7 +104,11 @@ app.UseCors("AllowFrontend");
 if (app.Environment.IsDevelopment() || Environment.GetEnvironmentVariable("ENABLE_SCALAR") == "true")
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(options =>
+    {
+        options.Title = "MicroService API Gateway";
+        options.Theme = ScalarTheme.BluePlanet;
+    });
 }
 
 app.UseHttpsRedirection();

@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using ApiGateway.Models;
+﻿using ApiGateway.Models;
 using ApiGateway.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,11 +35,7 @@ public class AdminDashboardController(ISendRequestService sendRequestService)
             if (!Utils.IsSuccessResult(companiesResult) || !Utils.IsSuccessResult(usersResult) ||
                 !Utils.IsSuccessResult(projectsResult) || !Utils.IsSuccessResult(teamsResult))
             {
-                return StatusCode(500, new ApiResponse<AdminDashboardDto>
-                {
-                    Message = "Some unexpected error occurred",
-                    Data = null
-                });
+                return Result<AdminDashboardDto>.InternalError("Some unexpected error occurred").ToActionResult();
             }
 
             var companiesData = ApiResponseExtensions.GetResultData(companiesResult);
@@ -51,11 +46,7 @@ public class AdminDashboardController(ISendRequestService sendRequestService)
             if (!companiesData.HasValue || !usersData.HasValue ||
                 !projectsData.HasValue || !teamsData.HasValue)
             {
-                return StatusCode(500, new ApiResponse<AdminDashboardDto>
-                {
-                    Message = "Some unexpected error occurred",
-                    Data = null
-                });
+                return Result<AdminDashboardDto>.InternalError("Some unexpected error occurred").ToActionResult();
             }
 
             result.CompaniesCount = companiesData.Value;
@@ -63,19 +54,11 @@ public class AdminDashboardController(ISendRequestService sendRequestService)
             result.ProjectsCount = projectsData.Value;
             result.TeamsCount = teamsData.Value;
 
-            return Ok(new ApiResponse<AdminDashboardDto>
-            {
-                Message = "Data to admin dashboard has been successfully retrieved",
-                Data = result
-            });
+            return Result<AdminDashboardDto>.Success(result, "Data to admin dashboard has been successfully retrieved").ToActionResult();
         }
         catch (Exception)
         {
-            return StatusCode(500, new ApiResponse<AdminDashboardDto>
-            {
-                Message = "Some unexpected error occurred",
-                Data = null
-            });
+            return Result<AdminDashboardDto>.InternalError("Some unexpected error occurred").ToActionResult();
         }
     }
 }

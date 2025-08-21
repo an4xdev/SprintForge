@@ -55,4 +55,12 @@ public class ProjectsController(ISendRequestService sendRequestService) : Contro
         return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Delete, $"/projects/{id}",
             ServiceType.SpringService);
     }
+
+    [HttpGet("current/{id:guid}")]
+    [Authorize(Roles = "manager")]
+    public async Task<ActionResult<ApiResponse<Guid>>> GetCurrentManagerProject(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<Guid>>(HttpMethod.Get, $"/projects/current/{id}",
+            ServiceType.SpringService);
+    }
 }

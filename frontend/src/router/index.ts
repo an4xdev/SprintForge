@@ -46,16 +46,10 @@ const routes = [
     meta: { requiresAuth: true, roles: ['admin'] }
   },
   {
-    path: '/admin/teams',
-    name: 'AdminTeams',
-    component: () => import('@/views/admin/AdminTeamsView.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
-  },
-  {
-    path: '/admin/sprints',
-    name: 'AdminSprints',
-    component: () => import('@/views/admin/AdminSprintsView.vue'),
-    meta: { requiresAuth: true, roles: ['admin'] }
+    path: '/sprints',
+    name: 'Sprints',
+    component: () => import('@/views/SprintsView.vue'),
+    meta: { requiresAuth: true, roles: ['admin', 'manager'] }
   },
   {
     path: '/admin/tasks',
@@ -69,17 +63,17 @@ const routes = [
     component: () => import('@/views/admin/UsersView.vue'),
     meta: { requiresAuth: true, roles: ['admin'] }
   },
+  {
+    path: '/admin/teams',
+    name: 'AdminTeams',
+    component: () => import('@/views/admin/AdminTeamsView.vue'),
+    meta: { requiresAuth: true, roles: ['admin'] }
+  },
   // Manager routes
   {
     path: '/manager/teams',
     name: 'ManagerTeams',
-    component: () => import('@/views/manager/ManagerTeamsView.vue'),
-    meta: { requiresAuth: true, roles: ['manager'] }
-  },
-  {
-    path: '/manager/sprints',
-    name: 'ManagerSprints',
-    component: () => import('@/views/manager/ManagerSprintsView.vue'),
+    component: () => import('@/views/manager/ManagerTeamView.vue'),
     meta: { requiresAuth: true, roles: ['manager'] }
   },
   {
@@ -142,7 +136,6 @@ router.beforeEach((to, from, next) => {
       if (!hasRequiredRole) {
         routerLogger.log('No role access, redirecting to /unauthorized');
 
-        // Przekieruj na stronę unauthorized z informacją o wymaganych rolach
         if (to.path !== '/unauthorized') {
           next({
             path: '/unauthorized',

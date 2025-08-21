@@ -19,18 +19,18 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $TaskStatusId
  * @property uuid|null $DeveloperId
  * @property uuid|null $SprintId
+ * @property uuid|null $ProjectId
  * 
  * @property TaskType $taskType
  * @property TaskStatus $taskStatus
  * @property User|null $user
  * @property Sprint|null $sprint
- * @property Collection|TaskHistory[] $task_histories
+ * @property Project|null $project
  *
  * @package App\Models
  */
 class Task extends Model
 {
-	protected $keyType = 'string';
 	protected $table = 'Tasks';
 	protected $primaryKey = 'Id';
 	public $incrementing = false;
@@ -52,7 +52,8 @@ class Task extends Model
 		'TaskTypeId',
 		'TaskStatusId',
 		'DeveloperId',
-		'SprintId'
+		'SprintId',
+		'ProjectId'
 	];
 
 	public function taskType()

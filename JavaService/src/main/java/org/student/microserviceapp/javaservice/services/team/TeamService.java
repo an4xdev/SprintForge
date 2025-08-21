@@ -117,4 +117,29 @@ public class TeamService implements ITeamService {
         var count = teamRepository.count();
         return Result.success(count, "Total teams count retrieved successfully");
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Result<TeamDTO> getTeamByManagerId(UUID managerId) {
+        var user = userService.findById(managerId);
+        if (user.isEmpty()) {
+            return Result.notFound("User not found");
+        }
+
+        var existingUser = user.get();
+        if (!Objects.equals(existingUser.getRole(), Roles.MANAGER)) {
+            return Result.badRequest("User is not a manager");
+        }
+
+        var teamOptional = teamRepository.findTeamByManager_Id(managerId);
+        if (teamOptional.isEmpty()) {
+            return Result.notFound("No teams found for this manager");
+        }
+
+        var team = teamOptional.get();
+
+        var teamDTO = new TeamDTO(team);
+
+        return Result.success(teamDTO, "Teams found for the manager");
+    }
 }

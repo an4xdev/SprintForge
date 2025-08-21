@@ -114,7 +114,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { useAuthStore } from '@/stores/auth'
@@ -122,17 +122,27 @@ import { useThemeStore, type ThemeMode } from '@/stores/theme'
 import profileService from '@/services/usersService'
 import type { Profile } from '@/types'
 
-const router = useRouter()
-const { mobile } = useDisplay()
-const authStore = useAuthStore()
-const themeStore = useThemeStore()
-const drawer = ref(true)
-const rail = ref(false)
-const userProfile = ref<Profile | null>(null)
+const emit = defineEmits<{
+    sidebarWidthChanged: [width: number]
+}>();
 
-const isMobile = computed(() => mobile.value)
+const router = useRouter();
+const { mobile } = useDisplay();
+const authStore = useAuthStore();
+const themeStore = useThemeStore();
+const drawer = ref(true);
+const rail = ref(false);
+const userProfile = ref<Profile | null>(null);
+
+const isMobile = computed(() => mobile.value);
 
 const user = computed(() => authStore.user)
+
+const sidebarWidth = computed(() => {
+    if (isMobile.value) return 0;
+    if (rail.value) return 8;
+    return 16;
+})
 
 const themeOptions = [
     { value: 'light' as ThemeMode, title: 'Light', icon: 'mdi-white-balance-sunny' },
@@ -142,16 +152,16 @@ const themeOptions = [
 
 const initializeMobileState = () => {
     if (isMobile.value) {
-        drawer.value = false
-        rail.value = false
+        drawer.value = false;
+        rail.value = false;
     } else {
-        drawer.value = true
+        drawer.value = true;
     }
 }
 
 const handleRouteChange = () => {
     if (isMobile.value) {
-        drawer.value = false
+        drawer.value = false;
     }
 }
 
@@ -196,7 +206,7 @@ const allMenuItems = [
     },
     {
         title: 'Sprints',
-        to: '/admin/sprints',
+        to: '/sprints',
         icon: 'mdi-rocket-launch',
         roles: ['admin']
     },
@@ -214,14 +224,14 @@ const allMenuItems = [
     },
     // manager
     {
-        title: 'My Teams',
+        title: 'Teams',
         to: '/manager/teams',
         icon: 'mdi-account-group',
         roles: ['manager']
     },
     {
         title: 'Sprints',
-        to: '/manager/sprints',
+        to: '/sprints',
         icon: 'mdi-rocket-launch',
         roles: ['manager']
     },
@@ -248,7 +258,7 @@ const allMenuItems = [
 ]
 
 const menuItems = computed(() => {
-    if (!user.value) return []
+    if (!user.value) return [];
 
     return allMenuItems.filter(item =>
         item.roles.includes(user.value!.role)
@@ -258,61 +268,65 @@ const menuItems = computed(() => {
 const getRoleDisplayName = (role?: string): string => {
     switch (role) {
         case 'admin':
-            return 'Administrator'
+            return 'Administrator';
         case 'manager':
-            return 'Manager'
+            return 'Manager';
         case 'developer':
-            return 'Developer'
+            return 'Developer';
         default:
-            return 'User'
+            return 'User';
     }
 }
 
 const getInitials = (username?: string): string => {
-    if (!username) return 'U'
-    return username.charAt(0).toUpperCase()
+    if (!username) return 'U';
+    return username.charAt(0).toUpperCase();
 }
 
 const loadUserProfile = async () => {
-    if (!user.value?.id) return
+    if (!user.value?.id) return;
 
     try {
-        userProfile.value = await profileService.getProfile(user.value.id)
+        userProfile.value = await profileService.getProfile(user.value.id);
     } catch (error) {
-        console.error('Error loading user profile in sidebar:', error)
+        console.error('Error loading user profile in sidebar:', error);
     }
 }
 
 const logout = async () => {
-    await authStore.logout()
-    router.push('/login')
+    await authStore.logout();
+    router.push('/login');
 }
 
 let avatarUpdateHandler: ((event: CustomEvent) => void) | null = null
 
+watch(sidebarWidth, (newWidth) => {
+    emit('sidebarWidthChanged', newWidth)
+}, { immediate: true })
+
 onMounted(() => {
-    initializeMobileState()
-    loadUserProfile()
+    initializeMobileState();
+    loadUserProfile();
 
     avatarUpdateHandler = (event: CustomEvent) => {
         if (event.detail) {
-            userProfile.value = event.detail
+            userProfile.value = event.detail;
         }
     }
 
-    window.addEventListener('avatar-updated', avatarUpdateHandler as EventListener)
+    window.addEventListener('avatar-updated', avatarUpdateHandler as EventListener);
 })
 
 onBeforeUnmount(() => {
     if (avatarUpdateHandler) {
-        window.removeEventListener('avatar-updated', avatarUpdateHandler as EventListener)
+        window.removeEventListener('avatar-updated', avatarUpdateHandler as EventListener);
     }
 })
 
 defineExpose({
     drawer,
     toggleDrawer: () => {
-        drawer.value = !drawer.value
+        drawer.value = !drawer.value;
     }
 })
 </script>
@@ -320,6 +334,24 @@ defineExpose({
 <style scoped>
 .dashboard-sidebar {
     border-right: 1px solid rgba(var(--v-border-color), var(--v-border-opacity));
+    height: 100vh !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    z-index: 1000 !important;
+    overflow-y: auto;
+    transition: width 0.2s ease-in-out;
+}
+
+.dashboard-sidebar:deep(.v-navigation-drawer--rail) {
+    width: 64px !important;
+}
+
+.dashboard-sidebar :deep(.v-navigation-drawer__content) {
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .project-header {
@@ -447,6 +479,9 @@ defineExpose({
 @media (max-width: 960px) {
     .dashboard-sidebar {
         z-index: 1005 !important;
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
     }
 
     .dashboard-sidebar :deep(.v-navigation-drawer__content) {

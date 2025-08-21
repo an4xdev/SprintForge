@@ -1,19 +1,26 @@
 ﻿using System.Net;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Hybrid;
+using StackExchange.Redis;
 
 namespace ApiGateway.Services;
 
 public class SendRequestService(
     IHttpClientFactory httpClientFactory,
     HybridCache hybridCache,
-    ILogger<SendRequestService> logger)
+    ILogger<SendRequestService> logger,
+    IDatabase redisDb)
     : ISendRequestService
 {
     private HttpClient GetHttpClient() => httpClientFactory.CreateClient();
 
-    private static string CombinePath(ServiceType serviceType, string endpoint) => $"{serviceType.GetHost()}{endpoint}";
+    private static string CombinePath(ServiceType serviceType, string endpoint)
+        => $"{serviceType.GetHost()}{endpoint}";
+
+    private static string GetCacheGroupKey(ServiceType serviceType, string group)
+        => $"cache_keys:{serviceType}:{group}";
 
     public async Task<ActionResult<T>> SendRequestAsync<T>(
         HttpMethod method,
@@ -25,38 +32,74 @@ public class SendRequestService(
         logger.LogInformation("[INFO]: Sending request to {S}", endpoint);
         logger.LogInformation("[INFO]: Method: {Method}", method);
         logger.LogInformation("[INFO]: Service: {Service}", serviceType);
+
         try
         {
             var fullUrl = CombinePath(serviceType, endpoint);
+
             if (method == HttpMethod.Get)
             {
-                var cachedData = await hybridCache.GetOrCreateAsync(
-                    key: fullUrl,
-                    factory: async cancellationToken =>
-                    {
-                        var httpClient = GetHttpClient();
-                        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, fullUrl);
-                        var response = await httpClient.SendAsync(requestMessage, cancellationToken);
-
-                        if (!response.IsSuccessStatusCode)
+                try
+                {
+                    var cachedData = await hybridCache.GetOrCreateAsync(
+                        key: fullUrl,
+                        factory: async cancellationToken =>
                         {
-                            throw new HttpRequestException($"Request failed with status code: {response.StatusCode}");
-                        }
+                            var httpClient = GetHttpClient();
+                            using var requestMessage = new HttpRequestMessage(HttpMethod.Get, fullUrl);
+                            var response = await httpClient.SendAsync(requestMessage, cancellationToken);
 
-                        var responseData = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
-                        return responseData;
-                    });
-                
-                return new OkObjectResult(cachedData);
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                throw new HttpRequestException($"Request failed with status code: {response.StatusCode}");
+                            }
+
+                            var responseData = await response.Content.ReadFromJsonAsync<T>(cancellationToken);
+
+                            var group = GetGroupFromEndpoint(endpoint);
+                            if (group != null)
+                            {
+                                await redisDb.SetAddAsync(GetCacheGroupKey(serviceType, group), fullUrl);
+                            }
+
+                            return responseData;
+                        });
+
+                    return new OkObjectResult(cachedData);
+                }
+                catch (HttpRequestException)
+                {
+                    var httpClientNonOk = GetHttpClient();
+                    using var requestMessage = new HttpRequestMessage(HttpMethod.Get, fullUrl);
+                    var response = await httpClientNonOk.SendAsync(requestMessage);
+
+                    if (!response.IsSuccessStatusCode)
+                    {
+                        var errorContent = await response.Content.ReadFromJsonAsync<dynamic>();
+                        return new ObjectResult(errorContent)
+                        { StatusCode = (int)response.StatusCode };
+                    }
+
+                    var responseData = await response.Content.ReadFromJsonAsync<T>();
+                    return new OkObjectResult(responseData);
+                }
+            }
+
+            if (method == HttpMethod.Post || method == HttpMethod.Put || method == HttpMethod.Delete)
+            {
+                var group = GetGroupFromEndpoint(endpoint);
+                if (group != null)
+                {
+                    await InvalidateCacheGroupAsync(serviceType, group);
+                }
             }
 
             var httpClient = GetHttpClient();
-
-            using var requestMessage = new HttpRequestMessage(method, fullUrl);
+            using var requestMessageNonGet = new HttpRequestMessage(method, fullUrl);
 
             if (content != null)
             {
-                requestMessage.Content = content;
+                requestMessageNonGet.Content = content;
             }
             else if (body != null)
             {
@@ -70,48 +113,39 @@ public class SendRequestService(
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
                 logger.LogInformation("[DEBUG]: SendRequestService to JSON: {SerializedBody}", serializedBody);
-                requestMessage.Content =
-                    new StringContent(serializedBody, System.Text.Encoding.UTF8, "application/json");
+                requestMessageNonGet.Content =
+                    new StringContent(serializedBody, Encoding.UTF8, "application/json");
             }
 
-            var response = await httpClient.SendAsync(requestMessage);
+            var responseNonGet = await httpClient.SendAsync(requestMessageNonGet);
 
-            if (!response.IsSuccessStatusCode)
+            if (!responseNonGet.IsSuccessStatusCode)
             {
-                var errorContent = await response.Content.ReadFromJsonAsync<dynamic>();
+                var errorContent = await responseNonGet.Content.ReadFromJsonAsync<dynamic>();
                 return new ObjectResult(errorContent)
-                    { StatusCode = (int)response.StatusCode };
+                { StatusCode = (int)responseNonGet.StatusCode };
             }
 
-            if (response.StatusCode == HttpStatusCode.NoContent) return new NoContentResult();
+            if (responseNonGet.StatusCode == HttpStatusCode.NoContent)
+                return new NoContentResult();
 
-            var responseData = await response.Content.ReadFromJsonAsync<T>();
+            var responseDataNonGet = await responseNonGet.Content.ReadFromJsonAsync<T>();
 
-            logger.LogInformation("[INFO]: Status code: {sc}", response.StatusCode);
+            logger.LogInformation("[INFO]: Status code: {sc}", responseNonGet.StatusCode);
 
-            switch (response.StatusCode)
+            return responseNonGet.StatusCode switch
             {
-                case HttpStatusCode.OK:
-                    break;
-                case HttpStatusCode.Created:
-                    return new CreatedResult(fullUrl, responseData);
-                case HttpStatusCode.BadRequest:
-                    return new BadRequestResult();
-                case HttpStatusCode.NotFound:
-                    return new NotFoundResult();
-                case HttpStatusCode.InternalServerError:
+                HttpStatusCode.OK => new OkObjectResult(responseDataNonGet),
+                HttpStatusCode.Created => new CreatedResult(fullUrl, responseDataNonGet),
+                HttpStatusCode.BadRequest => new BadRequestResult(),
+                HttpStatusCode.NotFound => new NotFoundResult(),
+                HttpStatusCode.InternalServerError => new ObjectResult(
+                    await responseNonGet.Content.ReadFromJsonAsync<dynamic>())
                 {
-                    var errorContent = await response.Content.ReadFromJsonAsync<dynamic>();
-                    return new ObjectResult(errorContent)
-                    {
-                        StatusCode = StatusCodes.Status500InternalServerError
-                    };
-                }
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
-
-            return new OkObjectResult(responseData);
+                    StatusCode = StatusCodes.Status500InternalServerError
+                },
+                _ => throw new ArgumentOutOfRangeException()
+            };
         }
         catch (HttpRequestException httpEx)
         {
@@ -125,10 +159,23 @@ public class SendRequestService(
         }
     }
 
-    public async Task InvalidateCacheAsync(string endpoint, ServiceType serviceType)
+    private static string? GetGroupFromEndpoint(string endpoint)
     {
-        var fullUrl = CombinePath(serviceType, endpoint);
-        await hybridCache.RemoveAsync(fullUrl);
-        logger.LogInformation("[INFO]: Cache invalidated for key: {Key}", fullUrl);
+        var segments = endpoint.TrimStart('/').Split('/');
+        return segments.Length > 0 ? segments[0] : null;
+    }
+
+    private async Task InvalidateCacheGroupAsync(ServiceType serviceType, string group)
+    {
+        var setKey = GetCacheGroupKey(serviceType, group);
+        var keys = await redisDb.SetMembersAsync(setKey);
+
+        foreach (var key in keys)
+        {
+            await hybridCache.RemoveAsync(key.ToString());
+            logger.LogInformation("[INFO]: Cache invalidated for key: {Key}", key);
+        }
+
+        await redisDb.KeyDeleteAsync(setKey);
     }
 }

@@ -24,5 +24,8 @@ public class Task
     public Guid? SprintId { get; set; }
     public Sprint? Sprint { get; set; }
 
+    public Guid? ProjectId { get; set; }
+    public Project? Project { get; set; } = null!;
+
     public ICollection<TaskHistory> TaskHistory { get; set; } = [];
 }

@@ -1,6 +1,5 @@
 <template>
     <v-layout>
-
         <v-main class="min-h-screen">
             <v-container fluid class="pa-6">
                 <h1 class="text-h4 mb-6">Team Management</h1>
@@ -14,7 +13,7 @@
                                     <v-toolbar-title>
                                         <v-icon color="medium-emphasis" icon="mdi-account-group" size="x-small"
                                             start></v-icon>
-                                        Teams
+                                        All Teams
                                     </v-toolbar-title>
 
                                     <v-btn class="me-2" prepend-icon="mdi-plus" rounded="lg" text="Add a Team" border
@@ -99,7 +98,6 @@
 
 <script setup lang="ts">
 import { useAsyncData } from '@/composables/useAsyncData';
-import authService from '@/services/authService';
 import teamService from '@/services/teamsService';
 import type { MinimalUser, Team } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
@@ -118,12 +116,13 @@ const headers = [
     { title: 'Actions', key: 'actions', align: 'end' as const, sortable: false }
 ];
 
+// Admin always gets all teams
 const {
     data: teams,
     load: refreshTeams
 } = useAsyncData<Team[]>({
     fetchFunction: (signal) => teamService.getTeams(signal),
-    loggerPrefix: '[TeamsView]'
+    loggerPrefix: '[AdminTeamsView]'
 });
 
 const newEditDialog = ref(false);
@@ -170,7 +169,6 @@ function showDeleteConfirmation(id: string) {
 }
 
 function confirmDelete() {
-
     if (teams.value == null) {
         logger.error('Teams data is not loaded yet.');
         return;

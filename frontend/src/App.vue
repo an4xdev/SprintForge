@@ -12,9 +12,9 @@
     </v-btn>
 
     <v-layout v-if="isAuthenticated">
-      <Sidebar ref="sidebarRef" />
+      <Sidebar ref="sidebarRef" @sidebar-width-changed="handleSidebarWidthChange" />
 
-      <v-main class="app-main">
+      <v-main class="app-main" :style="mainContentStyles">
         <v-app-bar v-if="isMobile" density="compact" class="mobile-header">
           <v-app-bar-nav-icon @click="toggleSidebar" color="white"></v-app-bar-nav-icon>
           <v-icon class="me-2" color="white">mdi-anvil</v-icon>
@@ -66,6 +66,7 @@ const route = useRoute()
 const { mobile } = useDisplay()
 const authStore = useAuthStore()
 const sidebarRef = ref<InstanceType<typeof Sidebar> | null>(null)
+const sidebarWidth = ref(256) // default width
 
 const showDebug = ref(false)
 const isDev = import.meta.env.DEV
@@ -89,6 +90,15 @@ const overlayActive = computed(() => {
 })
 
 const isMobile = computed(() => mobile.value)
+
+const mainContentStyles = computed(() => ({
+  marginLeft: isMobile.value ? '0px' : `${sidebarWidth.value}px`,
+  transition: 'margin-left 0.2s ease-in-out'
+}))
+
+const handleSidebarWidthChange = (width: number) => {
+  sidebarWidth.value = width
+}
 
 watch(() => authStore.isAuthenticated, (newValue) => {
   if (newValue && route.path === '/login') {
@@ -123,6 +133,7 @@ const showNotification = (message: string, color: 'success' | 'error' | 'warning
 
 provide('setLoading', setLoading)
 provide('showNotification', showNotification)
+provide('sidebarWidth', sidebarWidth)
 
 window.addEventListener('auth-error', () => {
   if (route.path === '/login') {
@@ -161,6 +172,13 @@ onMounted(() => {
 
 .app-main {
   min-height: 100vh;
+  transition: margin-left 0.2s ease-in-out;
+}
+
+@media (max-width: 960px) {
+  .app-main {
+    margin-left: 0 !important;
+  }
 }
 
 .mobile-header {

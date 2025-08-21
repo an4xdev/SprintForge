@@ -51,6 +51,36 @@ class TasksService {
             throw new Error('Failed to delete task');
         }
     }
+
+    async getUnassignedTasksByProject(projectId: string, signal?: AbortSignal): Promise<Task[]> {
+        try {
+            const response = await apiService.get<ApiResponse<Task[]>>(`/tasks/unassigned/project/${projectId}`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching unassigned tasks by project:', error);
+            throw new Error('Failed to fetch unassigned tasks by project');
+        }
+    }
+
+    async getUnassignedTasksBySprint(sprintId: string, signal?: AbortSignal): Promise<Task[]> {
+        try {
+            const response = await apiService.get<ApiResponse<Task[]>>(`/tasks/unassigned/sprint/${sprintId}`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching unassigned tasks by sprint:', error);
+            throw new Error('Failed to fetch unassigned tasks by sprint');
+        }
+    }
+
+    async getAssignedTasksBySprint(sprintId: string, signal?: AbortSignal): Promise<Task[]> {
+        try {
+            const response = await apiService.get<ApiResponse<Task[]>>(`/tasks/assigned/sprint/${sprintId}`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching assigned tasks by sprint:', error);
+            throw new Error('Failed to fetch assigned tasks by sprint');
+        }
+    }
 }
 
 export default new TasksService();

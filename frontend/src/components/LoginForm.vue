@@ -28,17 +28,17 @@ import { useAuthStore } from '@/stores/auth'
 import type { LoginCredentials, User } from '@/types'
 import { DevelopmentLogger } from '@/utils/logger'
 
-const authStore = useAuthStore()
+const authStore = useAuthStore();
 const logger = new DevelopmentLogger({ prefix: '[LoginForm]' });
 
-const valid = ref(false)
-const showPassword = ref(false)
-const error = ref('')
+const valid = ref(false);
+const showPassword = ref(false);
+const error = ref('');
 
 const credentials = reactive<LoginCredentials>({
     username: '',
     password: ''
-})
+});
 
 const rules = {
     required: (value: string) => !!value || 'This field is required'
@@ -46,7 +46,7 @@ const rules = {
 
 const emit = defineEmits<{
     loginSuccess: [user: User]
-}>()
+}>();
 
 const login = async () => {
     if (!valid.value) return;

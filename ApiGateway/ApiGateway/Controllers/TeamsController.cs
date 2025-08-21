@@ -33,7 +33,7 @@ public class TeamsController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpPost]
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<Guid>>> CreateTeam(CreateTeamDto createTeamDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<Guid>>(HttpMethod.Post, "/teams",
@@ -41,7 +41,7 @@ public class TeamsController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<TeamDto>>> UpdateTeam(Guid id, CreateTeamDto createTeamDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TeamDto>>(HttpMethod.Put, $"/teams/{id}",
@@ -49,10 +49,18 @@ public class TeamsController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "admin,manager")]
+    [Authorize(Roles = "admin")]
     public async Task<ActionResult<ApiResponse<object?>>> DeleteTeam(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Delete, $"/teams/{id}",
             ServiceType.SpringService);
+    }
+
+    [HttpGet("manager/{id:guid}")]
+    [Authorize(Roles = "manager")]
+    public async Task<ActionResult<ApiResponse<TeamDto>>> GetTeamByManager(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<TeamDto>>(HttpMethod.Get,
+            $"/teams/manager/{id}", ServiceType.SpringService);
     }
 }

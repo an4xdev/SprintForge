@@ -28,6 +28,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpPost]
+    [Authorize(Roles = "admin,manager")]
     public async Task<ActionResult<ApiResponse<TaskDto>>> CreateTask(CreateTaskDto createTaskDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TaskDto>>(HttpMethod.Post,
@@ -36,6 +37,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpPut("{id:guid}")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<ActionResult<ApiResponse<TaskDto>>> UpdateTask(Guid id, EditTaskDto editTaskDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TaskDto>>(HttpMethod.Put,
@@ -44,6 +46,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<ActionResult<ApiResponse<object?>>> DeleteTask(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Delete,
@@ -52,6 +55,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpPatch("{id:guid}/assign-developer")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<ActionResult<ApiResponse<TaskDto>>> AssignDeveloper(Guid id,
         AssignDeveloperDto assignDeveloperDto)
     {
@@ -61,6 +65,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpPatch("{id:guid}/move-to-sprint")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<ActionResult<ApiResponse<TaskDto>>> MoveToSprint(Guid id, MoveToSprintDto moveToSprintDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TaskDto>>(HttpMethod.Patch,
@@ -70,7 +75,6 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
 
     private readonly List<string> _actions = ["start", "pause", "stop"];
 
-    // TODO: split by manager(managing tasks) and developer(start/stop)
     [Authorize(Roles = "developer")]
     [HttpPut("{id:guid}/{command}")]
     public async Task<ActionResult<ApiResponse<TaskActionResponseDto>>> ActionOnTask(Guid id, string command)
@@ -83,5 +87,28 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
         return await sendRequestService.SendRequestAsync<ApiResponse<TaskActionResponseDto>>(HttpMethod.Put,
             $"/tasks/{id}/{command}",
             ServiceType.FastApiService);
+    }
+
+    [Authorize(Roles = "manager")]
+    [HttpGet("unassigned/project/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<TaskDto>?>>> GetUnassignedTasksByProject(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>?>>(HttpMethod.Get,
+            $"/tasks/unassigned/project/{id}", ServiceType.LaravelService);
+    }
+
+    [Authorize(Roles = "manager")]
+    [HttpGet("unassigned/sprint/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<TaskDto>?>>> GetUnassignedTasksBySprint(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>?>>(HttpMethod.Get, $"/tasks/unassigned/sprint/{id}", ServiceType.LaravelService);
+    }
+
+    [Authorize(Roles = "manager")]
+    [HttpGet("assigned/sprint/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<TaskDto>?>>> GetAssignedTasksBySprint(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>?>>(HttpMethod.Get,
+            $"/tasks/assigned/sprint/{id}", ServiceType.LaravelService);
     }
 }

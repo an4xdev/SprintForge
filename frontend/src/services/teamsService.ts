@@ -13,7 +13,7 @@ class TeamsService {
         }
     }
 
-    async getTeamById(id: number): Promise<Team> {
+    async getTeamById(id: string): Promise<Team> {
         try {
             const response = await apiService.get<ApiResponse<Team>>(`/teams/${id}`);
             return response.data;
@@ -33,7 +33,7 @@ class TeamsService {
         }
     }
 
-    async updateTeam(id: number, team: Partial<Team>): Promise<Team> {
+    async updateTeam(id: string, team: Partial<Team>): Promise<Team> {
         try {
             const response = await apiService.put<ApiResponse<Team>>(`/teams/${id}`, team);
             return response.data;
@@ -43,12 +43,22 @@ class TeamsService {
         }
     }
 
-    async deleteTeam(id: number): Promise<void> {
+    async deleteTeam(id: string): Promise<void> {
         try {
             await apiService.delete(`/teams/${id}`);
         } catch (error) {
             teamLogger.error('Error deleting team:', error);
             throw new Error('Failed to delete team');
+        }
+    }
+
+    async getTeamsByManager(managerId: string, signal?: AbortSignal): Promise<Team> {
+        try {
+            const response = await apiService.get<ApiResponse<Team>>(`/teams/manager/${managerId}`, signal);
+            return response.data;
+        } catch (error) {
+            teamLogger.error('Error fetching teams by manager:', error);
+            throw new Error('Failed to fetch teams by manager');
         }
     }
 }

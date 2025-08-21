@@ -8,7 +8,7 @@ export interface CompaniesAttributes {
 
 export type CompaniesPk = "Id";
 export type CompaniesId = Companies[CompaniesPk];
-export type CompaniesCreationAttributes = Optional<CompaniesAttributes, "Id">;
+export type CompaniesCreationAttributes = Optional<CompaniesAttributes, 'Id'>;
 
 export class Companies extends Model<CompaniesAttributes, CompaniesCreationAttributes> implements CompaniesAttributes {
   Id!: number;
