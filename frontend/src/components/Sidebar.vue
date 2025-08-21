@@ -124,17 +124,17 @@ import type { Profile } from '@/types'
 
 const emit = defineEmits<{
     sidebarWidthChanged: [width: number]
-}>()
+}>();
 
-const router = useRouter()
-const { mobile } = useDisplay()
-const authStore = useAuthStore()
-const themeStore = useThemeStore()
-const drawer = ref(true)
-const rail = ref(false)
-const userProfile = ref<Profile | null>(null)
+const router = useRouter();
+const { mobile } = useDisplay();
+const authStore = useAuthStore();
+const themeStore = useThemeStore();
+const drawer = ref(true);
+const rail = ref(false);
+const userProfile = ref<Profile | null>(null);
 
-const isMobile = computed(() => mobile.value)
+const isMobile = computed(() => mobile.value);
 
 const user = computed(() => authStore.user)
 
@@ -152,16 +152,16 @@ const themeOptions = [
 
 const initializeMobileState = () => {
     if (isMobile.value) {
-        drawer.value = false
-        rail.value = false
+        drawer.value = false;
+        rail.value = false;
     } else {
-        drawer.value = true
+        drawer.value = true;
     }
 }
 
 const handleRouteChange = () => {
     if (isMobile.value) {
-        drawer.value = false
+        drawer.value = false;
     }
 }
 
@@ -258,7 +258,7 @@ const allMenuItems = [
 ]
 
 const menuItems = computed(() => {
-    if (!user.value) return []
+    if (!user.value) return [];
 
     return allMenuItems.filter(item =>
         item.roles.includes(user.value!.role)
@@ -268,34 +268,34 @@ const menuItems = computed(() => {
 const getRoleDisplayName = (role?: string): string => {
     switch (role) {
         case 'admin':
-            return 'Administrator'
+            return 'Administrator';
         case 'manager':
-            return 'Manager'
+            return 'Manager';
         case 'developer':
-            return 'Developer'
+            return 'Developer';
         default:
-            return 'User'
+            return 'User';
     }
 }
 
 const getInitials = (username?: string): string => {
-    if (!username) return 'U'
-    return username.charAt(0).toUpperCase()
+    if (!username) return 'U';
+    return username.charAt(0).toUpperCase();
 }
 
 const loadUserProfile = async () => {
-    if (!user.value?.id) return
+    if (!user.value?.id) return;
 
     try {
-        userProfile.value = await profileService.getProfile(user.value.id)
+        userProfile.value = await profileService.getProfile(user.value.id);
     } catch (error) {
-        console.error('Error loading user profile in sidebar:', error)
+        console.error('Error loading user profile in sidebar:', error);
     }
 }
 
 const logout = async () => {
-    await authStore.logout()
-    router.push('/login')
+    await authStore.logout();
+    router.push('/login');
 }
 
 let avatarUpdateHandler: ((event: CustomEvent) => void) | null = null
@@ -305,28 +305,28 @@ watch(sidebarWidth, (newWidth) => {
 }, { immediate: true })
 
 onMounted(() => {
-    initializeMobileState()
-    loadUserProfile()
+    initializeMobileState();
+    loadUserProfile();
 
     avatarUpdateHandler = (event: CustomEvent) => {
         if (event.detail) {
-            userProfile.value = event.detail
+            userProfile.value = event.detail;
         }
     }
 
-    window.addEventListener('avatar-updated', avatarUpdateHandler as EventListener)
+    window.addEventListener('avatar-updated', avatarUpdateHandler as EventListener);
 })
 
 onBeforeUnmount(() => {
     if (avatarUpdateHandler) {
-        window.removeEventListener('avatar-updated', avatarUpdateHandler as EventListener)
+        window.removeEventListener('avatar-updated', avatarUpdateHandler as EventListener);
     }
 })
 
 defineExpose({
     drawer,
     toggleDrawer: () => {
-        drawer.value = !drawer.value
+        drawer.value = !drawer.value;
     }
 })
 </script>

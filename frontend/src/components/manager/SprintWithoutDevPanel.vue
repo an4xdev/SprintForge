@@ -80,7 +80,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     loading: false,
     tasks: () => []
-})
+});
 </script>
 
 <style scoped></style>

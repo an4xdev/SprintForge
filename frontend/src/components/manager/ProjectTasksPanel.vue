@@ -102,15 +102,15 @@ const activeTasks = computed(() => props.tasks.length > 0 ? props.tasks : localT
 const activeLoading = computed(() => props.loading || localLoading.value);
 
 const backlogTasks = computed(() => {
-    return activeTasks.value.filter((_, index) => index % 3 === 0)
+    return activeTasks.value.filter((_, index) => index % 3 === 0);
 });
 
 const futureFeatureTasks = computed(() => {
-    return activeTasks.value.filter((_, index) => index % 3 === 1)
+    return activeTasks.value.filter((_, index) => index % 3 === 1);
 });
 
 const researchTasks = computed(() => {
-    return activeTasks.value.filter((_, index) => index % 3 === 2)
+    return activeTasks.value.filter((_, index) => index % 3 === 2);
 });
 
 

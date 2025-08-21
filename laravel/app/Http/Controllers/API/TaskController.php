@@ -221,8 +221,8 @@ class TaskController extends Controller
             ->get();
 
         if ($tasks->isEmpty()) {
-            $response = ApiResponse::NotFound('No unassigned tasks found in this project');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            $response = ApiResponse::Success('No unassigned tasks found in this project', []);
+            return response()->json($response);
         }
 
         $response = ApiResponse::Success('Unassigned tasks retrieved successfully', $tasks);
@@ -239,8 +239,8 @@ class TaskController extends Controller
             ->get();
 
         if ($tasks->isEmpty()) {
-            $response = ApiResponse::NotFound('No unassigned tasks found in this sprint');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            $response = ApiResponse::Success('No unassigned tasks found in this sprint', []);
+            return response()->json($response);
         }
 
         $response = ApiResponse::Success('Unassigned tasks retrieved successfully', $tasks);
@@ -257,8 +257,8 @@ class TaskController extends Controller
             ->get();
 
         if ($tasks->isEmpty()) {
-            $response = ApiResponse::NotFound('No tasks found for this sprint and developer');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            $response = ApiResponse::Success('No tasks found for this sprint and developer', []);
+            return response()->json($response);
         }
 
         $response = ApiResponse::Success('Tasks retrieved successfully', $tasks);

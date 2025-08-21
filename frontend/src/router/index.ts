@@ -136,7 +136,6 @@ router.beforeEach((to, from, next) => {
       if (!hasRequiredRole) {
         routerLogger.log('No role access, redirecting to /unauthorized');
 
-        // Przekieruj na stronę unauthorized z informacją o wymaganych rolach
         if (to.path !== '/unauthorized') {
           next({
             path: '/unauthorized',

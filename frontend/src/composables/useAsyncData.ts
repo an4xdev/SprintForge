@@ -15,84 +15,84 @@ export function useAsyncData<T>(options: UseAsyncDataOptions<T>) {
         loggerPrefix = '[AsyncData]',
         autoLoad = true,
         resetOnLogout = true
-    } = options
+    } = options;
 
-    const authStore = useAuthStore()
-    const logger = new DevelopmentLogger({ prefix: loggerPrefix })
+    const authStore = useAuthStore();
+    const logger = new DevelopmentLogger({ prefix: loggerPrefix });
 
-    const data = ref<T | null>(null)
-    const loading = ref(false)
-    const error = ref('')
-    const isComponentMounted = ref(true)
-    const abortController = ref<AbortController | null>(null)
+    const data = ref<T | null>(null);
+    const loading = ref(false);
+    const error = ref('');
+    const isComponentMounted = ref(true);
+    const abortController = ref<AbortController | null>(null);
 
     const load = async () => {
         if (!authStore.isAuthenticated || !isComponentMounted.value || !localStorage.getItem('token')) {
-            logger.log('Skipping load: not authenticated or component not mounted')
-            return
+            logger.log('Skipping load: not authenticated or component not mounted');
+            return;
         }
 
-        logger.log('Starting to load data')
+        logger.log('Starting to load data');
 
         if (abortController.value) {
-            abortController.value.abort()
+            abortController.value.abort();
         }
 
-        abortController.value = new AbortController()
-        loading.value = true
-        error.value = ''
+        abortController.value = new AbortController();
+        loading.value = true;
+        error.value = '';
 
         try {
-            const result = await fetchFunction(abortController.value.signal)
+            const result = await fetchFunction(abortController.value.signal);
 
             if (isComponentMounted.value && !abortController.value.signal.aborted && authStore.isAuthenticated) {
-                logger.log('Successfully loaded data')
-                data.value = result
+                logger.log('Successfully loaded data');
+                data.value = result;
             }
         } catch (err) {
             if (err instanceof Error && (err.name === 'AbortError' || !authStore.isAuthenticated)) {
-                logger.log('Request canceled or user logged out')
-                return
+                logger.log('Request canceled or user logged out');
+                return;
             }
 
-            logger.error('Error loading data:', err)
+            logger.error('Error loading data:', err);
             if (isComponentMounted.value && !abortController.value.signal.aborted && authStore.isAuthenticated) {
-                error.value = err instanceof Error ? err.message : 'An unexpected error occurred'
+                error.value = err instanceof Error ? err.message : 'An unexpected error occurred';
             }
         } finally {
             if (isComponentMounted.value && !abortController.value.signal.aborted && authStore.isAuthenticated) {
-                loading.value = false
+                loading.value = false;
             }
         }
     }
 
     const reset = () => {
         if (abortController.value) {
-            abortController.value.abort()
+            abortController.value.abort();
         }
-        loading.value = false
-        error.value = ''
-        data.value = null
+        loading.value = false;
+        error.value = '';
+        data.value = null;
     }
 
     watch(() => authStore.isAuthenticated, (newValue) => {
-        logger.log('Authentication changed:', newValue)
+        logger.log('Authentication changed:', newValue);
         if (!newValue && resetOnLogout) {
-            logger.log('User logged out - resetting state')
-            reset()
+            logger.log('User logged out - resetting state');
+            reset();
         }
     })
 
     onMounted(() => {
         if (autoLoad) {
-            load()
+            load();
         }
     })
 
     onBeforeUnmount(() => {
-        isComponentMounted.value = false
+        isComponentMounted.value = false;
         if (abortController.value) {
-            abortController.value.abort()
+            abortController.value.abort();
         }
     })
 

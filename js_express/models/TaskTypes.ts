@@ -8,7 +8,7 @@ export interface TaskTypesAttributes {
 
 export type TaskTypesPk = "Id";
 export type TaskTypesId = TaskTypes[TaskTypesPk];
-export type TaskTypesCreationAttributes = TaskTypesAttributes;
+export type TaskTypesCreationAttributes = Optional<TaskTypesAttributes, 'Id'>;
 
 export class TaskTypes extends Model<TaskTypesAttributes, TaskTypesCreationAttributes> implements TaskTypesAttributes {
   Id!: number;
@@ -17,31 +17,31 @@ export class TaskTypes extends Model<TaskTypesAttributes, TaskTypesCreationAttri
 
   static initModel(sequelize: Sequelize.Sequelize): typeof TaskTypes {
     return TaskTypes.init({
-    Id: {
-      autoIncrement: true,
-      autoIncrementIdentity: true,
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true
-    },
-    Name: {
-      type: DataTypes.TEXT,
-      allowNull: false
-    }
-  }, {
-    sequelize,
-    tableName: 'TaskTypes',
-    schema: 'public',
-    timestamps: false,
-    indexes: [
-      {
-        name: "PK_TaskTypes",
-        unique: true,
-        fields: [
-          { name: "Id" },
-        ]
+      Id: {
+        autoIncrement: true,
+        autoIncrementIdentity: true,
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true
       },
-    ]
-  });
+      Name: {
+        type: DataTypes.TEXT,
+        allowNull: false
+      }
+    }, {
+      sequelize,
+      tableName: 'TaskTypes',
+      schema: 'public',
+      timestamps: false,
+      indexes: [
+        {
+          name: "PK_TaskTypes",
+          unique: true,
+          fields: [
+            { name: "Id" },
+          ]
+        },
+      ]
+    });
   }
 }

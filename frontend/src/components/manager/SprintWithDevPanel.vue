@@ -77,20 +77,19 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
     loading: false,
     tasks: () => []
-})
+});
 
-// Assuming task status IDs: 1 = To Do, 2 = In Progress, 3 = Done
 const todoTasks = computed(() =>
     props.tasks.filter(task => task.taskStatusId === 1)
-)
+);
 
 const inProgressTasks = computed(() =>
     props.tasks.filter(task => task.taskStatusId === 2)
-)
+);
 
 const doneTasks = computed(() =>
     props.tasks.filter(task => task.taskStatusId === 3)
-)
+);
 </script>
 
 <style scoped></style>

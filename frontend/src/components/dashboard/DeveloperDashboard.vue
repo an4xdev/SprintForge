@@ -109,55 +109,55 @@ const currentTask = ref({
     title: 'OAuth Login Implementation',
     description: 'Need to implement Google and Facebook login in the web application. Requires API integration and proper token handling.',
     project: 'Task Management System'
-})
+});
 
-const seconds = ref(0)
-const isTimerRunning = ref(false)
-const isPaused = ref(false)
-let timerInterval: number | null = null
+const seconds = ref(0);
+const isTimerRunning = ref(false);
+const isPaused = ref(false);
+let timerInterval: number | null = null;
 
 const timeDisplay = computed(() => {
-    const hours = Math.floor(seconds.value / 3600).toString().padStart(2, '0')
-    const minutes = Math.floor((seconds.value % 3600) / 60).toString().padStart(2, '0')
-    const secs = (seconds.value % 60).toString().padStart(2, '0')
-    return `${hours}:${minutes}:${secs}`
-})
+    const hours = Math.floor(seconds.value / 3600).toString().padStart(2, '0');
+    const minutes = Math.floor((seconds.value % 3600) / 60).toString().padStart(2, '0');
+    const secs = (seconds.value % 60).toString().padStart(2, '0');
+    return `${hours}:${minutes}:${secs}`;
+});
 
 const startTimer = () => {
-    isTimerRunning.value = true
-    isPaused.value = false
+    isTimerRunning.value = true;
+    isPaused.value = false;
     timerInterval = setInterval(() => {
-        seconds.value++
-    }, 1000)
+        seconds.value++;
+    }, 1000);
 }
 
 const pauseTimer = () => {
-    isTimerRunning.value = false
-    isPaused.value = true
+    isTimerRunning.value = false;
+    isPaused.value = true;
     if (timerInterval) {
-        clearInterval(timerInterval)
-        timerInterval = null
+        clearInterval(timerInterval);
+        timerInterval = null;
     }
 }
 
 const resumeTimer = () => {
-    startTimer()
+    startTimer();
 }
 
 const stopTimer = () => {
-    isTimerRunning.value = false
-    isPaused.value = false
+    isTimerRunning.value = false;
+    isPaused.value = false;
     if (timerInterval) {
-        clearInterval(timerInterval)
-        timerInterval = null
+        clearInterval(timerInterval);
+        timerInterval = null;
     }
-    seconds.value = 0
-    alert('Task completed. Work time has been saved.')
+    seconds.value = 0;
+    alert('Task completed. Work time has been saved.');
 }
 
 onUnmounted(() => {
     if (timerInterval) {
-        clearInterval(timerInterval)
+        clearInterval(timerInterval);
     }
 })
 </script>

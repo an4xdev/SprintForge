@@ -51,6 +51,16 @@ class ProjectsService {
             throw new Error('Failed to delete project');
         }
     }
+
+    async getCurrentProjectByManagerId(id: string, signal?: AbortSignal): Promise<string | null> {
+        try {
+            const response = await apiService.get<ApiResponse<string>>(`/projects/current/${id}`, signal);
+            return response.data || null;
+        } catch (error) {
+            projectsLogger.error('Error fetching current project by manager ID:', error);
+            throw new Error('Failed to fetch current project');
+        }
+    }
 }
 
 export default new ProjectsService();
