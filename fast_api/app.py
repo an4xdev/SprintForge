@@ -241,6 +241,19 @@ def get_last_active_sprint(managerId: UUID, db: Session=Depends(get_db)):
     }
     return ApiResponse(message="Sprint data for dashboard retrieved", data=sprint_data).model_dump()
 
+@app.get("/api/sprints/manager/{managerId}/last")
+def get_last_sprint_by_manager(managerId: UUID, db: Session=Depends(get_db)):
+    user = db.exec(select(Users).where(Users.Id == managerId)).first()
+    if not user:
+        raise ApiException(status_code=404, message="Manager not found")
+    if user.Role != "manager":
+        raise ApiException(status_code=403, message="User is not a manager")
+
+    statement = select(Sprints).where(Sprints.ManagerId == managerId)
+    sprint = db.exec(statement).first()
+    if not sprint:
+        raise ApiException(status_code=404, message="No sprint found")
+    return ApiResponse(message="Last sprint retrieved", data=sprint.Id).model_dump()
 
 @app.get("/api/sprints/manager/{managerId}")
 def get_sprint_by_manager(managerId: UUID, db: Session=Depends(get_db)):

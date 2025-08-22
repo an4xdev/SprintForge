@@ -199,6 +199,8 @@ import projectsService from '@/services/projectsService'
 import sprintsService from '@/services/sprintsService'
 import authService from '@/services/authService'
 import type { Task } from '@/types'
+import { DevelopmentLogger } from '@/utils/logger'
+import { no } from 'vuetify/locale'
 
 const route = useRoute();
 const router = useRouter();
@@ -222,7 +224,12 @@ const noProjectAssigned = ref(false);
 const currentSprintId = ref<string | null>(null);
 const noSprintAssigned = ref(false);
 
+const logger = new DevelopmentLogger({ prefix: '[ManagerTasksView]' });
+
 const loadSprintWithDevTasks = async () => {
+    logger.log("No sprint assigned:", noSprintAssigned.value);
+    logger.log("Current sprint ID:", currentSprintId.value);
+    logger.log("Sprint with dev tasks:", sprintWithDevTasks.value);
     if (noSprintAssigned.value) return;
     if (!currentSprintId.value) return;
     if (sprintWithDevTasks.value.length > 0) return;
@@ -300,20 +307,22 @@ onMounted(async () => {
         activeTab.value = route.query.tab;
     }
     try {
+
         const currentUser = authService.getStoredUser();
 
         const currentProject = await projectsService.getCurrentProjectByManagerId(currentUser!.id);
-        if (!currentProject || !(currentProject as any).id) {
+
+        if (!currentProject) {
             noProjectAssigned.value = true;
         } else {
-            projectId.value = (currentProject as any).id;
+            projectId.value = currentProject;
         }
         try {
-            const sprint = await sprintsService.getByManager(currentUser!.id);
-            if (!sprint) {
+            const sprintId = await sprintsService.getByManagerLast(currentUser!.id);
+            if (!sprintId) {
                 noSprintAssigned.value = true;
             } else {
-                currentSprintId.value = sprint.id;
+                currentSprintId.value = sprintId;
                 noSprintAssigned.value = false;
             }
         } catch (err) {

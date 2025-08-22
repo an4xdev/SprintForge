@@ -52,13 +52,23 @@ class SprintsService {
         }
     }
 
-    async getByManager(managerId: string, signal?: AbortSignal): Promise<Sprint> {
+    async getByManager(managerId: string, signal?: AbortSignal): Promise<Sprint[]> {
         try {
-            const response = await apiService.get<ApiResponse<Sprint>>(`/sprints/manager/${managerId}`, signal);
+            const response = await apiService.get<ApiResponse<Sprint[]>>(`/sprints/manager/${managerId}`, signal);
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error fetching sprints by manager:', error);
             throw new Error('Failed to fetch sprints by manager');
+        }
+    }
+
+    async getByManagerLast(managerId: string, signal?: AbortSignal): Promise<string> {
+        try {
+            const response = await apiService.get<ApiResponse<string>>(`/sprints/manager/${managerId}/last`, signal);
+            return response.data;
+        } catch (error) {
+            sprintsLogger.error('Error fetching last sprint by manager:', error);
+            throw new Error('Failed to fetch last sprint by manager');
         }
     }
 }
