@@ -111,4 +111,12 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
         return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>?>>(HttpMethod.Get,
             $"/tasks/assigned/sprint/{id}", ServiceType.LaravelService);
     }
+
+    [Authorize(Roles = "developer")]
+    [HttpGet("developer/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<TaskDto>>>> GetTasksByDeveloper(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>>>(HttpMethod.Get, $"/tasks/developer/{id}", ServiceType.LaravelService);
+    }
+
 }

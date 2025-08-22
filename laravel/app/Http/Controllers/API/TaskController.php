@@ -264,4 +264,21 @@ class TaskController extends Controller
         $response = ApiResponse::Success('Tasks retrieved successfully', $tasks);
         return response()->json($response);
     }
+
+    /**
+     * Get tasks assigned to developer
+     */
+    public function getTasksAssignedToDeveloper(string $developerId)
+    {
+        $tasks = Task::where('DeveloperId', $developerId)
+            ->get();
+
+        if ($tasks->isEmpty()) {
+            $response = ApiResponse::Success('No tasks found for this developer', []);
+            return response()->json($response);
+        }
+
+        $response = ApiResponse::Success('Tasks retrieved successfully', $tasks);
+        return response()->json($response);
+    }
 }
