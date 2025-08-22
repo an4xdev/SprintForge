@@ -1,11 +1,3 @@
-export interface EmployeeTask {
-    id: number;
-    name: string;
-    hours: number;
-    minutes: number;
-    seconds: number;
-}
-
 export interface ApiResponse<T> {
     data: T;
     message: string;
@@ -124,4 +116,17 @@ export interface ManagerTaskDto {
     statusId: number;
     statusName: string;
     count: number;
+}
+
+export type DeveloperTaskStatus = 'NONE' | 'STARTED' | 'PAUSED' | 'STOPPED';
+
+export interface DeveloperTask {
+    id: string;
+    name: string;
+    description: string;
+    project: string;
+    status: DeveloperTaskStatus;
+    hours: number;
+    minutes: number;
+    seconds: number;
 }

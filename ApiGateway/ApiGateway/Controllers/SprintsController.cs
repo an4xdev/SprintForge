@@ -55,4 +55,10 @@ public class SprintsController(ISendRequestService sendRequestService) : Control
         return await sendRequestService.SendRequestAsync<ApiResponse<List<SprintDto>>>(HttpMethod.Get,
             $"/sprints/manager/{id}", ServiceType.FastApiService);
     }
+
+    [HttpGet("manager/{id:guid}/last")]
+    public async Task<ActionResult<ApiResponse<Guid>>> GetSprintsByManagerLast(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<Guid>>(HttpMethod.Get, $"/sprints/manager/{id}/last", ServiceType.FastApiService);
+    }
 }

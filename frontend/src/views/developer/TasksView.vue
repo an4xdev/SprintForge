@@ -2,24 +2,75 @@
     <v-layout>
         <v-main class="min-h-screen">
             <v-container fluid class="pa-6">
-                <h1 class="text-h4 mb-6">All Tasks</h1>
+                <h1 class="text-h4 mb-6">Tasks Management</h1>
 
-                <v-card>
-                    <v-card-title class="text-h5">My Tasks</v-card-title>
-                    <v-card-text>
-                        <div class="text-center py-12">
-                            <v-icon size="64" color="primary" class="mb-4">mdi-format-list-bulleted</v-icon>
-                            <div class="text-h6 mb-2">Task List</div>
-                            <div class="text-body-2 text-medium-emphasis">No tasks to display at this time.</div>
-                        </div>
-                    </v-card-text>
-                </v-card>
+                <div class="py-1">
+                    <v-sheet border rounded>
+                        <v-data-table :headers="headers" :hide-default-footer="tasks !== null && tasks.length < 11"
+                            :items="tasks ?? []">
+                            <template v-slot:top>
+                                <v-toolbar flat>
+                                    <v-toolbar-title>
+                                        <v-icon color="medium-emphasis" icon="mdi-format-list-bulleted" size="x-small"
+                                            start></v-icon>
+                                        Tasks
+                                    </v-toolbar-title>
+                                </v-toolbar>
+                            </template>
+
+                            <template v-slot:item.name="{ value }">
+                                <v-chip :text="value" border="thin opacity-25" prepend-icon="mdi-format-list-bulleted"
+                                    label>
+                                    <template v-slot:prepend>
+                                        <v-icon color="medium-emphasis"></v-icon>
+                                    </template>
+                                </v-chip>
+                            </template>
+                            <template v-slot:no-data>
+                                <v-btn prepend-icon="mdi-backup-restore" rounded="lg" text="Refresh" variant="text"
+                                    border @click="loadTasks"></v-btn>
+                            </template>
+                        </v-data-table>
+                    </v-sheet>
+                </div>
             </v-container>
         </v-main>
     </v-layout>
 </template>
 
 <script setup lang="ts">
+import authService from '@/services/authService';
+import tasksService from '@/services/tasksService';
+import type { Task } from '@/types';
+import { DevelopmentLogger } from '@/utils/logger';
+import { onMounted, ref, toRef } from 'vue';
+
+const logger = new DevelopmentLogger({ prefix: '[TasksView]' });
+
+const headers = [
+    { title: 'Name', key: 'name', align: "start" as const },
+    { title: 'Description', key: 'description' },
+    { title: 'Developer id', key: 'developerId' },
+    { title: 'Sprint id', key: 'sprintId' },
+    { title: 'Task Status id', key: 'taskStatusId' },
+    { title: 'Task Type id', key: 'taskTypeId' }
+];
+
+const tasks = ref<Task[] | null>(null);
+
+onMounted(async () => {
+    await loadTasks();
+})
+
+async function loadTasks() {
+    try {
+        const currentUser = authService.getStoredUser();
+        tasks.value = await tasksService.getTasksByDeveloper(currentUser!.id);
+    } catch (error) {
+        console.error('Error loading tasks:', error);
+    }
+}
+
 </script>
 
 <style scoped></style>

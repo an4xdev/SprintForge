@@ -1,6 +1,6 @@
 import { tasksLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, Task } from '@/types';
+import type { ApiResponse, Task, DeveloperTask } from '@/types';
 
 class TasksService {
     async getTasks(signal?: AbortSignal): Promise<Task[]> {
@@ -80,6 +80,30 @@ class TasksService {
             tasksLogger.error('Error fetching assigned tasks by sprint:', error);
             throw new Error('Failed to fetch assigned tasks by sprint');
         }
+    }
+
+    async getTasksByDeveloper(developerId: string, signal?: AbortSignal): Promise<Task[]> {
+        try {
+            const response = await apiService.get<ApiResponse<Task[]>>(`/tasks/developer/${developerId}`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching tasks by developer:', error);
+            throw new Error('Failed to fetch tasks by developer');
+        }
+
+    }
+
+    mapTaskToDeveloperTask(task: Task, projectName: string = 'Unknown Project'): DeveloperTask {
+        return {
+            id: task.id,
+            name: task.name,
+            description: task.description,
+            project: projectName,
+            status: 'NONE',
+            hours: 0,
+            minutes: 0,
+            seconds: 0
+        };
     }
 }
 
