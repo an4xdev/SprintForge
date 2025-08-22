@@ -200,7 +200,6 @@ import sprintsService from '@/services/sprintsService'
 import authService from '@/services/authService'
 import type { Task } from '@/types'
 import { DevelopmentLogger } from '@/utils/logger'
-import { no } from 'vuetify/locale'
 
 const route = useRoute();
 const router = useRouter();
