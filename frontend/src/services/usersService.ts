@@ -35,6 +35,16 @@ class UsersService {
         }
     }
 
+    async getUsersByRole(role: string, signal?: AbortSignal): Promise<User[]> {
+        try {
+            const response = await apiService.get<ApiResponse<User[]>>(`/users/role/${role}`, signal);
+            return response.data;
+        } catch (error) {
+            profileLogger.error('Error fetching users by role:', error);
+            throw new Error('Failed to fetch users by role');
+        }
+    }
+
     async updateAvatar(file: File, userId: string, signal?: AbortSignal): Promise<AvatarChangeResponse | object> {
         try {
             const formData = new FormData();

@@ -49,6 +49,14 @@ public class UsersController(IUserService userService, IFileService fileService)
         return count.ToActionResult();
     }
 
+    [HttpGet("role/{role}")]
+    public async Task<ActionResult<ApiResponse<List<UserResponse>>>> GetUsersByEole(string role)
+    {
+        var users = await userService.GetAllUsersByRole(role);
+
+        return users.ToActionResult();
+    }
+
     [HttpPost("avatar")]
     public async Task<ActionResult<ApiResponse<AvatarResponse>>> UpdateAvatar(
         [FromForm] IFormFile file,

@@ -119,6 +119,7 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
         {
             return Result<UserResponse?>.NotFound("User not found");
         }
+
         var user = await context.Users.FindAsync(id);
 
         return Result<UserResponse?>.Success(new UserResponse
@@ -130,6 +131,30 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
             FirstName = user.FirstName,
             LastName = user.LastName
         }, "Successfully retrieved user");
+    }
+
+    public async Task<Result<List<UserResponse>>> GetAllUsersByRole(string role)
+    {
+        List<string> roles = ["admin", "manager", "developer"];
+        if (!roles.Contains(role))
+        {
+            return Result<List<UserResponse>>.NotFound("Unknown role");
+        }
+
+        var users = await context.Users
+            .Where(u => u.Role == role)
+            .Select(a => new UserResponse
+            {
+                Id = a.Id,
+                Username = a.Username,
+                Avatar = a.Avatar,
+                Email = a.Email,
+                FirstName = a.FirstName,
+                LastName = a.LastName
+            }).ToListAsync();
+
+
+        return Result<List<UserResponse>>.Success(users, $"Successfully retrieved all users by role: {role}");
     }
 
     private string FileServerPath => $"{configuration["MINIO_PUBLIC_URL"]}/{configuration["MINIO_BUCKET"]}";

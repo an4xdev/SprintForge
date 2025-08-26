@@ -17,4 +17,6 @@ public interface IUserService
     Task<string> UpdateAvatar(Guid id, string path);
 
     Task<Result<UserResponse?>> GetUser(Guid id);
+
+    Task<Result<List<UserResponse>>> GetAllUsersByRole(string role);
 }

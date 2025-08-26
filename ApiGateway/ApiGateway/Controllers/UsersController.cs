@@ -50,6 +50,14 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
             ServiceType.AuthService);
     }
 
+    [HttpGet("role/{role}")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<List<UserResponse>>>> GetUsersByEole(string role)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<UserResponse>>>(HttpMethod.Get, $"/users/role/{role}",
+        ServiceType.AuthService);
+    }
+
     [HttpPost("avatar")]
     public async Task<ActionResult<ApiResponse<AvatarResponse>>> UpdateAvatar([FromForm] IFormFile? file,
         [FromForm] Guid userId)
