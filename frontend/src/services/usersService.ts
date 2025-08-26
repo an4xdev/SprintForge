@@ -1,13 +1,13 @@
 import { profileLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, AvatarChangeResponse, Profile, RegisterCredentials } from '@/types';
+import type { ApiResponse, AvatarChangeResponse, Profile, RegisterCredentials, User } from '@/types';
 import axios from 'axios';
 
 class UsersService {
 
-    async getUsers(signal?: AbortSignal): Promise<Profile[]> {
+    async getUsers(signal?: AbortSignal): Promise<User[]> {
         try {
-            const response = await apiService.get<ApiResponse<Profile[]>>('/users', signal);
+            const response = await apiService.get<ApiResponse<User[]>>('/users', signal);
             return response.data;
         } catch (error) {
             profileLogger.error('Error fetching users:', error);
@@ -17,7 +17,7 @@ class UsersService {
 
     async getProfile(id: string, signal?: AbortSignal): Promise<Profile> {
         try {
-            const response = await apiService.get<ApiResponse<Profile>>(`/users/${id}`, signal);
+            const response = await apiService.get<ApiResponse<Profile>>(`/users/profile/${id}`, signal);
             return response.data;
         } catch (error) {
             profileLogger.error('Error fetching profile:', error);
@@ -25,9 +25,9 @@ class UsersService {
         }
     }
 
-    async registerUser(credentials: RegisterCredentials, signal?: AbortSignal): Promise<Profile> {
+    async registerUser(credentials: RegisterCredentials, signal?: AbortSignal): Promise<User> {
         try {
-            const response = await apiService.post<ApiResponse<Profile>>('/users', credentials, signal);
+            const response = await apiService.post<ApiResponse<User>>('/users', credentials, signal);
             return response.data;
         } catch (error) {
             profileLogger.error('Error registering user:', error);
