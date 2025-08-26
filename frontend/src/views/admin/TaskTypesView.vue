@@ -90,7 +90,7 @@
 import type { TaskType } from '@/types';
 import { useAsyncData } from '@/composables/useAsyncData';
 import { DevelopmentLogger } from '@/utils/logger';
-import { ref, toRef } from 'vue';
+import { ref, computed } from 'vue';
 import taskTypesService from '@/services/taskTypesService';
 
 const logger = new DevelopmentLogger({ prefix: '[TaskTypesView]' });
@@ -103,8 +103,6 @@ const headers = [
 
 const {
     data: taskTypes,
-    loading,
-    error,
     load: refreshTaskTypes
 } = useAsyncData<TaskType[]>({
     fetchFunction: (signal) => taskTypesService.getTaskTypes(signal),
@@ -115,6 +113,9 @@ const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
 const formModel = ref(createNewRecord());
 const taskTypeNameToDelete = ref('');
+const taskTypeIdToDelete = ref<number | null>(null);
+const saving = ref(false);
+const deleting = ref(false);
 
 function createNewRecord() {
     return {
@@ -123,7 +124,7 @@ function createNewRecord() {
     } as TaskType;
 }
 
-const isEditing = toRef(() => !!formModel.value.id)
+const isEditing = computed(() => !!formModel.value.id && formModel.value.id !== 0)
 
 function addNewTaskType() {
     formModel.value = createNewRecord();
@@ -145,29 +146,32 @@ function showDeleteConfirmation(id: number) {
     if (taskType) {
         logger.log('Delete task type:', taskType);
         taskTypeNameToDelete.value = taskType.name;
+        taskTypeIdToDelete.value = taskType.id;
         confirmDeleteDialog.value = true;
     } else {
         logger.error(`Company with ID ${id} not found.`);
     }
 }
 
-function confirmDelete() {
-
-    if (taskTypes.value == null) {
-        logger.error('Task Types data is not loaded yet.');
-        return;
-    }
-
-    if (!taskTypeNameToDelete.value) {
+async function confirmDelete() {
+    if (taskTypeIdToDelete.value == null) {
         logger.error('No task type selected for deletion.');
         return;
     }
 
-    taskTypes.value = taskTypes.value.filter(tt => tt.name !== taskTypeNameToDelete.value);
-    taskTypeNameToDelete.value = '';
-
-    logger.log(`Confirmed deletion of task type: ${taskTypeNameToDelete.value}`);
-    confirmDeleteDialog.value = false;
+    deleting.value = true;
+    try {
+        await taskTypesService.deleteTaskType(taskTypeIdToDelete.value);
+        await refreshTaskTypes();
+        logger.log(`Deleted task type id=${taskTypeIdToDelete.value}`);
+    } catch (err) {
+        logger.error('Failed to delete task type:', err);
+    } finally {
+        deleting.value = false;
+        taskTypeIdToDelete.value = null;
+        taskTypeNameToDelete.value = '';
+        confirmDeleteDialog.value = false;
+    }
 }
 
 function cancelDelete() {
@@ -175,28 +179,29 @@ function cancelDelete() {
     taskTypeNameToDelete.value = '';
 }
 
-function save() {
-    if (taskTypes.value === null) {
-        logger.error('Task Types data is not loaded yet.');
-        return;
-    }
-
+async function save() {
     if (!formModel.value.name) {
         logger.error('Task Type name is required.');
         return;
     }
 
-    if (isEditing.value) {
-        const index = taskTypes.value.findIndex(tt => tt.id === formModel.value.id)
-        taskTypes.value[index] = formModel.value
+    saving.value = true;
+    try {
+        if (isEditing.value) {
+            await taskTypesService.updateTaskType(formModel.value.id, { name: formModel.value.name });
+            logger.log('Updated task type', formModel.value);
+        } else {
+            await taskTypesService.createTaskType({ name: formModel.value.name });
+            logger.log('Created task type', formModel.value.name);
+        }
 
-    } else {
-        formModel.value.id = taskTypes.value.length + 1
-        taskTypes.value.push(formModel.value)
-
+        await refreshTaskTypes();
+        newEditDialog.value = false;
+    } catch (err) {
+        logger.error('Failed to save task type:', err);
+    } finally {
+        saving.value = false;
     }
-
-    newEditDialog.value = false
 }
 
 </script>
