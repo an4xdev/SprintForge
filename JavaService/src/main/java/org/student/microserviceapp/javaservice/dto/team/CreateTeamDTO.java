@@ -1,5 +1,6 @@
 package org.student.microserviceapp.javaservice.dto.team;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -19,7 +20,10 @@ public class CreateTeamDTO {
     @NotBlank(message = "Team name cannot be blank")
     public String name;
 
-    public Team toTeam() {
+    @Nullable
+    public UUID projectId;
+
+    public Team toTeamPartial() {
         Team team = new Team();
         team.setName(name);
         return team;
