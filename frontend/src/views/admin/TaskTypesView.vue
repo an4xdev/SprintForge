@@ -132,24 +132,32 @@ function addNewTaskType() {
 }
 
 function editTaskType(id: number) {
-    const taskType = taskTypes.value?.find(tt => tt.id === id);
-    if (taskType) {
-        formModel.value = { ...taskType };
-        newEditDialog.value = true;
-    } else {
-        logger.error(`Task Type with ID ${id} not found.`);
+    try {
+        const taskType = taskTypes.value?.find(tt => tt.id === id);
+        if (taskType) {
+            formModel.value = { ...taskType };
+            newEditDialog.value = true;
+        } else {
+            logger.error(`Task Type with ID ${id} not found (API returned empty).`);
+        }
+    } catch (err) {
+        logger.error(`Failed to load task type id=${id}:`, err);
     }
 }
 
 function showDeleteConfirmation(id: number) {
-    const taskType = taskTypes.value?.find(tt => tt.id === id);
-    if (taskType) {
-        logger.log('Delete task type:', taskType);
-        taskTypeNameToDelete.value = taskType.name;
-        taskTypeIdToDelete.value = taskType.id;
-        confirmDeleteDialog.value = true;
-    } else {
-        logger.error(`Company with ID ${id} not found.`);
+    try {
+        const taskType = taskTypes.value?.find(tt => tt.id === id);
+        if (taskType) {
+            logger.log('Delete task type:', taskType);
+            taskTypeNameToDelete.value = taskType.name;
+            taskTypeIdToDelete.value = taskType.id;
+            confirmDeleteDialog.value = true;
+        } else {
+            logger.error(`Task Type with ID ${id} not found (API returned empty).`);
+        }
+    } catch (err) {
+        logger.error(`Failed to load task type for deletion id=${id}:`, err);
     }
 }
 

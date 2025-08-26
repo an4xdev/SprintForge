@@ -1,6 +1,6 @@
 import axios, { type AxiosResponse } from 'axios';
 import { jwtDecode } from 'jwt-decode';
-import type { ApiResponse, AuthResponse, JwtPayload, LoginCredentials, User } from '@/types';
+import type { ApiResponse, AuthResponse, JwtPayload, LoginCredentials, MinimalUser, User } from '@/types';
 import { authLogger } from '@/utils/logger';
 
 class AuthService {
@@ -48,18 +48,18 @@ class AuthService {
         return userStr ? JSON.parse(userStr) : null;
     }
 
-    mapClaims(decoded: any): User {
+    mapClaims(decoded: any): MinimalUser & { role: string } {
         const mappedUser = {
             id: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] || '',
             username: decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || '',
-            role: decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+            role: decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || ''
         };
         authLogger.debug('Mapping claims input', decoded);
         authLogger.debug('Mapping claims output', mappedUser);
         return mappedUser;
     }
 
-    parseTokenData(token: string): User {
+    parseTokenData(token: string): MinimalUser & { role: string } {
         try {
             const decoded = jwtDecode(token);
             authLogger.debug('Parsed user data from token', decoded);
