@@ -2,11 +2,9 @@
 
 namespace SharedObjects.DTOs.Responses;
 
-public class UserResponse
+public class UserResponse : ProfileResponse
 {
-    [JsonPropertyName("id")] public Guid Id { get; set; }
-
-    [JsonPropertyName("username")] public string Username { get; set; } = string.Empty;
-
-    [JsonPropertyName("avatar")] public string? Avatar { get; set; }
+    [JsonPropertyName("email")] public string Email { get; set; } = string.Empty;
+    [JsonPropertyName("firstName")] public string FirstName { get; set; } = string.Empty;
+    [JsonPropertyName("lastName")] public string LastName { get; set; } = string.Empty;
 }

@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.student.microserviceapp.javaservice.dto.team.CreateTeamDTO;
 import org.student.microserviceapp.javaservice.dto.team.TeamDTO;
 import org.student.microserviceapp.javaservice.models.Roles;
+import org.student.microserviceapp.javaservice.repositories.ProjectRepository;
 import org.student.microserviceapp.javaservice.repositories.TeamRepository;
 import org.student.microserviceapp.javaservice.responses.Result;
 import org.student.microserviceapp.javaservice.services.user.IUserService;
@@ -17,10 +18,12 @@ import java.util.UUID;
 public class TeamService implements ITeamService {
     private final TeamRepository teamRepository;
     private final IUserService userService;
+    private final ProjectRepository projectRepository;
 
-    public TeamService(TeamRepository teamRepository, IUserService userService) {
+    public TeamService(TeamRepository teamRepository, IUserService userService, ProjectRepository projectRepository) {
         this.teamRepository = teamRepository;
         this.userService = userService;
+        this.projectRepository = projectRepository;
     }
 
     @Override
@@ -61,9 +64,20 @@ public class TeamService implements ITeamService {
             return Result.badRequest("User is not a manager");
         }
 
-        var team = createTeamDTO.toTeam();
+        if (createTeamDTO.projectId != null) {
+            var project = projectRepository.findById(createTeamDTO.projectId);
+            if (project.isEmpty()) {
+                return Result.notFound("Project not found");
+            }
+        }
+
+        var team = createTeamDTO.toTeamPartial();
         team.setId(UUID.randomUUID());
         team.setManager(existingUser);
+        if (createTeamDTO.projectId != null) {
+            var project = projectRepository.findById(createTeamDTO.projectId);
+            project.ifPresent(team::setProject);
+        }
         teamRepository.save(team);
         return Result.success(team.getId(), "Team created successfully");
     }
@@ -93,6 +107,14 @@ public class TeamService implements ITeamService {
 
         if (createTeamDTO.getName() != null && !createTeamDTO.getName().isBlank()) {
             existingTeam.setName(createTeamDTO.getName());
+        }
+
+        if (createTeamDTO.projectId != null) {
+            var project = projectRepository.findById(createTeamDTO.projectId);
+            if (project.isEmpty()) {
+                return Result.notFound("Project not found");
+            }
+            existingTeam.setProject(project.get());
         }
 
         teamRepository.save(existingTeam);

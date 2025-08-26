@@ -4,6 +4,6 @@ namespace SharedObjects.DTOs.Requests;
 
 public class RefreshTokenRequestDto
 {
-    [JsonPropertyName("userId")] public Guid UserId { get; set; }
+    [JsonPropertyName("userId")] public required Guid UserId { get; set; }
     [JsonPropertyName("refreshToken")] public required string RefreshToken { get; set; }
 }

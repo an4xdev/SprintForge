@@ -58,4 +58,19 @@ public class User {
     @Column(name = "\"NeedResetPassword\"", nullable = false)
     private Boolean needResetPassword = false;
 
+    @NotNull
+    @ColumnDefault("''")
+    @Column(name = "\"Email\"", nullable = false, length = Integer.MAX_VALUE)
+    private String email;
+
+    @NotNull
+    @ColumnDefault("''")
+    @Column(name = "\"FirstName\"", nullable = false, length = Integer.MAX_VALUE)
+    private String firstName;
+
+    @NotNull
+    @ColumnDefault("''")
+    @Column(name = "\"LastName\"", nullable = false, length = Integer.MAX_VALUE)
+    private String lastName;
+
 }

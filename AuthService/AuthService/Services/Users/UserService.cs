@@ -25,7 +25,10 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
             Username = request.Username,
             PasswordHash = string.Empty,
             PasswordSalt = salt,
-            Role = request.Role
+            Role = request.Role,
+            Email = request.Email,
+            FirstName = request.FirstName,
+            LastName = request.LastName
         };
         var hashedPassword = new PasswordHasher<User>()
             .HashPassword(user, salt + request.Password);
@@ -40,6 +43,9 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
             Id = user.Id,
             Username = user.Username,
             Avatar = user.Avatar,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
         };
 
         return Result<UserResponse>.Success(result, "Registration Successful");
@@ -60,23 +66,26 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
             Id = u.Id,
             Username = u.Username,
             Avatar = u.Avatar,
+            Email = u.Email,
+            FirstName = u.FirstName,
+            LastName = u.LastName,
         }).ToListAsync();
         return Result<List<UserResponse>>.Success(users, "Successfully retrieved all users");
     }
 
-    public async Task<Result<UserResponse?>> Get(Guid id)
+    public async Task<Result<ProfileResponse?>> GetProfile(Guid id)
     {
         var user = await context.Users.FindAsync(id);
         if (user == null)
         {
-            return Result<UserResponse?>.NotFound("User not found");
+            return Result<ProfileResponse?>.NotFound("User not found");
         }
 
-        return Result<UserResponse?>.Success(new UserResponse
+        return Result<ProfileResponse?>.Success(new ProfileResponse
         {
             Id = user.Id,
             Avatar = user.Avatar,
-            Username = user.Username,
+            Username = user.Username
         }, "Successfully retrieved profile");
     }
 
@@ -102,6 +111,25 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
         await context.SaveChangesAsync();
 
         return avatar;
+    }
+
+    public async Task<Result<UserResponse?>> GetUser(Guid id)
+    {
+        if (!await IsUserInDatabase(id))
+        {
+            return Result<UserResponse?>.NotFound("User not found");
+        }
+        var user = await context.Users.FindAsync(id);
+
+        return Result<UserResponse?>.Success(new UserResponse
+        {
+            Id = user!.Id,
+            Avatar = user.Avatar,
+            Username = user.Username,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName
+        }, "Successfully retrieved user");
     }
 
     private string FileServerPath => $"{configuration["MINIO_PUBLIC_URL"]}/{configuration["MINIO_BUCKET"]}";

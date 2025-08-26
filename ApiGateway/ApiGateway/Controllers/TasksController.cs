@@ -75,7 +75,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
 
     private readonly List<string> _actions = ["start", "pause", "stop"];
 
-    [Authorize(Roles = "developer")]
+    [Authorize(Roles = "admin,developer")]
     [HttpPut("{id:guid}/{command}")]
     public async Task<ActionResult<ApiResponse<TaskActionResponseDto>>> ActionOnTask(Guid id, string command)
     {
@@ -89,7 +89,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
             ServiceType.FastApiService);
     }
 
-    [Authorize(Roles = "manager")]
+    [Authorize(Roles = "admin,manager")]
     [HttpGet("unassigned/project/{id:guid}")]
     public async Task<ActionResult<ApiResponse<List<TaskDto>?>>> GetUnassignedTasksByProject(Guid id)
     {
@@ -97,14 +97,14 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
             $"/tasks/unassigned/project/{id}", ServiceType.LaravelService);
     }
 
-    [Authorize(Roles = "manager")]
+    [Authorize(Roles = "admin,manager")]
     [HttpGet("unassigned/sprint/{id:guid}")]
     public async Task<ActionResult<ApiResponse<List<TaskDto>?>>> GetUnassignedTasksBySprint(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>?>>(HttpMethod.Get, $"/tasks/unassigned/sprint/{id}", ServiceType.LaravelService);
     }
 
-    [Authorize(Roles = "manager")]
+    [Authorize(Roles = "admin,manager")]
     [HttpGet("assigned/sprint/{id:guid}")]
     public async Task<ActionResult<ApiResponse<List<TaskDto>?>>> GetAssignedTasksBySprint(Guid id)
     {
@@ -112,11 +112,18 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
             $"/tasks/assigned/sprint/{id}", ServiceType.LaravelService);
     }
 
-    [Authorize(Roles = "developer")]
+    [Authorize(Roles = "admin,developer")]
     [HttpGet("developer/{id:guid}")]
     public async Task<ActionResult<ApiResponse<List<TaskDto>>>> GetTasksByDeveloper(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskDto>>>(HttpMethod.Get, $"/tasks/developer/{id}", ServiceType.LaravelService);
     }
 
+    [Authorize(Roles = "admin,manager")]
+    [HttpGet("sprint/{id:guid}/count")]
+    public async Task<ActionResult<ApiResponse<List<ManagerTaskDto>>>> GetTasksBySprintCount(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<ManagerTaskDto>>>(HttpMethod.Get,
+            $"/tasks/sprint/{id}/count", ServiceType.LaravelService);
+    }
 }

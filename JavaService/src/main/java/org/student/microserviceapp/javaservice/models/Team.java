@@ -29,14 +29,12 @@ public class Team {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    @ColumnDefault("'00000000-0000-0000-0000-000000000000'")
-    @JoinColumn(name = "\"ProjectId\"", nullable = false)
-    private Project project;
-
-    @NotNull
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "\"ManagerId\"", nullable = false)
     private User manager;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @ColumnDefault("'00000000-0000-0000-0000-000000000000'")
+    @JoinColumn(name = "\"ProjectId\"")
+    private Project project;
 
 }

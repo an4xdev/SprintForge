@@ -15,4 +15,9 @@ public class User
     public bool NeedResetPassword { get; set; }
 
     public string? Avatar { get; set; }
+
+    public required string Email { get; set; } = string.Empty;
+
+    public required string FirstName { get; set; } = string.Empty;
+    public required string LastName { get; set; } = string.Empty;
 }

@@ -73,6 +73,16 @@
                                     <v-col cols="12">
                                         <v-text-field v-model="editFormModel.username" label="Username"></v-text-field>
                                     </v-col>
+                                    <v-col cols="12">
+                                        <v-text-field v-model="editFormModel.email" label="Email"></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <v-text-field v-model="editFormModel.firstName"
+                                            label="First Name"></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <v-text-field v-model="editFormModel.lastName" label="Last Name"></v-text-field>
+                                    </v-col>
                                 </v-row>
                             </template>
 
@@ -110,7 +120,7 @@
 <script setup lang="ts">
 import { useAsyncData } from '@/composables/useAsyncData';
 import usersService from '@/services/usersService';
-import type { Profile, RegisterCredentials } from '@/types';
+import type { Profile, RegisterCredentials, User } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref } from 'vue';
 
@@ -119,6 +129,9 @@ const logger = new DevelopmentLogger({ prefix: '[UsersView]' });
 const headers = [
     { title: 'Username', key: 'username', align: "start" as const },
     { title: 'ID', key: 'id' },
+    { title: 'Email', key: 'email' },
+    { title: 'First Name', key: 'firstName' },
+    { title: 'Last Name', key: 'lastName' },
     { title: 'Avatar', key: 'avatar' },
     { title: 'Actions', key: 'actions', align: 'end' as const, sortable: false }
 ];
@@ -126,7 +139,7 @@ const headers = [
 const {
     data: users,
     load: refreshUsers
-} = useAsyncData<Profile[]>({
+} = useAsyncData<User[]>({
     fetchFunction: (signal) => usersService.getUsers(signal),
     loggerPrefix: '[UsersView]'
 });
@@ -151,7 +164,10 @@ function createNewEditRecord() {
         id: '',
         username: '',
         avatar: null,
-    } as Profile;
+        email: '',
+        firstName: '',
+        lastName: '',
+    } as User;
 }
 
 function addNewUser() {
@@ -235,14 +251,18 @@ function save() {
             return;
         }
 
-        // new profile from registration data
-        const newProfile: Profile = {
+        // new user from registration data
+        const newUser: User = {
             id: `${Date.now()}`,
             username: registrationFormModel.value.username,
-            avatar: null
+            avatar: null,
+            role: registrationFormModel.value.role || 'developer',
+            email: '',
+            firstName: '',
+            lastName: '',
         };
 
-        users.value.push(newProfile);
+        users.value.push(newUser);
     }
 
     newEditDialog.value = false;

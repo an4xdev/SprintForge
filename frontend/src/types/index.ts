@@ -68,6 +68,12 @@ export interface Profile {
     avatar: string | null;
 }
 
+export interface User extends Profile {
+    email: string;
+    firstName: string;
+    lastName: string;
+}
+
 export interface AvatarChangeResponse {
     path: string;
 }
