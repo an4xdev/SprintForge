@@ -91,7 +91,7 @@ import companyService from '@/services/companyService';
 import type { Company } from '@/types';
 import { useAsyncData } from '@/composables/useAsyncData';
 import { DevelopmentLogger } from '@/utils/logger';
-import { ref, toRef } from 'vue';
+import { ref, computed } from 'vue';
 
 const logger = new DevelopmentLogger({ prefix: '[CompaniesView]' });
 
@@ -103,8 +103,6 @@ const headers = [
 
 const {
     data: companies,
-    loading,
-    error,
     load: refreshCompanies
 } = useAsyncData<Company[]>({
     fetchFunction: (signal) => companyService.getCompanies(signal),
@@ -115,6 +113,7 @@ const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
 const formModel = ref(createNewRecord());
 const companyNameToDelete = ref('');
+const companyIdToDelete = ref<number | null>(null);
 
 function createNewRecord() {
     return {
@@ -123,7 +122,7 @@ function createNewRecord() {
     } as Company;
 }
 
-const isEditing = toRef(() => !!formModel.value.id)
+const isEditing = computed(() => !!formModel.value.id);
 
 function addNewCompany() {
     formModel.value = createNewRecord();
@@ -145,58 +144,57 @@ function showDeleteConfirmation(id: number) {
     if (company) {
         logger.log('Delete company:', company);
         companyNameToDelete.value = company.name;
+        companyIdToDelete.value = company.id;
         confirmDeleteDialog.value = true;
     } else {
         logger.error(`Company with ID ${id} not found.`);
     }
 }
 
-function confirmDelete() {
-
-    if (companies.value == null) {
-        logger.error('Companies data is not loaded yet.');
-        return;
-    }
-
-    if (!companyNameToDelete.value) {
+async function confirmDelete() {
+    if (companyIdToDelete.value == null) {
         logger.error('No company selected for deletion.');
         return;
     }
 
-    companies.value = companies.value.filter(c => c.name !== companyNameToDelete.value);
-    companyNameToDelete.value = '';
-
-    logger.log(`Confirmed deletion of company: ${companyNameToDelete.value}`);
-    confirmDeleteDialog.value = false;
+    try {
+        await companyService.deleteCompany(companyIdToDelete.value);
+        await refreshCompanies();
+        logger.log(`Confirmed deletion of company id: ${companyIdToDelete.value}`);
+    } catch (error) {
+        logger.error('Failed to delete company:', error);
+    } finally {
+        companyIdToDelete.value = null;
+        companyNameToDelete.value = '';
+        confirmDeleteDialog.value = false;
+    }
 }
 
 function cancelDelete() {
     confirmDeleteDialog.value = false;
     companyNameToDelete.value = '';
+    companyIdToDelete.value = null;
 }
 
-function save() {
-    if (companies.value === null) {
-        logger.error('Companies data is not loaded yet.');
-        return;
-    }
-
+async function save() {
     if (!formModel.value.name) {
         logger.error('Company name is required.');
         return;
     }
 
-    if (isEditing.value) {
-        const index = companies.value.findIndex(company => company.id === formModel.value.id)
-        companies.value[index] = formModel.value
+    try {
+        if (isEditing.value) {
+            await companyService.updateCompany(formModel.value.id, { name: formModel.value.name });
+            await refreshCompanies();
+        } else {
+            await companyService.createCompany({ name: formModel.value.name });
+            await refreshCompanies();
+        }
 
-    } else {
-        formModel.value.id = companies.value.length + 1
-        companies.value.push(formModel.value)
-
+        newEditDialog.value = false;
+    } catch (error) {
+        logger.error('Failed to save company:', error);
     }
-
-    newEditDialog.value = false
 }
 
 </script>
