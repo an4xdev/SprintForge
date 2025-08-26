@@ -8,11 +8,13 @@ public interface IUserService
 {
     Task<Result<UserResponse>> RegisterAsync(AdminRegisterRequest request);
     Task<Result<List<UserResponse>>> GetAllUsers();
-    Task<Result<UserResponse?>> Get(Guid id);
+    Task<Result<ProfileResponse?>> GetProfile(Guid id);
 
     Task<Result<int>> GetCount();
 
     Task<bool> IsUserInDatabase(Guid id);
 
     Task<string> UpdateAvatar(Guid id, string path);
+
+    Task<Result<UserResponse?>> GetUser(Guid id);
 }

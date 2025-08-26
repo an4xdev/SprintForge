@@ -30,9 +30,16 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<UserResponse>>> GetProfile(Guid id)
+    public async Task<ActionResult<ApiResponse<UserResponse>>> Get(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<UserResponse>>(HttpMethod.Get, $"/users/{id}",
+            ServiceType.AuthService);
+    }
+
+    [HttpGet("profile/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<ProfileResponse>>> GetProfile(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<ProfileResponse>>(HttpMethod.Get, $"/users/profile/{id}",
             ServiceType.AuthService);
     }
 

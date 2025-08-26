@@ -2,7 +2,7 @@
 
     DO $$
     BEGIN
-        IF EXISTS (                                                                                                                                        SELECT 1
+        IF EXISTS (SELECT 1
             FROM public."Companies"
         UNION ALL
             SELECT 1
@@ -65,11 +65,11 @@ VALUES
         WHERE "Name" = 'Default Company'));
 
 INSERT INTO public."Users"
-    ("Id", "Username", "PasswordHash", "Role", "RefreshToken", "RefreshTokenExpiryTime", "Avatar", "PasswordSalt", "NeedResetPassword")
+    ("Id", "Username", "PasswordHash", "Role", "RefreshToken", "RefreshTokenExpiryTime", "Avatar", "PasswordSalt", "NeedResetPassword", "Email", "FirstName", "LastName")
 VALUES
-    ('0195e1ef-eda3-7e5f-9a9f-d6101c9b4644', 'admin', 'AQAAAAIAAYagAAAAEK5QXetwkM6E/ElyAX491XbOjzoq1v+3Q2NRXQEFanYGVL1O3zoHkzpWv6erfS1lww==', 'admin', NULL, NULL, NULL, 'zOnRFy+RiZ6TcHC8XPsMQQ==', false),
-    ('0195e20a-5055-7d77-a247-f093aded8758', 'manager1', 'AQAAAAIAAYagAAAAEGjuAs1ukAUbY+mLlcS+L4QT1FS40ATP597z3q9FvLTD813+EXV8SiAHhA8pzawJeg==', 'manager', NULL, NULL, NULL, 'WtWWjxcM/DRZIgBNAPr4xQ==', false),
-    ('0195e20a-6f95-7713-9e4b-bb21508c9270', 'manager2', 'AQAAAAIAAYagAAAAEDieevQa4rEOonp5WjjRTJvU0JM0BfGIng2ZKgBvdv7Dnm2GOR06eRGm/vZmrBuoIA==', 'manager', NULL, NULL, NULL, 'y3hxZZWdBZ3n4M2RDJabfA==', false);
+    ('0195e1ef-eda3-7e5f-9a9f-d6101c9b4644', 'admin', 'AQAAAAIAAYagAAAAEK5QXetwkM6E/ElyAX491XbOjzoq1v+3Q2NRXQEFanYGVL1O3zoHkzpWv6erfS1lww==', 'admin', NULL, NULL, NULL, 'zOnRFy+RiZ6TcHC8XPsMQQ==', false, 'admin@example.com', 'Ad', 'Min'),
+    ('0195e20a-5055-7d77-a247-f093aded8758', 'manager1', 'AQAAAAIAAYagAAAAEGjuAs1ukAUbY+mLlcS+L4QT1FS40ATP597z3q9FvLTD813+EXV8SiAHhA8pzawJeg==', 'manager', NULL, NULL, NULL, 'WtWWjxcM/DRZIgBNAPr4xQ==', false, 'manager1@example.com', 'Mana', 'Ger1'),
+    ('0195e20a-6f95-7713-9e4b-bb21508c9270', 'manager2', 'AQAAAAIAAYagAAAAEDieevQa4rEOonp5WjjRTJvU0JM0BfGIng2ZKgBvdv7Dnm2GOR06eRGm/vZmrBuoIA==', 'manager', NULL, NULL, NULL, 'y3hxZZWdBZ3n4M2RDJabfA==', false, 'manager2@example.com', 'Mana', 'Ger2');
 
 INSERT INTO public."Teams"
     ("Id", "Name", "ManagerId", "ProjectId")
@@ -86,29 +86,29 @@ VALUES
         WHERE "Name" = 'Project Beta'));
 
 INSERT INTO public."Users"
-    ("Id", "Username", "PasswordHash", "Role", "RefreshToken", "RefreshTokenExpiryTime", "Avatar", "PasswordSalt", "TeamId", "NeedResetPassword")
+    ("Id", "Username", "PasswordHash", "Role", "RefreshToken", "RefreshTokenExpiryTime", "Avatar", "PasswordSalt", "TeamId", "NeedResetPassword", "Email", "FirstName", "LastName")
 VALUES
     ('0195e20a-c2a2-7f9a-8719-e007bf497889', 'dev1', 'AQAAAAIAAYagAAAAECTGa9X4fItKgF1xmZzJSrHqtIBjEVRJVnZDpbDcjfEf0JG8+3YXV0k20cWH8ID9Nw==', 'developer', NULL, NULL, NULL, '5b1Qbyx8gqO0ymPhj5N1Ng==', (SELECT "Id"
         FROM public."Teams"
-        WHERE "Name" = 'Team 1'), false),
+        WHERE "Name" = 'Team 1'), false, 'dev1@example.com', 'Developer', 'Nr. 1'),
     ('0195e20a-d6c9-7cdc-ae6e-750db8a3b69f', 'dev2', 'AQAAAAIAAYagAAAAEKXOufPcJAyhhZNrqHsAjNXp1rthb6oHsOxOCVF+lfbM2dzqHTefJl9I/9sfY+ZrZw==', 'developer', NULL, NULL, NULL, 'FLvWhqaLp2DwxjWGAn/T7g==', (SELECT "Id"
         FROM public."Teams"
-        WHERE "Name" = 'Team 1'), false),
+        WHERE "Name" = 'Team 1'), false, 'dev2@example.com', 'Developer', 'Nr. 2'),
     ('0195e20a-ebc0-7b68-ba97-26bdd43964db', 'dev3', 'AQAAAAIAAYagAAAAEFGPxNh4HtKmngpGi9oMXKzMdDv09qumupRabxl6ZBfNdutlUtNhbIFH4D9bOtToNw==', 'developer', NULL, NULL, NULL, '9SiIrdY8AI0iPDLsyjk7ew==', (SELECT "Id"
         FROM public."Teams"
-        WHERE "Name" = 'Team 1'), false),
+        WHERE "Name" = 'Team 1'), false, 'dev3@example.com', 'Developer', 'Nr. 3'),
     ('0195e20a-fb84-747f-9e4d-356496149d8f', 'dev4', 'AQAAAAIAAYagAAAAEBHqTlyEpDoIx3KlnAT3IMm0iUpi79xsjr/+W7HhxVYukF8J6wZskiGpAkUc+/aSSg==', 'developer', NULL, NULL, NULL, 'zqKWb1TMJPK8KMDXV85ktg==', (SELECT "Id"
         FROM public."Teams"
-        WHERE "Name" = 'Team 1'), false),
+        WHERE "Name" = 'Team 1'), false, 'dev4@example.com', 'Developer', 'Nr. 4'),
     ('0195e20b-0b19-7715-86b9-77cd57423373', 'dev5', 'AQAAAAIAAYagAAAAEH7bF+BcWWKbVneacKuJuSADrBjOWYJ3RcXmpNfADf7S+wVokuKmRM4hiYJP9tRBBw==', 'developer', NULL, NULL, NULL, 'IcVJNuI1hmM0hSomqS5TpA==', (SELECT "Id"
         FROM public."Teams"
-        WHERE "Name" = 'Team 2'), false),
+        WHERE "Name" = 'Team 2'), false, 'dev5@example.com', 'Developer', 'Nr. 5'),
     ('0195e20b-1bfc-7c5b-889d-ac6238b88dd8', 'dev6', 'AQAAAAIAAYagAAAAELZhguZpaoDZPdTcQy6QRoyHC/q/XpttiE36DtsJDXXvcPN1VPOPqPXtTqiPNYHkIQ==', 'developer', NULL, NULL, NULL, 'Y4IINTwnpvspW1NrHN4J9g==', (SELECT "Id"
         FROM public."Teams"
-        WHERE "Name" = 'Team 2'), false),
+        WHERE "Name" = 'Team 2'), false, 'dev6@example.com', 'Developer', 'Nr. 6'),
     ('0195e20b-2bb7-77ba-80a5-b5d1364c0774', 'dev7', 'AQAAAAIAAYagAAAAEGLtTQr0QH+EEtRnEj0CKSfiNfyOF4kqEnBBEklwGdv9/hbFfxPTlbaIlcjfZc6XrQ==', 'developer', NULL, NULL, NULL, 'WBYSSIACTwF+YFl9LpVXpw==', (SELECT "Id"
         FROM public."Teams"
-        WHERE "Name" = 'Team 2'), false);
+        WHERE "Name" = 'Team 2'), false, 'dev7@example.com', 'Developer', 'Nr. 7');
 
 
 INSERT INTO public."TaskStatuses"
@@ -421,5 +421,3 @@ VALUES
     ('42371d27-9348-4470-b737-42a86720bc1c', (SELECT "Id"
         FROM public."Tasks"
         WHERE "Name" = 'Task 12'), '2025-01-24 18:00:00', 'Created', '');
-
-COMMIT;

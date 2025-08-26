@@ -26,9 +26,17 @@ public class UsersController(IUserService userService, IFileService fileService)
     }
 
     [HttpGet("{id:guid}")]
-    public async Task<ActionResult<ApiResponse<UserResponse?>>> Get(Guid id)
+    public async Task<ActionResult<ApiResponse<UserResponse?>>> GetUser(Guid id)
     {
-        var profile = await userService.Get(id);
+        var profile = await userService.GetUser(id);
+
+        return profile.ToActionResult();
+    }
+
+    [HttpGet("profile/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<ProfileResponse?>>> GetProfile(Guid id)
+    {
+        var profile = await userService.GetProfile(id);
 
         return profile.ToActionResult();
     }
@@ -46,7 +54,7 @@ public class UsersController(IUserService userService, IFileService fileService)
         [FromForm] IFormFile file,
         [FromForm] Guid userId)
     {
-        if (await userService.IsUserInDatabase(userId) == false)
+        if (!await userService.IsUserInDatabase(userId))
         {
             return Result<AvatarResponse>.BadRequest("User not found.").ToActionResult();
         }
