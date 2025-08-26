@@ -250,6 +250,11 @@ app.put("/api/companies/:id", async (req, res) => {
       res.status(404).json(response);
       return;
     }
+    if (company.Name === "Default") {
+      let response = ApiResponse.BadRequest("Default company cannot be modified");
+      res.status(400).json(response);
+      return;
+    }
     company.Name = name;
     await company.save();
     let response = ApiResponse.Success("Company updated successfully", company);
@@ -269,6 +274,11 @@ app.delete("/api/companies/:id", async (req, res) => {
     if (!company) {
       let response = ApiResponse.NotFound("Company not found");
       res.status(404).json(response);
+      return;
+    }
+    if (company.Name === "Default") {
+      let response = ApiResponse.BadRequest("Default company cannot be deleted");
+      res.status(400).json(response);
       return;
     }
     await company.destroy();

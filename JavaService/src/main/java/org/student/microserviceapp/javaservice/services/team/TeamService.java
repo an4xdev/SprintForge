@@ -78,6 +78,15 @@ public class TeamService implements ITeamService {
             var project = projectRepository.findById(createTeamDTO.projectId);
             project.ifPresent(team::setProject);
         }
+        else {
+            var project = projectRepository.findByName("Default");
+            if(project.isEmpty()) {
+                return Result.internalError("No project provided and could not find default project");
+            }
+            else {
+                team.setProject(project.get());
+            }
+        }
         teamRepository.save(team);
         return Result.success(team.getId(), "Team created successfully");
     }
@@ -153,14 +162,14 @@ public class TeamService implements ITeamService {
             return Result.badRequest("User is not a manager");
         }
 
-        var teamOptional = teamRepository.findTeamByManager_Id(managerId);
-        if (teamOptional.isEmpty()) {
+        var team = teamRepository.findTeamByManager_Id(managerId);
+        if (team.isEmpty()) {
             return Result.notFound("No teams found for this manager");
         }
 
-        var team = teamOptional.get();
+        var existingTeam = team.get();
 
-        var teamDTO = new TeamDTO(team);
+        var teamDTO = new TeamDTO(existingTeam);
 
         return Result.success(teamDTO, "Teams found for the manager");
     }

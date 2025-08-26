@@ -11,6 +11,7 @@ import org.student.microserviceapp.javaservice.services.company.ICompanyService;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -76,6 +77,11 @@ public class ProjectService implements IProjectService {
         }
         var existingProject = project.get();
 
+        if(Objects.equals(existingProject.getName(), "Default"))
+        {
+            return Result.badRequest("Default project cannot be modified");
+        }
+
         if (createProjectDTO.getName() != null && !createProjectDTO.getName().isBlank()) {
             existingProject.setName(createProjectDTO.getName());
         }
@@ -117,6 +123,10 @@ public class ProjectService implements IProjectService {
         var project = projectRepository.findById(id);
         if (project.isEmpty()) {
             return Result.notFound("Project not found");
+        }
+        if(Objects.equals(project.get().getName(), "Default"))
+        {
+            return Result.badRequest("Default project cannot be deleted");
         }
         projectRepository.delete(project.get());
         return Result.noContent();

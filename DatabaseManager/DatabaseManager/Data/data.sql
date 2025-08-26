@@ -48,7 +48,7 @@
 INSERT INTO public."Companies"
     ("Name")
 VALUES
-    ('Default Company'),
+    ('Default'),
     ('Example Company');
 
 INSERT INTO public."Projects"
@@ -62,7 +62,7 @@ VALUES
         WHERE "Name" = 'Example Company')),
     ('f74408db-c52c-4c3c-94e4-16fdb1a0326b', 'Default', '0001-01-01', '9999-12-31', (SELECT "Id"
         FROM public."Companies"
-        WHERE "Name" = 'Default Company'));
+        WHERE "Name" = 'Default'));
 
 INSERT INTO public."Users"
     ("Id", "Username", "PasswordHash", "Role", "RefreshToken", "RefreshTokenExpiryTime", "Avatar", "PasswordSalt", "NeedResetPassword", "Email", "FirstName", "LastName")
