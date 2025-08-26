@@ -57,7 +57,7 @@ public class ProjectsController(ISendRequestService sendRequestService) : Contro
     }
 
     [HttpGet("current/{id:guid}")]
-    [Authorize(Roles = "manager")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<ActionResult<ApiResponse<Guid>>> GetCurrentManagerProject(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<Guid>>(HttpMethod.Get, $"/projects/current/{id}",

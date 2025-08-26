@@ -9,7 +9,7 @@ namespace ApiGateway.Controllers;
 [ApiController]
 [Route("[controller]")]
 [Authorize(AuthenticationSchemes = "Bearer")]
-[Authorize(Roles = "manager")]
+[Authorize(Roles = "admin,manager")]
 public class ManagerDashboardController(
     ISendRequestService sendRequestService)
 {
@@ -38,7 +38,7 @@ public class ManagerDashboardController(
 
         var tasksBySprintResult =
             await sendRequestService.SendRequestAsync<ApiResponse<List<ManagerTaskDto>>>(HttpMethod.Get,
-                $"/sprints/{sprintData.SprintId}/tasks/count", ServiceType.LaravelService);
+                $"/tasks/sprint/{sprintData.SprintId}/count", ServiceType.LaravelService);
 
         if (!Utils.IsSuccessResult(tasksBySprintResult))
         {

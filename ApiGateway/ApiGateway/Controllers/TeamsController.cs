@@ -57,7 +57,7 @@ public class TeamsController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpGet("manager/{id:guid}")]
-    [Authorize(Roles = "manager")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<ActionResult<ApiResponse<TeamDto>>> GetTeamByManager(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TeamDto>>(HttpMethod.Get,

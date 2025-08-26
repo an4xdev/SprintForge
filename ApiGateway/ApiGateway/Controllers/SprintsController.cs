@@ -50,6 +50,7 @@ public class SprintsController(ISendRequestService sendRequestService) : Control
     }
 
     [HttpGet("manager/{id:guid}")]
+    [Authorize(Roles = "admin,manager")]
     public async Task<ActionResult<ApiResponse<List<SprintDto>>>> GetSprintsByManager(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<List<SprintDto>>>(HttpMethod.Get,
@@ -57,7 +58,8 @@ public class SprintsController(ISendRequestService sendRequestService) : Control
     }
 
     [HttpGet("manager/{id:guid}/last")]
-    public async Task<ActionResult<ApiResponse<Guid>>> GetSprintsByManagerLast(Guid id)
+    [Authorize(Roles = "admin,manager")]
+    public async Task<ActionResult<ApiResponse<Guid>>> GetSprintByManagerLast(Guid id)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<Guid>>(HttpMethod.Get, $"/sprints/manager/{id}/last", ServiceType.FastApiService);
     }
