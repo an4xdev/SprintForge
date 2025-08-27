@@ -1,6 +1,6 @@
 import { profileLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, AvatarChangeResponse, Profile, RegisterCredentials, User } from '@/types';
+import type { ApiResponse, AvatarChangeResponse, Profile, RegisterCredentials, UpdateUser, User } from '@/types';
 import axios from 'axios';
 
 class UsersService {
@@ -42,6 +42,25 @@ class UsersService {
         } catch (error) {
             profileLogger.error('Error fetching users by role:', error);
             throw new Error('Failed to fetch users by role');
+        }
+    }
+
+    async editUser(id: string, request: UpdateUser, signal?: AbortSignal): Promise<User> {
+        try {
+            const response = await apiService.post<ApiResponse<User>>(`/users/${id}`, request, signal);
+            return response.data;
+        } catch (error) {
+            profileLogger.error('Error updating user:', error);
+            throw new Error('Failed to update user');
+        }
+    }
+
+    async deleteUser(id: string, signal?: AbortSignal): Promise<void> {
+        try {
+            await apiService.delete(`/users/${id}`, signal);
+        } catch (error) {
+            profileLogger.error('Error deleting user:', error);
+            throw new Error('Failed to delete user');
         }
     }
 

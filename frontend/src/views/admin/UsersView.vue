@@ -56,12 +56,22 @@
                                         <v-text-field v-model="registrationFormModel.username"
                                             label="Username"></v-text-field>
                                     </v-col>
-
+                                    <v-col cols="12">
+                                        <v-text-field v-model="registrationFormModel.email"
+                                            label="Email"></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <v-text-field v-model="registrationFormModel.firstName"
+                                            label="First Name"></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <v-text-field v-model="registrationFormModel.lastName"
+                                            label="Last Name"></v-text-field>
+                                    </v-col>
                                     <v-col cols="12">
                                         <v-text-field v-model="registrationFormModel.password" label="Password"
                                             type="password"></v-text-field>
                                     </v-col>
-
                                     <v-col cols="12">
                                         <v-select v-model="registrationFormModel.role"
                                             :items="['admin', 'manager', 'developer']" label="Role"></v-select>
@@ -82,6 +92,10 @@
                                     </v-col>
                                     <v-col cols="12">
                                         <v-text-field v-model="editFormModel.lastName" label="Last Name"></v-text-field>
+                                    </v-col>
+                                    <v-col cols="12">
+                                        <v-select v-model="editFormModel.role"
+                                            :items="['admin', 'manager', 'developer']" label="Role"></v-select>
                                     </v-col>
                                 </v-row>
                             </template>
@@ -120,7 +134,7 @@
 <script setup lang="ts">
 import { useAsyncData } from '@/composables/useAsyncData';
 import usersService from '@/services/usersService';
-import type { Profile, RegisterCredentials, User } from '@/types';
+import type { RegisterCredentials, UpdateUser, User } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref } from 'vue';
 
@@ -149,37 +163,49 @@ const confirmDeleteDialog = ref(false);
 const registrationFormModel = ref(createNewRegistrationRecord());
 const editFormModel = ref(createNewEditRecord());
 const userNameToDelete = ref('');
+const userIdToDelete = ref('');
+const userIdToEdit = ref('');
 const isEditing = ref(false);
 
-function createNewRegistrationRecord() {
+function createNewRegistrationRecord(): RegisterCredentials {
     return {
         username: '',
         role: '' as 'admin' | 'manager' | 'developer' | '',
         password: '',
-    } as RegisterCredentials;
-}
-
-function createNewEditRecord() {
-    return {
-        id: '',
-        username: '',
-        avatar: null,
         email: '',
         firstName: '',
         lastName: '',
-    } as User;
+    };
+}
+
+function createNewEditRecord(): UpdateUser {
+    return {
+        username: null,
+        role: null,
+        email: null,
+        firstName: null,
+        lastName: null,
+    };
 }
 
 function addNewUser() {
     registrationFormModel.value = createNewRegistrationRecord();
     isEditing.value = false;
+    userIdToEdit.value = '';
     newEditDialog.value = true;
 }
 
 function editUser(id: string) {
     const user = users.value?.find(u => u.id === id);
     if (user) {
-        editFormModel.value = { ...user };
+        editFormModel.value = {
+            username: user.username || null,
+            role: user.role || null,
+            email: user.email || null,
+            firstName: user.firstName || null,
+            lastName: user.lastName || null,
+        };
+        userIdToEdit.value = user.id;
         isEditing.value = true;
         newEditDialog.value = true;
     } else {
@@ -192,55 +218,60 @@ function showDeleteConfirmation(id: string) {
     if (user) {
         logger.log('Delete user:', user);
         userNameToDelete.value = user.username;
+        userIdToDelete.value = user.id;
         confirmDeleteDialog.value = true;
     } else {
         logger.error(`User with ID ${id} not found.`);
     }
 }
 
-function confirmDelete() {
-
-    if (users.value == null) {
-        logger.error('Users data is not loaded yet.');
-        return;
-    }
-
-    if (!userNameToDelete.value) {
+async function confirmDelete() {
+    if (!userIdToDelete.value) {
         logger.error('No user selected for deletion.');
         return;
     }
 
-    users.value = users.value.filter(u => u.username !== userNameToDelete.value);
-    userNameToDelete.value = '';
+    try {
+        await usersService.deleteUser(userIdToDelete.value);
+        await refreshUsers();
+        logger.log(`Successfully deleted user: ${userNameToDelete.value}`);
+    } catch (error) {
+        logger.error(`Failed to delete user with ID ${userIdToDelete.value}:`, error);
+    }
 
-    logger.log(`Confirmed deletion of user: ${userNameToDelete.value}`);
+    userNameToDelete.value = '';
+    userIdToDelete.value = '';
     confirmDeleteDialog.value = false;
 }
 
 function cancelDelete() {
     confirmDeleteDialog.value = false;
     userNameToDelete.value = '';
+    userIdToDelete.value = '';
 }
 
-function save() {
-    if (users.value === null) {
-        logger.error('Users data is not loaded yet.');
-        return;
-    }
-
+async function save() {
     if (isEditing.value) {
-        // editing
+        // Editing user
         if (!editFormModel.value.username) {
             logger.error('User username is required.');
             return;
         }
 
-        const index = users.value.findIndex(user => user.id === editFormModel.value.id);
-        if (index !== -1) {
-            users.value[index] = { ...editFormModel.value };
+        if (!userIdToEdit.value) {
+            logger.error('No user selected for editing.');
+            return;
+        }
+
+        try {
+            await usersService.editUser(userIdToEdit.value, editFormModel.value);
+            await refreshUsers();
+            logger.log(`Successfully updated user: ${editFormModel.value.username}`);
+        } catch (error) {
+            logger.error('Failed to update user:', error);
         }
     } else {
-        // registering
+        // Registering new user
         if (!registrationFormModel.value.username) {
             logger.error('User username is required.');
             return;
@@ -251,21 +282,17 @@ function save() {
             return;
         }
 
-        // new user from registration data
-        const newUser: User = {
-            id: `${Date.now()}`,
-            username: registrationFormModel.value.username,
-            avatar: null,
-            role: registrationFormModel.value.role || 'developer',
-            email: '',
-            firstName: '',
-            lastName: '',
-        };
-
-        users.value.push(newUser);
+        try {
+            await usersService.registerUser(registrationFormModel.value);
+            await refreshUsers();
+            logger.log(`Successfully registered user: ${registrationFormModel.value.username}`);
+        } catch (error) {
+            logger.error('Failed to register user:', error);
+        }
     }
 
     newEditDialog.value = false;
+    userIdToEdit.value = '';
 }
 </script>
 

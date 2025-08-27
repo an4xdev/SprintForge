@@ -21,6 +21,9 @@ export interface LoginCredentials {
 
 export interface RegisterCredentials extends LoginCredentials {
     role: 'admin' | 'manager' | 'developer' | '';
+    email: string;
+    firstName: string;
+    lastName: string;
 }
 
 export interface Company {
@@ -148,4 +151,13 @@ export interface DeveloperTask {
     hours: number;
     minutes: number;
     seconds: number;
+}
+
+export interface UpdateUser {
+    username: string | null;
+    role: 'admin' | 'manager' | 'developer' | null;
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+
 }
