@@ -54,13 +54,16 @@
                                         <v-text-field v-model="formModel.name" label="Name"></v-text-field>
                                     </v-col>
 
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.manager.id" label="Manager ID"></v-text-field>
+                                    <v-col cols="12" md="12">
+                                        <v-select :items="users ?? []" item-title="username" item-value="id"
+                                            label="Manager" v-model="selectedManagerId" :return-object="false"
+                                            dense></v-select>
                                     </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.manager.username"
-                                            label="Manager"></v-text-field>
+                                    <v-col cols="12" md="12">
+                                        <v-select
+                                            :items="([{ id: null, name: 'Default project' }] as any).concat(projects ?? [])"
+                                            item-title="name" item-value="id" label="Project (optional)"
+                                            v-model="selectedProjectId" dense></v-select>
                                     </v-col>
                                 </v-row>
                             </template>
@@ -99,9 +102,11 @@
 <script setup lang="ts">
 import { useAsyncData } from '@/composables/useAsyncData';
 import teamService from '@/services/teamsService';
-import type { MinimalUser, Team } from '@/types';
+import usersService from '@/services/usersService';
+import projectsService from '@/services/projectsService';
+import type { CreateTeam, MinimalUser, Team, Project, UpdateTeam } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
-import { ref, toRef } from 'vue';
+import { ref, computed } from 'vue';
 
 const logger = new DevelopmentLogger({ prefix: '[AdminTeamsView]' });
 
@@ -125,10 +130,25 @@ const {
     loggerPrefix: '[AdminTeamsView]'
 });
 
+const {
+    data: users } = useAsyncData<{ id: string; username: string }[]>({
+        fetchFunction: (signal) => usersService.getUsersByRole("manager", signal),
+        loggerPrefix: '[AdminTeamsView][users]'
+    });
+
+const {
+    data: projects } = useAsyncData<Project[]>({
+        fetchFunction: (signal) => projectsService.getProjects(signal),
+        loggerPrefix: '[AdminTeamsView][projects]'
+    });
+
 const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
 const formModel = ref(createNewRecord());
+const selectedManagerId = ref('');
+const selectedProjectId = ref<string | null>(null);
 const teamNameToDelete = ref('');
+const teamIdToDelete = ref('');
 
 function createNewRecord() {
     return {
@@ -140,10 +160,11 @@ function createNewRecord() {
         } as MinimalUser
     } as Team;
 }
-const isEditing = toRef(() => !!formModel.value.id)
+const isEditing = computed(() => !!formModel.value.id)
 
 function addNewTeam() {
     formModel.value = createNewRecord();
+    selectedManagerId.value = '';
     newEditDialog.value = true;
 }
 
@@ -151,6 +172,7 @@ function editTeam(id: string) {
     const team = teams.value?.find(t => t.id === id);
     if (team) {
         formModel.value = { ...team };
+        selectedManagerId.value = team.manager?.id ?? '';
         newEditDialog.value = true;
     } else {
         logger.error(`Team with ID ${id} not found.`);
@@ -162,6 +184,7 @@ function showDeleteConfirmation(id: string) {
     if (team) {
         logger.log('Delete team:', team);
         teamNameToDelete.value = team.name;
+        teamIdToDelete.value = team.id;
         confirmDeleteDialog.value = true;
     } else {
         logger.error(`Team with ID ${id} not found.`);
@@ -169,52 +192,78 @@ function showDeleteConfirmation(id: string) {
 }
 
 function confirmDelete() {
-    if (teams.value == null) {
-        logger.error('Teams data is not loaded yet.');
-        return;
-    }
-
-    if (!teamNameToDelete.value) {
+    if (!teamIdToDelete.value) {
         logger.error('No team selected for deletion.');
         return;
     }
 
-    teams.value = teams.value.filter(t => t.name !== teamNameToDelete.value);
-    teamNameToDelete.value = '';
-
-    logger.log(`Confirmed deletion of team: ${teamNameToDelete.value}`);
-    confirmDeleteDialog.value = false;
+    teamService.deleteTeam(teamIdToDelete.value)
+        .then(() => {
+            logger.log(`Deleted team id=${teamIdToDelete.value}`);
+            refreshTeams();
+        })
+        .catch(err => {
+            logger.error('Failed to delete team:', err);
+        })
+        .finally(() => {
+            teamNameToDelete.value = '';
+            teamIdToDelete.value = '';
+            confirmDeleteDialog.value = false;
+        });
 }
 
 function cancelDelete() {
     confirmDeleteDialog.value = false;
     teamNameToDelete.value = '';
+    teamIdToDelete.value = '';
 }
-
-function save() {
-    if (teams.value === null) {
-        logger.error('Teams data is not loaded yet.');
-        return;
-    }
-
+async function save() {
     if (!formModel.value.name) {
         logger.error('Team name is required.');
         return;
     }
 
-    if (isEditing.value) {
-        const index = teams.value.findIndex(team => team.id === formModel.value.id)
-        teams.value[index] = formModel.value
-
-    } else {
-        formModel.value.id = `${Date.now()}`; // fake
-        formModel.value.manager.id = `${Date.now()}`; // fake
-        formModel.value.manager.username = `user-${Date.now()}`; // fake
-        teams.value.push(formModel.value)
-
+    if (selectedManagerId.value && users.value) {
+        const u = users.value.find(x => x.id === selectedManagerId.value);
+        if (u) {
+            formModel.value.manager = { id: u.id, username: (u as any).username } as MinimalUser;
+        }
     }
 
-    newEditDialog.value = false
+    try {
+        if (isEditing.value) {
+            const payload: UpdateTeam = {
+                name: formModel.value.name,
+                managerId: formModel.value.manager.id,
+                projectId: selectedProjectId.value ?? null
+            };
+            await teamService.updateTeam(formModel.value.id, payload);
+            logger.log('Updated team', formModel.value.id);
+        } else {
+
+            if (formModel.value.name.trim() === '') {
+                logger.error('Team name cannot be empty.');
+                return;
+            }
+
+            if (!selectedManagerId.value) {
+                logger.error('Manager must be selected.');
+                return;
+            }
+
+            const created = await teamService.createTeam({
+                name: formModel.value.name,
+                managerId: formModel.value.manager.id,
+                projectId: selectedProjectId.value ?? null
+            } as CreateTeam);
+            logger.log('Created team', created.id);
+        }
+
+        await refreshTeams();
+        newEditDialog.value = false;
+    } catch (err) {
+        logger.error('Failed to save team:', err);
+    }
 }
 </script>
 

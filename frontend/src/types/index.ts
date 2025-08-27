@@ -42,6 +42,19 @@ export interface Team {
     id: string;
     name: string;
     manager: MinimalUser;
+    projectId: string;
+}
+
+export interface CreateTeam {
+    name: string;
+    managerId: string;
+    projectId: string | null;
+}
+
+export interface UpdateTeam {
+    name: string | null;
+    managerId: string | null;
+    projectId: string | null;
 }
 
 export interface TaskStatus {
