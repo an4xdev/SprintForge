@@ -157,5 +157,75 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
         return Result<List<UserResponse>>.Success(users, $"Successfully retrieved all users by role: {role}");
     }
 
+    public async Task<Result<UserResponse?>> UpdateUser(Guid id, UpdateUserRequest request)
+    {
+        if (!await IsUserInDatabase(id))
+        {
+            return Result<UserResponse?>.NotFound("User not found");
+        }
+
+        List<string> roles = ["admin", "manager", "developer"];
+        var user = await context.Users.FindAsync(id);
+
+        if (request.Username != null)
+        {
+            user!.Username = request.Username;
+        }
+
+        if (request.FirstName != null)
+        {
+            user!.FirstName = request.FirstName;
+        }
+
+        if (request.LastName != null)
+        {
+            user!.LastName = request.LastName;
+        }
+
+        if (request.Email != null)
+        {
+            user!.Email = request.Email;
+        }
+
+        if (request.Role != null)
+        {
+            if (roles.Contains(request.Role))
+            {
+                user!.Role = request.Role;
+            }
+            else
+            {
+                return Result<UserResponse?>.BadRequest("Invalid role");
+            }
+        }
+
+        await context.SaveChangesAsync();
+
+        return Result<UserResponse?>.Success(new UserResponse
+        {
+            Id = user!.Id,
+            Username = user.Username,
+            Avatar = user.Avatar,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName
+        }, "Successfully updated the user");
+    }
+
+    public async Task<Result<object?>> DeleteUser(Guid id)
+    {
+        if (!await IsUserInDatabase(id))
+        {
+            return Result<object?>.NotFound("User not found");
+        }
+
+        var user = await context.Users.FindAsync(id);
+
+        context.Users.Remove(user!);
+        await context.SaveChangesAsync();
+
+        return Result<object?>.NoContent();
+    }
+
     private string FileServerPath => $"{configuration["MINIO_PUBLIC_URL"]}/{configuration["MINIO_BUCKET"]}";
 }

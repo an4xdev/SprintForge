@@ -19,4 +19,8 @@ public interface IUserService
     Task<Result<UserResponse?>> GetUser(Guid id);
 
     Task<Result<List<UserResponse>>> GetAllUsersByRole(string role);
+
+    Task<Result<UserResponse?>> UpdateUser(Guid id, UpdateUserRequest request);
+
+    Task<Result<object?>> DeleteUser(Guid id);
 }

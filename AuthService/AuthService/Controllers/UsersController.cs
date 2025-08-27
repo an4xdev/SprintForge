@@ -57,6 +57,20 @@ public class UsersController(IUserService userService, IFileService fileService)
         return users.ToActionResult();
     }
 
+    [HttpPost("{userId:guid}")]
+    public async Task<ActionResult<ApiResponse<UserResponse?>>> EditUser(Guid userId, UpdateUserRequest request)
+    {
+        var user = await userService.UpdateUser(userId, request);
+        return user.ToActionResult();
+    }
+
+    [HttpDelete("{userId:guid}")]
+    public async Task<ActionResult<ApiResponse<object?>>> DeleteUser(Guid userId)
+    {
+        var user = await userService.DeleteUser(userId);
+        return user.ToActionResult();
+    }
+
     [HttpPost("avatar")]
     public async Task<ActionResult<ApiResponse<AvatarResponse>>> UpdateAvatar(
         [FromForm] IFormFile file,
