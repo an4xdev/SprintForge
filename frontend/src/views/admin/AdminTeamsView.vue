@@ -60,10 +60,8 @@
                                             dense></v-select>
                                     </v-col>
                                     <v-col cols="12" md="12">
-                                        <v-select
-                                            :items="([{ id: null, name: 'Default project' }] as any).concat(projects ?? [])"
-                                            item-title="name" item-value="id" label="Project (optional)"
-                                            v-model="selectedProjectId" dense></v-select>
+                                        <v-select :items="projects ?? []" item-title="name" item-value="id"
+                                            label="Project (optional)" v-model="selectedProjectId" dense></v-select>
                                     </v-col>
                                 </v-row>
                             </template>
