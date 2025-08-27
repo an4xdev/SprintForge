@@ -11,10 +11,10 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class TaskType
- * 
+ *
  * @property int $Id
  * @property string $Name
- * 
+ *
  * @property Collection|Task[] $tasks
  *
  * @package App\Models
@@ -30,8 +30,8 @@ class TaskType extends Model
 		'Name'
 	];
 
-	public function tasks()
-	{
+	public function tasks(): TaskType|\Illuminate\Database\Eloquent\Relations\HasMany
+    {
 		return $this->hasMany(Task::class, 'TaskTypeId');
 	}
 }
