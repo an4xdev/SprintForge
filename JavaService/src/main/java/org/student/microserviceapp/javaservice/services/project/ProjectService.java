@@ -21,7 +21,7 @@ public class ProjectService implements IProjectService {
     private final TeamRepository teamRepository;
 
     public ProjectService(ProjectRepository projectRepository, ICompanyService companyService,
-            TeamRepository teamRepository) {
+                          TeamRepository teamRepository) {
         this.projectRepository = projectRepository;
         this.companyService = companyService;
         this.teamRepository = teamRepository;
@@ -52,10 +52,6 @@ public class ProjectService implements IProjectService {
     @Override
     @Transactional
     public Result<UUID> createProject(CreateProjectDTO createProjectDTO) {
-        var company = companyService.getCompanyById(createProjectDTO.getCompanyId());
-        if (company.isEmpty()) {
-            return Result.notFound("Company not found");
-        }
 
         if (createProjectDTO.getStartDate().isAfter(createProjectDTO.getEndDate())) {
             return Result.badRequest("Start date cannot be after end date");
@@ -63,7 +59,20 @@ public class ProjectService implements IProjectService {
 
         var project = createProjectDTO.toProject();
         project.setId(UUID.randomUUID());
-        project.setCompany(company.get());
+        if(createProjectDTO.getCompanyId() != null) {
+            var company = companyService.getCompanyById(createProjectDTO.getCompanyId());
+            if (company.isEmpty()) {
+                return Result.notFound("Company not found");
+            }
+            project.setCompany(company.get());
+        }
+        else {
+            var defaultCompany = companyService.getDefaultCompany();
+            if(defaultCompany.isEmpty()) {
+                return Result.internalError("Could not find default company.");
+            }
+            project.setCompany(defaultCompany.get());
+        }
         projectRepository.save(project);
         return Result.success(project.getId(), "Project created successfully");
     }
@@ -77,8 +86,7 @@ public class ProjectService implements IProjectService {
         }
         var existingProject = project.get();
 
-        if(Objects.equals(existingProject.getName(), "Default"))
-        {
+        if (Objects.equals(existingProject.getName(), "Default")) {
             return Result.badRequest("Default project cannot be modified");
         }
 
@@ -124,8 +132,7 @@ public class ProjectService implements IProjectService {
         if (project.isEmpty()) {
             return Result.notFound("Project not found");
         }
-        if(Objects.equals(project.get().getName(), "Default"))
-        {
+        if (Objects.equals(project.get().getName(), "Default")) {
             return Result.badRequest("Default project cannot be deleted");
         }
         projectRepository.delete(project.get());

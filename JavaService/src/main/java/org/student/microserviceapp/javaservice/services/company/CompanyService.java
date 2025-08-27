@@ -19,4 +19,9 @@ public class CompanyService implements ICompanyService {
     public Optional<Company> getCompanyById(int id) {
         return companyRepository.findById(id);
     }
+
+    @Override
+    public Optional<Company> getDefaultCompany() {
+        return companyRepository.findByName("Default");
+    }
 }
