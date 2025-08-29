@@ -86,7 +86,13 @@ app.get("/api/taskTypes", async (_req, res) => {
       res.status(200).json(response);
       return;
     }
-    let response = ApiResponse.Success("Task types fetched successfully", taskTypes);
+
+    const transformedTaskTypes = taskTypes.map(taskType => ({
+      id: taskType.Id,
+      name: taskType.Name
+    }));
+
+    let response = ApiResponse.Success("Task types fetched successfully", transformedTaskTypes);
     res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching task types:", error);
@@ -102,7 +108,13 @@ app.post("/api/taskTypes", async (req, res) => {
     const taskType = await TaskTypes.create({
       Name: name
     });
-    let response = ApiResponse.Created("Task type created successfully", taskType.Id);
+
+    const transformedTaskType = {
+      id: taskType.Id,
+      name: taskType.Name
+    };
+
+    let response = ApiResponse.Created("Task type created successfully", transformedTaskType);
     res.status(201).json(response);
   } catch (error) {
     console.error("Error creating task type:", error);
@@ -121,7 +133,13 @@ app.get("/api/taskTypes/:id", async (req, res) => {
       res.status(404).json(response);
       return;
     }
-    let response = ApiResponse.Success("Task type fetched successfully", taskType);
+
+    const transformedTaskType = {
+      id: taskType.Id,
+      name: taskType.Name
+    };
+
+    let response = ApiResponse.Success("Task type fetched successfully", transformedTaskType);
     res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching task type:", error);
@@ -143,7 +161,13 @@ app.put("/api/taskTypes/:id", async (req, res) => {
     }
     taskType.Name = name;
     await taskType.save();
-    let response = ApiResponse.Success("Task type updated successfully", taskType);
+
+    const transformedTaskType = {
+      id: taskType.Id,
+      name: taskType.Name
+    };
+
+    let response = ApiResponse.Success("Task type updated successfully", transformedTaskType);
     res.status(200).json(response);
   } catch (error) {
     console.error("Error updating task type:", error);
@@ -195,7 +219,12 @@ app.get("/api/companies", async (_req, res) => {
       return;
     }
 
-    let response = ApiResponse.Success("Companies fetched successfully", companies);
+    const transformedCompanies = companies.map(company => ({
+      id: company.Id,
+      name: company.Name
+    }));
+
+    let response = ApiResponse.Success("Companies fetched successfully", transformedCompanies);
     res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching companies:", error);
@@ -214,7 +243,13 @@ app.get("/api/companies/:id", async (req, res) => {
       res.status(404).json(response);
       return;
     }
-    let response = ApiResponse.Success("Company fetched successfully", company);
+
+    const transformedCompany = {
+      id: company.Id,
+      name: company.Name
+    };
+
+    let response = ApiResponse.Success("Company fetched successfully", transformedCompany);
     res.status(200).json(response);
   } catch (error) {
     console.error("Error fetching company:", error);
@@ -230,7 +265,13 @@ app.post("/api/companies", async (req, res) => {
     const company = await Companies.create({
       Name: name
     });
-    let response = ApiResponse.Created("Company created successfully", company.Id);
+
+    const transformedCompany = {
+      id: company.Id,
+      name: company.Name
+    };
+
+    let response = ApiResponse.Created("Company created successfully", transformedCompany);
     res.status(201).json(response);
   } catch (error) {
     console.error("Error creating company:", error);
@@ -257,7 +298,13 @@ app.put("/api/companies/:id", async (req, res) => {
     }
     company.Name = name;
     await company.save();
-    let response = ApiResponse.Success("Company updated successfully", company);
+
+    const transformedCompany = {
+      id: company.Id,
+      name: company.Name
+    };
+
+    let response = ApiResponse.Success("Company updated successfully", transformedCompany);
     res.status(200).json(response);
   } catch (error) {
     console.error("Error updating company:", error);
