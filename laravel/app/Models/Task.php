@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Task
- * 
+ *
  * @property uuid $Id
  * @property string $Name
  * @property string|null $Description
@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property uuid|null $DeveloperId
  * @property uuid|null $SprintId
  * @property uuid|null $ProjectId
- * 
+ *
  * @property TaskType $taskType
  * @property TaskStatus $taskStatus
  * @property User|null $user
@@ -56,23 +56,23 @@ class Task extends Model
 		'ProjectId'
 	];
 
-	public function taskType()
-	{
+	public function taskType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
 		return $this->belongsTo(TaskType::class, 'TaskTypeId');
 	}
 
-	public function taskStatus()
-	{
+	public function taskStatus(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
 		return $this->belongsTo(TaskStatus::class, 'TaskStatusId');
 	}
 
-	public function user()
-	{
+	public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
 		return $this->belongsTo(User::class, 'DeveloperId');
 	}
 
-	public function sprint()
-	{
+	public function sprint(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
 		return $this->belongsTo(Sprint::class, 'SprintId');
 	}
 }

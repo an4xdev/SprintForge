@@ -106,8 +106,6 @@ const headers = [
 
 const {
     data: taskStatuses,
-    loading,
-    error,
     load: refreshTaskStatuses
 } = useAsyncData<TaskStatus[]>({
     fetchFunction: (signal) => taskStatusesService.getTaskStatuses(signal),

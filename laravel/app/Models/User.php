@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class User
- * 
+ *
  * @property uuid $Id
  * @property string $Username
  * @property string $PasswordHash
@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $PasswordSalt
  * @property uuid|null $TeamId
  * @property bool $NeedsPasswordChange
- * 
+ *
  * @property Team|null $team
  * @property Collection|Task[] $tasks
  * @property Collection|Sprint[] $sprints
@@ -63,13 +63,13 @@ class User extends Model
 		'NeedsPasswordChange'
 	];
 
-	public function tasks()
-	{
+	public function tasks(): User|\Illuminate\Database\Eloquent\Relations\HasMany
+    {
 		return $this->hasMany(Task::class, 'DeveloperId');
 	}
 
-	public function sprints()
-	{
+	public function sprints(): User|\Illuminate\Database\Eloquent\Relations\HasMany
+    {
 		return $this->hasMany(Sprint::class, 'ManagerId');
 	}
 }

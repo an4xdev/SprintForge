@@ -11,10 +11,10 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class TaskStatus
- * 
+ *
  * @property int $Id
  * @property string $Name
- * 
+ *
  * @property Collection|Task[] $tasks
  *
  * @package App\Models
@@ -30,16 +30,16 @@ class TaskStatus extends Model
 		'Name'
 	];
 
-	public function toArray()
-	{
+	public function toArray(): array
+    {
 		return [
 			'id' => $this->Id,
 			'name' => $this->Name,
 		];
 	}
 
-	public function tasks()
-	{
+	public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany|TaskStatus
+    {
 		return $this->hasMany(Task::class, 'TaskStatusId');
 	}
 }

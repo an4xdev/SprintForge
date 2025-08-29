@@ -39,7 +39,8 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
     [HttpGet("profile/{id:guid}")]
     public async Task<ActionResult<ApiResponse<ProfileResponse>>> GetProfile(Guid id)
     {
-        return await sendRequestService.SendRequestAsync<ApiResponse<ProfileResponse>>(HttpMethod.Get, $"/users/profile/{id}",
+        return await sendRequestService.SendRequestAsync<ApiResponse<ProfileResponse>>(HttpMethod.Get,
+            $"/users/profile/{id}",
             ServiceType.AuthService);
     }
 
@@ -47,6 +48,32 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
     public async Task<ActionResult<ApiResponse<int>>> GetUserCount()
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<int>>(HttpMethod.Get, "/users/count",
+            ServiceType.AuthService);
+    }
+
+    [HttpGet("role/{role}")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<List<UserResponse>>>> GetUsersByRole(string role)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<UserResponse>>>(HttpMethod.Get,
+            $"/users/role/{role}",
+            ServiceType.AuthService);
+    }
+
+    [HttpPost("{id:guid}")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<UserResponse>>> UpdateUser(Guid id, UpdateUserRequest request)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<UserResponse>>(HttpMethod.Post,
+            $"/users/{id}",
+            ServiceType.AuthService, body: request);
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<object?>>> DeleteUser(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Delete, $"/users/{id}",
             ServiceType.AuthService);
     }
 

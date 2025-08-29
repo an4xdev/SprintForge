@@ -21,6 +21,9 @@ export interface LoginCredentials {
 
 export interface RegisterCredentials extends LoginCredentials {
     role: 'admin' | 'manager' | 'developer' | '';
+    email: string;
+    firstName: string;
+    lastName: string;
 }
 
 export interface Company {
@@ -42,6 +45,19 @@ export interface Team {
     id: string;
     name: string;
     manager: MinimalUser;
+    projectId: string;
+}
+
+export interface CreateTeam {
+    name: string;
+    managerId: string;
+    projectId: string | null;
+}
+
+export interface UpdateTeam {
+    name: string | null;
+    managerId: string | null;
+    projectId: string | null;
 }
 
 export interface TaskStatus {
@@ -98,6 +114,14 @@ export interface Task {
     taskTypeId: number;
 }
 
+export interface CreateTask {
+    name: string;
+    description?: string;
+    developerId?: string | null;
+    sprintId?: string | null;
+    taskTypeId?: number | null;
+}
+
 export interface AdminDashboard {
     companiesCount: number;
     usersCount: number;
@@ -135,4 +159,13 @@ export interface DeveloperTask {
     hours: number;
     minutes: number;
     seconds: number;
+}
+
+export interface UpdateUser {
+    username: string | null;
+    role: 'admin' | 'manager' | 'developer' | null;
+    email: string | null;
+    firstName: string | null;
+    lastName: string | null;
+
 }

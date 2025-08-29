@@ -1,6 +1,6 @@
 import { teamLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, Team } from '@/types';
+import type { ApiResponse, CreateTeam, Team, UpdateTeam } from '@/types';
 
 class TeamsService {
     async getTeams(signal?: AbortSignal): Promise<Team[]> {
@@ -23,7 +23,7 @@ class TeamsService {
         }
     }
 
-    async createTeam(team: Omit<Team, 'id'>): Promise<Team> {
+    async createTeam(team: CreateTeam): Promise<Team> {
         try {
             const response = await apiService.post<ApiResponse<Team>>('/teams', team);
             return response.data;
@@ -33,7 +33,7 @@ class TeamsService {
         }
     }
 
-    async updateTeam(id: string, team: Partial<Team>): Promise<Team> {
+    async updateTeam(id: string, team: UpdateTeam): Promise<Team> {
         try {
             const response = await apiService.put<ApiResponse<Team>>(`/teams/${id}`, team);
             return response.data;

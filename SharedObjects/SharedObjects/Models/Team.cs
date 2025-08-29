@@ -12,8 +12,8 @@ public class Team
     public Guid ManagerId { get; set; }
     public Manager Manager { get; set; } = null!;
 
-    public Guid? ProjectId { get; set; }
-    public Project? Project { get; set; } = null!;
+    public Guid ProjectId { get; set; }
+    public Project Project { get; set; } = null!;
 
     public List<Developer> Developers { get; set; } = [];
 }

@@ -29,6 +29,14 @@
                                 </v-chip>
                             </template>
 
+                            <template v-slot:item.startDate="{ value }">
+                                {{ formatDateForDisplay(value) }}
+                            </template>
+
+                            <template v-slot:item.endDate="{ value }">
+                                {{ formatDateForDisplay(value) }}
+                            </template>
+
                             <template v-slot:item.actions="{ item }">
                                 <div class="d-flex ga-2 justify-end">
                                     <v-icon color="medium-emphasis" icon="mdi-pencil" size="small"
@@ -47,7 +55,7 @@
                     </v-sheet>
 
                     <v-dialog v-model="newEditDialog" max-width="500">
-                        <v-card :title="`${isEditing ? 'Edit' : 'Add'} a Team`">
+                        <v-card :title="`${isEditing ? 'Edit' : 'Add'} a Project`">
                             <template v-slot:text>
                                 <v-row>
                                     <v-col cols="12">
@@ -55,22 +63,19 @@
                                     </v-col>
 
                                     <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.startDate" label="Start Date"
-                                            type="date"></v-text-field>
+                                        <v-text-field v-model="startDateStr" label="Start Date" type="date"
+                                            :error="!!dateErrorMessage"
+                                            :error-messages="dateErrorMessage"></v-text-field>
                                     </v-col>
                                     <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.endDate" label="End Date"
-                                            type="date"></v-text-field>
-                                    </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.companyDto.id"
-                                            label="Company ID"></v-text-field>
+                                        <v-text-field v-model="endDateStr" label="End Date" type="date"
+                                            :error="!!dateErrorMessage"
+                                            :error-messages="dateErrorMessage"></v-text-field>
                                     </v-col>
 
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.companyDto.name"
-                                            label="Company Name"></v-text-field>
+                                    <v-col cols="12" md="12">
+                                        <v-select :items="companies ?? []" item-title="name" item-value="id"
+                                            label="Company (optional)" v-model="selectedCompanyId" dense></v-select>
                                     </v-col>
                                 </v-row>
                             </template>
@@ -82,7 +87,7 @@
 
                                 <v-spacer></v-spacer>
 
-                                <v-btn text="Save" @click="save"></v-btn>
+                                <v-btn text="Save" @click="save" :disabled="!isValid"></v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
@@ -109,9 +114,11 @@
 <script setup lang="ts">
 import { useAsyncData } from '@/composables/useAsyncData';
 import projectsService from '@/services/projectsService';
-import type { Project } from '@/types';
+import companyService from '@/services/companyService';
+import type { Project, Company } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
-import { ref, toRef } from 'vue';
+import { formatDate } from '@/utils/dateFormatter';
+import { ref, computed } from 'vue';
 
 const logger = new DevelopmentLogger({ prefix: '[ProjectsView]' });
 
@@ -136,10 +143,126 @@ const {
     loggerPrefix: '[ProjectsView]'
 });
 
+const {
+    data: companies,
+    load: refreshCompanies
+} = useAsyncData<Company[]>({
+    fetchFunction: (signal) => companyService.getCompanies(signal),
+    loggerPrefix: '[ProjectsView][companies]'
+});
+
 const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
 const formModel = ref(createNewRecord());
 const projectNameToDelete = ref('');
+const projectIdToDelete = ref('');
+const selectedCompanyId = ref<number | null>(null);
+
+const startDateStr = computed({
+    get: () => {
+        const raw = formModel.value.startDate;
+        if (!raw) return '';
+
+        let date: Date;
+        if (typeof raw === 'string') {
+            date = new Date(raw);
+        } else {
+            date = raw as Date;
+        }
+
+        if (isNaN(date.getTime())) return '';
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    },
+    set: (val: string) => {
+        if (val) {
+            formModel.value.startDate = new Date(val + 'T00:00:00.000Z');
+        } else {
+            formModel.value.startDate = new Date();
+        }
+    }
+});
+
+const endDateStr = computed({
+    get: () => {
+        const raw = formModel.value.endDate;
+        if (!raw) return '';
+
+        let date: Date;
+        if (typeof raw === 'string') {
+            date = new Date(raw);
+        } else {
+            date = raw as Date;
+        }
+
+        if (isNaN(date.getTime())) return '';
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    },
+    set: (val: string) => {
+        if (val) {
+            formModel.value.endDate = new Date(val + 'T00:00:00.000Z');
+        } else {
+            formModel.value.endDate = new Date();
+        }
+    }
+});
+
+const isValid = computed(() => {
+    if (!formModel.value.name || !formModel.value.name.trim()) return false;
+
+    const rawS = formModel.value.startDate;
+    const rawE = formModel.value.endDate;
+    if (!rawS || !rawE) return false;
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (typeof rawS === 'string') {
+        startDate = new Date(rawS);
+    } else {
+        startDate = rawS as Date;
+    }
+
+    if (typeof rawE === 'string') {
+        endDate = new Date(rawE);
+    } else {
+        endDate = rawE as Date;
+    }
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return false;
+    return startDate.getTime() <= endDate.getTime();
+});
+
+const dateErrorMessage = computed(() => {
+    const rawS = formModel.value.startDate;
+    const rawE = formModel.value.endDate;
+    if (!rawS || !rawE) return '';
+
+    let startDate: Date;
+    let endDate: Date;
+
+    if (typeof rawS === 'string') {
+        startDate = new Date(rawS);
+    } else {
+        startDate = rawS as Date;
+    }
+
+    if (typeof rawE === 'string') {
+        endDate = new Date(rawE);
+    } else {
+        endDate = rawE as Date;
+    }
+
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return 'Invalid date';
+    return startDate.getTime() <= endDate.getTime() ? '' : 'Start date must be before or equal to End date';
+});
 
 function createNewRecord() {
     return {
@@ -150,17 +273,23 @@ function createNewRecord() {
         companyDto: { id: 0, name: '' }
     } as Project;
 }
-const isEditing = toRef(() => !!formModel.value.id)
+const isEditing = computed(() => !!formModel.value.id)
 
 function addNewProject() {
     formModel.value = createNewRecord();
+    selectedCompanyId.value = null;
     newEditDialog.value = true;
 }
 
 function editProject(id: string) {
     const project = projects.value?.find(p => p.id === id);
     if (project) {
-        formModel.value = { ...project };
+        formModel.value = {
+            ...project,
+            startDate: typeof project.startDate === 'string' ? new Date(project.startDate) : project.startDate,
+            endDate: typeof project.endDate === 'string' ? new Date(project.endDate) : project.endDate
+        };
+        selectedCompanyId.value = project.companyDto?.id ?? null;
         newEditDialog.value = true;
     } else {
         logger.error(`Project with ID ${id} not found.`);
@@ -172,6 +301,7 @@ function showDeleteConfirmation(id: string) {
     if (project) {
         logger.log('Delete project:', project);
         projectNameToDelete.value = project.name;
+        projectIdToDelete.value = project.id;
         confirmDeleteDialog.value = true;
     } else {
         logger.error(`Project with ID ${id} not found.`);
@@ -179,53 +309,62 @@ function showDeleteConfirmation(id: string) {
 }
 
 function confirmDelete() {
-
-    if (projects.value == null) {
-        logger.error('Projects data is not loaded yet.');
-        return;
-    }
-
-    if (!projectNameToDelete.value) {
+    if (!projectIdToDelete.value) {
         logger.error('No project selected for deletion.');
         return;
     }
 
-    projects.value = projects.value.filter(p => p.name !== projectNameToDelete.value);
-    projectNameToDelete.value = '';
-
-    logger.log(`Confirmed deletion of project: ${projectNameToDelete.value}`);
-    confirmDeleteDialog.value = false;
+    projectsService.deleteProject(projectIdToDelete.value)
+        .then(() => {
+            logger.log(`Deleted project id=${projectIdToDelete.value}`);
+            refreshProjects();
+        })
+        .catch(err => logger.error('Failed to delete project:', err))
+        .finally(() => {
+            projectNameToDelete.value = '';
+            projectIdToDelete.value = '';
+            confirmDeleteDialog.value = false;
+        });
 }
 
 function cancelDelete() {
     confirmDeleteDialog.value = false;
     projectNameToDelete.value = '';
+    projectIdToDelete.value = '';
 }
 
-function save() {
-    if (projects.value === null) {
-        logger.error('Projects data is not loaded yet.');
-        return;
-    }
+function formatDateForDisplay(date: Date | string): string {
+    if (!date) return '';
+    return formatDate(date, { format: 'numeric', includeYear: true });
+}
 
+async function save() {
     if (!formModel.value.name) {
         logger.error('Project name is required.');
         return;
     }
 
-    if (isEditing.value) {
-        const index = projects.value.findIndex(project => project.id === formModel.value.id)
-        projects.value[index] = formModel.value
+    const payload = {
+        name: formModel.value.name,
+        startDate: startDateStr.value,
+        endDate: endDateStr.value,
+        companyId: selectedCompanyId.value ?? null
+    };
 
-    } else {
-        formModel.value.id = `${Date.now()}`; // fake
-        formModel.value.companyDto.id = Math.floor(Math.random() * 1000) + 1; // fake
-        formModel.value.companyDto.name = `Company ${Date.now()}`; // fake
-        projects.value.push(formModel.value)
+    try {
+        if (isEditing.value) {
+            await projectsService.updateProject(formModel.value.id, payload as any);
+            logger.log('Updated project', formModel.value.id);
+        } else {
+            const created = await projectsService.createProject(payload as any);
+            logger.log('Created project', created.id);
+        }
 
+        await refreshProjects();
+        newEditDialog.value = false;
+    } catch (err) {
+        logger.error('Failed to save project:', err);
     }
-
-    newEditDialog.value = false
 }
 </script>
 

@@ -1,6 +1,6 @@
 import { tasksLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, Task, DeveloperTask } from '@/types';
+import type { ApiResponse, Task, DeveloperTask, CreateTask } from '@/types';
 
 class TasksService {
     async getTasks(signal?: AbortSignal): Promise<Task[]> {
@@ -23,7 +23,7 @@ class TasksService {
         }
     }
 
-    async createTask(task: Omit<Task, 'id'>, signal?: AbortSignal): Promise<Task> {
+    async createTask(task: CreateTask, signal?: AbortSignal): Promise<Task> {
         try {
             const response = await apiService.post<ApiResponse<Task>>('/tasks', task, signal);
             return response.data;
@@ -90,7 +90,26 @@ class TasksService {
             tasksLogger.error('Error fetching tasks by developer:', error);
             throw new Error('Failed to fetch tasks by developer');
         }
+    }
 
+    async assignDeveloper(taskId: string, developerId: string, signal?: AbortSignal): Promise<Task> {
+        try {
+            const response = await apiService.patch<ApiResponse<Task>>(`/tasks/${taskId}/assign-developer`, { developerId }, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error assigning developer to task:', error);
+            throw new Error('Failed to assign developer to task');
+        }
+    }
+
+    async moveToSprint(taskId: string, sprintId: string, signal?: AbortSignal): Promise<Task> {
+        try {
+            const response = await apiService.patch<ApiResponse<Task>>(`/tasks/${taskId}/move-to-sprint`, { sprintId }, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error moving task to sprint:', error);
+            throw new Error('Failed to move task to sprint');
+        }
     }
 
     mapTaskToDeveloperTask(task: Task, projectName: string = 'Unknown Project'): DeveloperTask {

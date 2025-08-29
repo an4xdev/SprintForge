@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class TaskController extends Controller
 {
@@ -37,33 +38,33 @@ class TaskController extends Controller
 
         if ($request->has('taskStatusId')) {
             $response = ApiResponse::BadRequest('Task status ID automatically assigned to `Created` status. Do not provide it in the request.');
-            return response()->json($response, Response::HTTP_BAD_REQUEST);
+            return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
         }
 
         $statusId = TaskStatus::where('Name', 'Created')->value('Id');
         if (!$statusId) {
             $response = ApiResponse::InternalError('Default task status "Created" not found');
-            return response()->json($response, Response::HTTP_INTERNAL_SERVER_ERROR);
+            return response()->json($response, ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         if ($request->has('developerId') && $request->input('developerId') !== null) {
             if (User::where('Id', $request->input('developerId'))->doesntExist()) {
                 $response = ApiResponse::BadRequest('Developer not found');
-                return response()->json($response, Response::HTTP_BAD_REQUEST);
+                return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
             }
         }
 
         if ($request->has('taskTypeId') && $request->input('taskTypeId') !== null) {
             if (!TaskType::where('Id', $request->input('taskTypeId'))->exists()) {
                 $response = ApiResponse::BadRequest('Task Type not found');
-                return response()->json($response, Response::HTTP_BAD_REQUEST);
+                return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
             }
         }
 
         if ($request->has('sprintId') && $request->input('sprintId') !== null) {
             if (Sprint::where('Id', $request->input('sprintId'))->doesntExist()) {
                 $response = ApiResponse::BadRequest('Sprint not found');
-                return response()->json($response, Response::HTTP_BAD_REQUEST);
+                return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
             }
         }
 
@@ -89,7 +90,7 @@ class TaskController extends Controller
     {
         if (!$task) {
             $response = ApiResponse::NotFound('Task not found');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
         $response = ApiResponse::Success('Task retrieved successfully', $task);
         return response()->json($response);
@@ -102,7 +103,7 @@ class TaskController extends Controller
     {
         if (!$task) {
             $response = ApiResponse::NotFound('Task not found');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
         $request->validate([
             'name' => 'nullable|string|max:255',
@@ -112,12 +113,12 @@ class TaskController extends Controller
 
         if ($request->has('developerId')) {
             $response = ApiResponse::BadRequest('Cannot update developerId directly. Use assign task to developer method.');
-            return response()->json($response, Response::HTTP_BAD_REQUEST);
+            return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
         }
 
         if ($request->has('sprintId')) {
             $response = ApiResponse::BadRequest('Cannot update sprintId directly. Use move task to another sprint method.');
-            return response()->json($response, Response::HTTP_BAD_REQUEST);
+            return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
         }
 
         $task->update(
@@ -139,7 +140,7 @@ class TaskController extends Controller
     {
         if (!$task) {
             $response = ApiResponse::NotFound('Task not found');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
 
         $request->validate([
@@ -160,7 +161,7 @@ class TaskController extends Controller
     {
         if (!$task) {
             $response = ApiResponse::NotFound('Task not found');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
 
         $request->validate([
@@ -205,10 +206,10 @@ class TaskController extends Controller
     {
         if (!$task) {
             $response = ApiResponse::NotFound('Task not found');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
         $task->delete();
-        return response(status: Response::HTTP_NO_CONTENT);
+        return response(status: ResponseAlias::HTTP_NO_CONTENT);
     }
 
     /**

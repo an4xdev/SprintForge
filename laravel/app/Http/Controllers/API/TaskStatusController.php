@@ -8,6 +8,7 @@ use App\Models\TaskStatus;
 use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class TaskStatusController extends Controller
 {
@@ -17,7 +18,13 @@ class TaskStatusController extends Controller
     public function index()
     {
         $taskStatuses = TaskStatus::all();
-        $response = ApiResponse::Success('Task Statuses retrieved successfully', $taskStatuses);
+        if($taskStatuses->isEmpty()) {
+            $response = ApiResponse::Success('No task statuses found', []);
+        }
+        else
+        {
+            $response = ApiResponse::Success('Task Statuses retrieved successfully', $taskStatuses);
+        }
         return response()->json($response);
     }
 
@@ -33,7 +40,7 @@ class TaskStatusController extends Controller
             'Name' => $request->input('name'),
         ]);
         $response = ApiResponse::Created('Task Status created successfully', $taskStatus);
-        return response()->json($response, Response::HTTP_CREATED);
+        return response()->json($response, ResponseAlias::HTTP_CREATED);
     }
 
     /**
@@ -43,7 +50,7 @@ class TaskStatusController extends Controller
     {
         if (!$taskStatus) {
             $response = ApiResponse::NotFound('Task Status not found');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
         $response = ApiResponse::Success('Task Status retrieved successfully', $taskStatus);
         return response()->json($response);
@@ -55,8 +62,8 @@ class TaskStatusController extends Controller
     public function update(Request $request, TaskStatus $taskStatus)
     {
         if (!$taskStatus) {
-            $response = ApiResponse::NotFound('Task Status not found');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            $response = ApiResponse::BadRequest('Task Status not found');
+            return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
         $request->validate([
             'name' => 'required|string|max:255',
@@ -75,7 +82,7 @@ class TaskStatusController extends Controller
     {
         if (!$taskStatus) {
             $response = ApiResponse::NotFound('Task Status not found');
-            return response()->json($response, Response::HTTP_NOT_FOUND);
+            return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
         $taskStatus->delete();
         return response(status: Response::HTTP_NO_CONTENT);

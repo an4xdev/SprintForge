@@ -4,14 +4,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.student.microserviceapp.javaservice.dto.project.CreateProjectDTO;
 import org.student.microserviceapp.javaservice.dto.project.ProjectDTO;
+import org.student.microserviceapp.javaservice.models.Project;
 import org.student.microserviceapp.javaservice.repositories.ProjectRepository;
 import org.student.microserviceapp.javaservice.repositories.TeamRepository;
 import org.student.microserviceapp.javaservice.responses.Result;
 import org.student.microserviceapp.javaservice.services.company.ICompanyService;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class ProjectService implements IProjectService {
@@ -20,7 +20,7 @@ public class ProjectService implements IProjectService {
     private final TeamRepository teamRepository;
 
     public ProjectService(ProjectRepository projectRepository, ICompanyService companyService,
-            TeamRepository teamRepository) {
+                          TeamRepository teamRepository) {
         this.projectRepository = projectRepository;
         this.companyService = companyService;
         this.teamRepository = teamRepository;
@@ -38,9 +38,12 @@ public class ProjectService implements IProjectService {
     @Override
     @Transactional(readOnly = true)
     public Result<List<ProjectDTO>> getAllProjects() {
-        var projects = projectRepository.findAll();
+        var projects = projectRepository.findAll()
+                .stream()
+                .sorted(Comparator.comparing(Project::getStartDate))
+                .toList();
         if (projects.isEmpty()) {
-            return Result.notFound("No projects found");
+            return Result.success(new ArrayList<>(0), "No projects found");
         }
         var projectDTOs = projects.stream()
                 .map(ProjectDTO::new)
@@ -51,10 +54,6 @@ public class ProjectService implements IProjectService {
     @Override
     @Transactional
     public Result<UUID> createProject(CreateProjectDTO createProjectDTO) {
-        var company = companyService.getCompanyById(createProjectDTO.getCompanyId());
-        if (company.isEmpty()) {
-            return Result.notFound("Company not found");
-        }
 
         if (createProjectDTO.getStartDate().isAfter(createProjectDTO.getEndDate())) {
             return Result.badRequest("Start date cannot be after end date");
@@ -62,7 +61,19 @@ public class ProjectService implements IProjectService {
 
         var project = createProjectDTO.toProject();
         project.setId(UUID.randomUUID());
-        project.setCompany(company.get());
+        if (createProjectDTO.getCompanyId() != null) {
+            var company = companyService.getCompanyById(createProjectDTO.getCompanyId());
+            if (company.isEmpty()) {
+                return Result.badRequest("Company not found");
+            }
+            project.setCompany(company.get());
+        } else {
+            var defaultCompany = companyService.getDefaultCompany();
+            if (defaultCompany.isEmpty()) {
+                return Result.internalError("No company provided and could not find default company.");
+            }
+            project.setCompany(defaultCompany.get());
+        }
         projectRepository.save(project);
         return Result.success(project.getId(), "Project created successfully");
     }
@@ -75,6 +86,10 @@ public class ProjectService implements IProjectService {
             return Result.notFound("Project not found");
         }
         var existingProject = project.get();
+
+        if (Objects.equals(existingProject.getName(), "Default")) {
+            return Result.badRequest("Default project cannot be modified");
+        }
 
         if (createProjectDTO.getName() != null && !createProjectDTO.getName().isBlank()) {
             existingProject.setName(createProjectDTO.getName());
@@ -101,7 +116,7 @@ public class ProjectService implements IProjectService {
         if (createProjectDTO.getCompanyId() != null) {
             var company = companyService.getCompanyById(createProjectDTO.getCompanyId());
             if (company.isEmpty()) {
-                return Result.notFound("Company not found");
+                return Result.badRequest("Company not found");
             }
             existingProject.setCompany(company.get());
         }
@@ -117,6 +132,9 @@ public class ProjectService implements IProjectService {
         var project = projectRepository.findById(id);
         if (project.isEmpty()) {
             return Result.notFound("Project not found");
+        }
+        if (Objects.equals(project.get().getName(), "Default")) {
+            return Result.badRequest("Default project cannot be deleted");
         }
         projectRepository.delete(project.get());
         return Result.noContent();

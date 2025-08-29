@@ -1,5 +1,6 @@
 package org.student.microserviceapp.javaservice.dto.project;
 
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -25,7 +26,7 @@ public class CreateProjectDTO {
     @FutureOrPresent(message = "End date must be today or in the future")
     private LocalDate endDate;
 
-    @NotNull(message = "Company ID is required")
+    @Nullable
     private Integer companyId;
 
     public Project toProject() {

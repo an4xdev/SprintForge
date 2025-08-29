@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface ICompanyService {
     Optional<Company> getCompanyById(int id);
+    Optional<Company> getDefaultCompany();
 }

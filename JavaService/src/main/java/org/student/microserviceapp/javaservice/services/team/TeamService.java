@@ -10,6 +10,7 @@ import org.student.microserviceapp.javaservice.repositories.TeamRepository;
 import org.student.microserviceapp.javaservice.responses.Result;
 import org.student.microserviceapp.javaservice.services.user.IUserService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -42,7 +43,7 @@ public class TeamService implements ITeamService {
     public Result<List<TeamDTO>> getAllTeams() {
         var teams = teamRepository.findAll();
         if (teams.isEmpty()) {
-            return Result.notFound("No teams found");
+            return Result.success(new ArrayList<>(0),"No teams found");
         }
         var teamDTOs = teams.stream()
                 .map(TeamDTO::new)
@@ -55,7 +56,7 @@ public class TeamService implements ITeamService {
     public Result<UUID> createTeam(CreateTeamDTO createTeamDTO) {
         var user = userService.findById(createTeamDTO.getManagerId());
         if (user.isEmpty()) {
-            return Result.notFound("User not found");
+            return Result.badRequest("User not found");
         }
 
         var existingUser = user.get();
@@ -67,7 +68,7 @@ public class TeamService implements ITeamService {
         if (createTeamDTO.projectId != null) {
             var project = projectRepository.findById(createTeamDTO.projectId);
             if (project.isEmpty()) {
-                return Result.notFound("Project not found");
+                return Result.badRequest("Project not found");
             }
         }
 
@@ -77,6 +78,15 @@ public class TeamService implements ITeamService {
         if (createTeamDTO.projectId != null) {
             var project = projectRepository.findById(createTeamDTO.projectId);
             project.ifPresent(team::setProject);
+        }
+        else {
+            var project = projectRepository.findByName("Default");
+            if(project.isEmpty()) {
+                return Result.internalError("No project provided and could not find default project");
+            }
+            else {
+                team.setProject(project.get());
+            }
         }
         teamRepository.save(team);
         return Result.success(team.getId(), "Team created successfully");
@@ -96,7 +106,7 @@ public class TeamService implements ITeamService {
         if (createTeamDTO.getManagerId() != null) {
             var user = userService.findById(createTeamDTO.getManagerId());
             if (user.isEmpty()) {
-                return Result.notFound("User not found");
+                return Result.badRequest("User not found");
             }
             var existingUser = user.get();
             if (!Objects.equals(existingUser.getRole(), Roles.MANAGER)) {
@@ -112,7 +122,7 @@ public class TeamService implements ITeamService {
         if (createTeamDTO.projectId != null) {
             var project = projectRepository.findById(createTeamDTO.projectId);
             if (project.isEmpty()) {
-                return Result.notFound("Project not found");
+                return Result.badRequest("Project not found");
             }
             existingTeam.setProject(project.get());
         }
@@ -153,14 +163,14 @@ public class TeamService implements ITeamService {
             return Result.badRequest("User is not a manager");
         }
 
-        var teamOptional = teamRepository.findTeamByManager_Id(managerId);
-        if (teamOptional.isEmpty()) {
-            return Result.notFound("No teams found for this manager");
+        var team = teamRepository.findTeamByManager_Id(managerId);
+        if (team.isEmpty()) {
+            return Result.success(null,"No teams found for this manager");
         }
 
-        var team = teamOptional.get();
+        var existingTeam = team.get();
 
-        var teamDTO = new TeamDTO(team);
+        var teamDTO = new TeamDTO(existingTeam);
 
         return Result.success(teamDTO, "Teams found for the manager");
     }
