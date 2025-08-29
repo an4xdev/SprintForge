@@ -82,8 +82,8 @@ app.get("/api/taskTypes", async (_req, res) => {
   try {
     const taskTypes = await TaskTypes.findAll();
     if (!taskTypes || taskTypes.length === 0) {
-      let response = ApiResponse.NotFound("No task types found");
-      res.status(404).json(response);
+      let response = ApiResponse.Success("No task types found", []);
+      res.status(200).json(response);
       return;
     }
     let response = ApiResponse.Success("Task types fetched successfully", taskTypes);
@@ -102,7 +102,7 @@ app.post("/api/taskTypes", async (req, res) => {
     const taskType = await TaskTypes.create({
       Name: name
     });
-    let response = ApiResponse.Created("Task type created successfully", taskType);
+    let response = ApiResponse.Created("Task type created successfully", taskType.Id);
     res.status(201).json(response);
   } catch (error) {
     console.error("Error creating task type:", error);
@@ -137,8 +137,8 @@ app.put("/api/taskTypes/:id", async (req, res) => {
   try {
     const taskType = await TaskTypes.findByPk(id);
     if (!taskType) {
-      let response = ApiResponse.NotFound("Task type not found");
-      res.status(404).json(response);
+      let response = ApiResponse.BadRequest("Task type not found");
+      res.status(400).json(response);
       return;
     }
     taskType.Name = name;
@@ -190,8 +190,8 @@ app.get("/api/companies", async (_req, res) => {
   try {
     const companies = await Companies.findAll();
     if (!companies || companies.length === 0) {
-      let response = ApiResponse.NotFound("No companies found");
-      res.status(404).json(response);
+      let response = ApiResponse.Success("No companies found", []);
+      res.status(200).json(response);
       return;
     }
 
@@ -230,7 +230,7 @@ app.post("/api/companies", async (req, res) => {
     const company = await Companies.create({
       Name: name
     });
-    let response = ApiResponse.Created("Company created successfully", company);
+    let response = ApiResponse.Created("Company created successfully", company.Id);
     res.status(201).json(response);
   } catch (error) {
     console.error("Error creating company:", error);
@@ -246,8 +246,8 @@ app.put("/api/companies/:id", async (req, res) => {
   try {
     const company = await Companies.findByPk(id);
     if (!company) {
-      let response = ApiResponse.NotFound("Company not found");
-      res.status(404).json(response);
+      let response = ApiResponse.BadRequest("Company not found");
+      res.status(400).json(response);
       return;
     }
     if (company.Name === "Default") {

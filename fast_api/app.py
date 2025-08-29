@@ -294,7 +294,7 @@ def create_sprint(sprint: SprintCreate, db: Session=Depends(get_db)):
         db.add(new_sprint)
         db.commit()
         db.refresh(new_sprint)
-        return ApiResponse(message="Sprint created", data=new_sprint).model_dump()
+        return ApiResponse(message="Sprint created", data=new_sprint.Id).model_dump()
     except Exception as e:
         db.rollback()
         raise ApiException(status_code=500, message=str(e))

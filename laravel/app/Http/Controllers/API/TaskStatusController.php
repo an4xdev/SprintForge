@@ -18,7 +18,13 @@ class TaskStatusController extends Controller
     public function index()
     {
         $taskStatuses = TaskStatus::all();
-        $response = ApiResponse::Success('Task Statuses retrieved successfully', $taskStatuses);
+        if($taskStatuses->isEmpty()) {
+            $response = ApiResponse::Success('No task statuses found', []);
+        }
+        else
+        {
+            $response = ApiResponse::Success('Task Statuses retrieved successfully', $taskStatuses);
+        }
         return response()->json($response);
     }
 
@@ -56,7 +62,7 @@ class TaskStatusController extends Controller
     public function update(Request $request, TaskStatus $taskStatus)
     {
         if (!$taskStatus) {
-            $response = ApiResponse::NotFound('Task Status not found');
+            $response = ApiResponse::BadRequest('Task Status not found');
             return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
         $request->validate([
