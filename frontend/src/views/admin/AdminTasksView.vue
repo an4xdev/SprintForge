@@ -7,7 +7,7 @@
                 <div class="py-1">
                     <v-sheet border rounded>
                         <v-data-table :headers="headers" :hide-default-footer="tasks !== null && tasks.length < 11"
-                            :items="tasks ?? []">
+                            :items="tasks ?? []" :loading="loading">
                             <template v-slot:top>
                                 <v-toolbar flat>
                                     <v-toolbar-title>
@@ -30,13 +30,47 @@
                                 </v-chip>
                             </template>
 
+                            <template v-slot:item.developerId="{ value }">
+                                <span v-if="value">
+                                    {{developers.find(d => d.id === value)?.username || 'Unknown'}}
+                                </span>
+                                <span v-else class="text-medium-emphasis">Not assigned</span>
+                            </template>
+
+                            <template v-slot:item.sprintId="{ value }">
+                                <span v-if="value">
+                                    {{sprints.find(s => s.id === value)?.name || 'Unknown'}}
+                                </span>
+                                <span v-else class="text-medium-emphasis">No sprint</span>
+                            </template>
+
+                            <template v-slot:item.taskStatusId="{ value }">
+                                <span v-if="value">
+                                    {{taskStatuses.find(ts => ts.id === value)?.name || 'Unknown'}}
+                                </span>
+                                <span v-else class="text-medium-emphasis">No status</span>
+                            </template>
+
+                            <template v-slot:item.taskTypeId="{ value }">
+                                <span v-if="value">
+                                    {{taskTypes.find(tt => tt.id === value)?.name || 'Unknown'}}
+                                </span>
+                                <span v-else class="text-medium-emphasis">No type</span>
+                            </template>
+
                             <template v-slot:item.actions="{ item }">
                                 <div class="d-flex ga-2 justify-end">
                                     <v-icon color="medium-emphasis" icon="mdi-pencil" size="small"
-                                        @click="editTask(item.id)"></v-icon>
+                                        @click="editTask(item.id)" />
+
+                                    <v-icon color="medium-emphasis" icon="mdi-account-switch" size="small"
+                                        @click="showAssignDeveloperDialog(item.id)" title="Assign Developer" />
+
+                                    <v-icon color="medium-emphasis" icon="mdi-swap-horizontal" size="small"
+                                        @click="showMoveToSprintDialog(item.id)" title="Move to Sprint" />
 
                                     <v-icon color="medium-emphasis" icon="mdi-delete" size="small"
-                                        @click="showDeleteConfirmation(item.id)"></v-icon>
+                                        @click="showDeleteConfirmation(item.id)" />
                                 </div>
                             </template>
 
@@ -52,32 +86,23 @@
                             <template v-slot:text>
                                 <v-row>
                                     <v-col cols="12">
-                                        <v-text-field v-model="formModel.name" label="Name"></v-text-field>
+                                        <v-text-field v-model="formModel.name" label="Task Name" required />
                                     </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.description"
-                                            label="Description"></v-text-field>
+                                    <v-col cols="12">
+                                        <v-textarea v-model="formModel.description" label="Description" rows="3" />
                                     </v-col>
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.developerId"
-                                            label="Developer ID"></v-text-field>
+                                    <v-col cols="12" v-if="!isEditing">
+                                        <v-select v-model="formModel.developerId" :items="developers"
+                                            item-title="username" item-value="id" label="Developer" clearable />
                                     </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.sprintId" label="Sprint ID"></v-text-field>
+                                    <v-col cols="12" v-if="!isEditing">
+                                        <v-select v-model="formModel.sprintId" :items="sprints" item-title="name"
+                                            item-value="id" label="Sprint" clearable />
                                     </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.taskStatusId"
-                                            label="Task Status ID"></v-text-field>
+                                    <v-col cols="12">
+                                        <v-select v-model="formModel.taskTypeId" :items="taskTypes" item-title="name"
+                                            item-value="id" label="Task Type" clearable />
                                     </v-col>
-
-                                    <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.taskTypeId"
-                                            label="Task Type ID"></v-text-field>
-                                    </v-col>
-
                                 </v-row>
                             </template>
 
@@ -88,7 +113,7 @@
 
                                 <v-spacer></v-spacer>
 
-                                <v-btn text="Save" @click="save"></v-btn>
+                                <v-btn text="Save" @click="save" :loading="saving"></v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
@@ -102,7 +127,37 @@
                             <v-card-actions class="bg-surface-light">
                                 <v-btn text="Cancel" color="success" @click="cancelDelete"></v-btn>
                                 <v-spacer></v-spacer>
-                                <v-btn text="Confirm" color="error" @click="confirmDelete"></v-btn>
+                                <v-btn text="Confirm" color="error" @click="confirmDelete" :loading="deleting"></v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+
+                    <v-dialog v-model="assignDeveloperDialog" max-width="400px">
+                        <v-card title="Assign Developer">
+                            <template v-slot:text>
+                                <v-select v-model="selectedDeveloperId" :items="developers" item-title="username"
+                                    item-value="id" label="Developer" clearable />
+                            </template>
+                            <v-divider></v-divider>
+                            <v-card-actions class="bg-surface-light">
+                                <v-btn text="Cancel" @click="assignDeveloperDialog = false"></v-btn>
+                                <v-spacer></v-spacer>
+                                <v-btn text="Assign" @click="assignDeveloper" :loading="assigning"></v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
+
+                    <v-dialog v-model="moveToSprintDialog" max-width="400px">
+                        <v-card title="Move to Sprint">
+                            <template v-slot:text>
+                                <v-select v-model="selectedSprintId" :items="sprints" item-title="name" item-value="id"
+                                    label="Sprint" clearable />
+                            </template>
+                            <v-divider></v-divider>
+                            <v-card-actions class="bg-surface-light">
+                                <v-btn text="Cancel" @click="moveToSprintDialog = false"></v-btn>
+                                <v-spacer></v-spacer>
+                                <v-btn text="Move" @click="moveTaskToSprint" :loading="moving"></v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
@@ -115,47 +170,86 @@
 <script setup lang="ts">
 import { useAsyncData } from '@/composables/useAsyncData';
 import tasksService from '@/services/tasksService';
-import type { Task } from '@/types';
+import usersService from '@/services/usersService';
+import sprintsService from '@/services/sprintsService';
+import taskStatusesService from '@/services/taskStatusesService';
+import taskTypesService from '@/services/taskTypesService';
+import type { Task, CreateTask, User, Sprint, TaskStatus, TaskType } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
-import { ref, toRef } from 'vue';
+import { ref, toRef, computed, onMounted } from 'vue';
 
-const logger = new DevelopmentLogger({ prefix: '[TasksView]' });
+const logger = new DevelopmentLogger({ prefix: '[AdminTasksView]' });
 
 const headers = [
     { title: 'Name', key: 'name', align: "start" as const },
     { title: 'Description', key: 'description' },
-    { title: 'Developer id', key: 'developerId' },
-    { title: 'Sprint id', key: 'sprintId' },
-    { title: 'Task Status id', key: 'taskStatusId' },
-    { title: 'Task Type id', key: 'taskTypeId' },
+    { title: 'Developer', key: 'developerId' },
+    { title: 'Sprint', key: 'sprintId' },
+    { title: 'Status', key: 'taskStatusId' },
+    { title: 'Type', key: 'taskTypeId' },
     { title: 'Actions', key: 'actions', align: 'end' as const, sortable: false }
 ];
 
 const {
     data: tasks,
-    load: refreshTasks
+    load: refreshTasks,
+    loading
 } = useAsyncData<Task[]>({
     fetchFunction: (signal) => tasksService.getTasks(signal),
-    loggerPrefix: '[TasksView]'
+    loggerPrefix: '[AdminTasksView]'
 });
+
+const developers = ref<User[]>([]);
+const sprints = ref<Sprint[]>([]);
+const taskStatuses = ref<TaskStatus[]>([]);
+const taskTypes = ref<TaskType[]>([]);
 
 const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
-const formModel = ref(createNewRecord());
-const taskNameToDelete = ref('');
+const assignDeveloperDialog = ref(false);
+const moveToSprintDialog = ref(false);
+const saving = ref(false);
+const deleting = ref(false);
+const assigning = ref(false);
+const moving = ref(false);
 
-function createNewRecord() {
+const formModel = ref<CreateTask & { id?: string }>(createNewRecord());
+const taskToDelete = ref<Task | null>(null);
+const taskNameToDelete = computed(() => taskToDelete.value?.name || '');
+const taskToAssign = ref<string | null>(null);
+const taskToMove = ref<string | null>(null);
+const selectedDeveloperId = ref<string | null>(null);
+const selectedSprintId = ref<string | null>(null);
+
+function createNewRecord(): CreateTask & { id?: string } {
     return {
-        id: '',
         name: '',
         description: '',
         developerId: null,
         sprintId: null,
-        taskStatusId: 0,
-        taskTypeId: 0
-    } as Task;
+        taskTypeId: null
+    };
 }
-const isEditing = toRef(() => !!formModel.value.id)
+
+const isEditing = toRef(() => !!formModel.value.id);
+
+async function loadReferenceData() {
+    try {
+        const [developersData, sprintsData, statusesData, typesData] = await Promise.all([
+            usersService.getUsersByRole('developer'),
+            sprintsService.getSprints(),
+            taskStatusesService.getTaskStatuses(),
+            taskTypesService.getTaskTypes()
+        ]);
+
+        developers.value = developersData;
+        sprints.value = sprintsData;
+        taskStatuses.value = statusesData;
+        taskTypes.value = typesData;
+    } catch (error) {
+        logger.error('Error loading reference data:', error);
+    }
+}
 
 function addNewTask() {
     formModel.value = createNewRecord();
@@ -165,7 +259,14 @@ function addNewTask() {
 function editTask(id: string) {
     const task = tasks.value?.find(t => t.id === id);
     if (task) {
-        formModel.value = { ...task };
+        formModel.value = {
+            id: task.id,
+            name: task.name,
+            description: task.description,
+            developerId: task.developerId,
+            sprintId: task.sprintId,
+            taskTypeId: task.taskTypeId
+        };
         newEditDialog.value = true;
     } else {
         logger.error(`Task with ID ${id} not found.`);
@@ -175,65 +276,137 @@ function editTask(id: string) {
 function showDeleteConfirmation(id: string) {
     const task = tasks.value?.find(t => t.id === id);
     if (task) {
-        logger.log('Delete task:', task);
-        taskNameToDelete.value = task.name;
+        taskToDelete.value = task;
         confirmDeleteDialog.value = true;
     } else {
         logger.error(`Task with ID ${id} not found.`);
     }
 }
 
-function confirmDelete() {
-
-    if (tasks.value == null) {
-        logger.error('Tasks data is not loaded yet.');
-        return;
-    }
-
-    if (!taskNameToDelete.value) {
-        logger.error('No task selected for deletion.');
-        return;
-    }
-
-    tasks.value = tasks.value.filter(t => t.name !== taskNameToDelete.value);
-    taskNameToDelete.value = '';
-
-    logger.log(`Confirmed deletion of task: ${taskNameToDelete.value}`);
-    confirmDeleteDialog.value = false;
-}
-
-function cancelDelete() {
-    confirmDeleteDialog.value = false;
-    taskNameToDelete.value = '';
-}
-
-function save() {
-    if (tasks.value === null) {
-        logger.error('Tasks data is not loaded yet.');
-        return;
-    }
-
-    if (!formModel.value.name) {
+async function save() {
+    if (!formModel.value.name.trim()) {
         logger.error('Task name is required.');
         return;
     }
 
-    if (isEditing.value) {
-        const index = tasks.value.findIndex(task => task.id === formModel.value.id)
-        tasks.value[index] = formModel.value
+    saving.value = true;
+    try {
+        if (isEditing.value && formModel.value.id) {
+            const updateData: Partial<Task> = {
+                name: formModel.value.name,
+                description: formModel.value.description,
+                taskTypeId: formModel.value.taskTypeId || 0
+            };
 
-    } else {
-        formModel.value.id = `${Date.now()}`; // fake
-        formModel.value.developerId = 'team-id'; // fake
-        formModel.value.sprintId = 'sprint-id'; // fake
-        formModel.value.taskStatusId = 0; // fake
-        formModel.value.taskTypeId = 0; // fake
-        tasks.value.push(formModel.value)
+            await tasksService.updateTask(formModel.value.id, updateData);
+            logger.log('Task updated successfully');
+        } else {
+            const createData: CreateTask = {
+                name: formModel.value.name,
+                description: formModel.value.description,
+                developerId: formModel.value.developerId,
+                sprintId: formModel.value.sprintId,
+                taskTypeId: formModel.value.taskTypeId
+            };
 
+            await tasksService.createTask(createData);
+            logger.log('Task created successfully');
+        }
+
+        await refreshTasks();
+        newEditDialog.value = false;
+    } catch (error) {
+        logger.error('Error saving task:', error);
+    } finally {
+        saving.value = false;
+    }
+}
+
+async function confirmDelete() {
+    if (!taskToDelete.value) {
+        logger.error('No task selected for deletion.');
+        return;
     }
 
-    newEditDialog.value = false
+    deleting.value = true;
+    try {
+        await tasksService.deleteTask(taskToDelete.value.id);
+        logger.log(`Task "${taskToDelete.value.name}" deleted successfully`);
+
+        await refreshTasks();
+        confirmDeleteDialog.value = false;
+        taskToDelete.value = null;
+    } catch (error) {
+        logger.error('Error deleting task:', error);
+    } finally {
+        deleting.value = false;
+    }
 }
+
+function cancelDelete() {
+    confirmDeleteDialog.value = false;
+    taskToDelete.value = null;
+}
+
+function showAssignDeveloperDialog(id: string) {
+    taskToAssign.value = id;
+    selectedDeveloperId.value = null;
+    assignDeveloperDialog.value = true;
+}
+
+async function assignDeveloper() {
+    if (!taskToAssign.value || !selectedDeveloperId.value) {
+        logger.error('Task ID and Developer ID are required for assignment.');
+        return;
+    }
+
+    assigning.value = true;
+    try {
+        await tasksService.assignDeveloper(taskToAssign.value, selectedDeveloperId.value);
+        logger.log('Developer assigned to task successfully');
+
+        await refreshTasks();
+        assignDeveloperDialog.value = false;
+        taskToAssign.value = null;
+        selectedDeveloperId.value = null;
+    } catch (error) {
+        logger.error('Error assigning developer to task:', error);
+    } finally {
+        assigning.value = false;
+    }
+}
+
+function showMoveToSprintDialog(id: string) {
+    taskToMove.value = id;
+    selectedSprintId.value = null;
+    moveToSprintDialog.value = true;
+}
+
+async function moveTaskToSprint() {
+    if (!taskToMove.value || !selectedSprintId.value) {
+        logger.error('Task ID and Sprint ID are required for moving task.');
+        return;
+    }
+
+    moving.value = true;
+    try {
+        await tasksService.moveToSprint(taskToMove.value, selectedSprintId.value);
+        logger.log('Task moved to sprint successfully');
+
+        await refreshTasks();
+        moveToSprintDialog.value = false;
+        taskToMove.value = null;
+        selectedSprintId.value = null;
+    } catch (error) {
+        logger.error('Error moving task to sprint:', error);
+    } finally {
+        moving.value = false;
+    }
+}
+
+onMounted(() => {
+    loadReferenceData();
+});
 </script>
 
 <style scoped></style>

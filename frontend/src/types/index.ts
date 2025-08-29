@@ -114,6 +114,14 @@ export interface Task {
     taskTypeId: number;
 }
 
+export interface CreateTask {
+    name: string;
+    description?: string;
+    developerId?: string | null;
+    sprintId?: string | null;
+    taskTypeId?: number | null;
+}
+
 export interface AdminDashboard {
     companiesCount: number;
     usersCount: number;
