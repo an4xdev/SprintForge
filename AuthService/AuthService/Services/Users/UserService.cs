@@ -227,5 +227,29 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
         return Result<object?>.NoContent();
     }
 
+    public async Task<Result<List<UserResponse>>> GetDevelopersByTeamId(Guid teamId)
+    {
+        var team = await context
+            .Teams
+            .Include(t => t.Developers)
+            .FirstOrDefaultAsync(t => t.Id == teamId);
+        if (team == null)
+        {
+            return Result<List<UserResponse>>.NotFound("Team not found");
+        }
+
+        var users = team.Developers.Select(d => new UserResponse
+        {
+            Id = d.Id,
+            Username = d.Username,
+            Avatar = d.Avatar,
+            Email = d.Email,
+            FirstName = d.FirstName,
+            LastName = d.LastName
+        }).ToList();
+
+        return Result<List<UserResponse>>.Success(users, $"Successfully retrieved all users by team: {teamId}");
+    }
+
     private string FileServerPath => $"{configuration["MINIO_PUBLIC_URL"]}/{configuration["MINIO_BUCKET"]}";
 }
