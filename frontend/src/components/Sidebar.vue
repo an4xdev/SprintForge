@@ -224,8 +224,8 @@ const allMenuItems = [
     },
     // manager
     {
-        title: 'Teams',
-        to: '/manager/teams',
+        title: 'Team',
+        to: '/manager/team',
         icon: 'mdi-account-group',
         roles: ['manager']
     },

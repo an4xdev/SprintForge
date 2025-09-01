@@ -64,6 +64,16 @@ class UsersService {
         }
     }
 
+    async getDevelopersByTeam(id: string, signal?: AbortSignal): Promise<User[]> {
+        try {
+            const response = await apiService.get<ApiResponse<User[]>>(`/users/teams/${id}`, signal);
+            return response.data;
+        } catch (error) {
+            profileLogger.error('Error fetching developers by team:', error);
+            throw new Error('Failed to fetch developers by team');
+        }
+    }
+
     async updateAvatar(file: File, userId: string, signal?: AbortSignal): Promise<AvatarChangeResponse | object> {
         try {
             const formData = new FormData();

@@ -5,65 +5,81 @@
                 <div class="d-flex align-center mb-6">
                     <h1 class="text-h4">My Team</h1>
                     <v-spacer></v-spacer>
-                    <v-btn prepend-icon="mdi-refresh" variant="outlined" @click="refreshTeam">
+                    <v-btn prepend-icon="mdi-refresh" variant="outlined" @click="refreshData">
                         Refresh
                     </v-btn>
                 </div>
 
                 <v-row v-if="team">
-                    <v-col cols="12" md="6">
-                        <v-card>
+                    <v-col cols="12" lg="6">
+                        <v-card class="h-100">
                             <v-card-title class="d-flex align-center">
                                 <v-icon color="primary" icon="mdi-account-group" class="me-2"></v-icon>
                                 Team Information
                             </v-card-title>
                             <v-card-text>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <v-text-field v-model="team.name" label="Team Name"
-                                            prepend-icon="mdi-account-group" readonly variant="outlined"></v-text-field>
-                                    </v-col>
-                                    <v-col cols="12">
-                                        <v-text-field v-model="team.id" label="Team ID" prepend-icon="mdi-identifier"
-                                            readonly variant="outlined"></v-text-field>
-                                    </v-col>
-                                </v-row>
+                                <div class="mb-4">
+                                    <div class="text-subtitle-2 text-medium-emphasis mb-1">Team Name</div>
+                                    <div class="text-h6">{{ team.name }}</div>
+                                </div>
+                                <div class="mb-4">
+                                    <div class="text-subtitle-2 text-medium-emphasis mb-1">Manager</div>
+                                    <div class="text-h6">{{ team.manager.username }}</div>
+                                </div>
+                                <v-alert type="info" variant="tonal" density="compact" class="mt-4">
+                                    <div class="text-body-2">
+                                        You can view your team details but cannot modify them.
+                                        Please contact an administrator for any changes.
+                                    </div>
+                                </v-alert>
                             </v-card-text>
                         </v-card>
                     </v-col>
 
-                    <v-col cols="12" md="6">
-                        <v-card>
+                    <v-col cols="12" lg="6">
+                        <v-card class="h-100">
                             <v-card-title class="d-flex align-center">
-                                <v-icon color="success" icon="mdi-account-star" class="me-2"></v-icon>
-                                Manager Information
+                                <v-icon color="success" icon="mdi-account-multiple" class="me-2"></v-icon>
+                                Team Developers
+                                <v-spacer></v-spacer>
+                                <v-chip color="primary" variant="tonal" size="small">
+                                    {{ developers?.length || 0 }}
+                                </v-chip>
                             </v-card-title>
                             <v-card-text>
-                                <v-row>
-                                    <v-col cols="12">
-                                        <v-text-field v-model="team.manager.username" label="Manager Username"
-                                            prepend-icon="mdi-account" readonly variant="outlined"></v-text-field>
-                                    </v-col>
-                                    <v-col cols="12">
-                                        <v-text-field v-model="team.manager.id" label="Manager ID"
-                                            prepend-icon="mdi-identifier" readonly variant="outlined"></v-text-field>
-                                    </v-col>
-                                </v-row>
+                                <div v-if="loadingDevelopers" class="d-flex justify-center align-center py-8">
+                                    <v-progress-circular color="primary" indeterminate size="32"></v-progress-circular>
+                                </div>
+                                <div v-else-if="developers && developers.length > 0">
+                                    <v-list density="compact">
+                                        <v-list-item v-for="developer in developers" :key="developer.id">
+                                            <template v-slot:prepend>
+                                                <v-avatar size="40" class="me-3">
+                                                    <span class="text-subtitle-1 font-weight-bold"
+                                                        :style="{ color: 'white' }">
+                                                        {{ getInitials(developer.username) }}
+                                                    </span>
+                                                </v-avatar>
+                                            </template>
+                                            <v-list-item-title>{{ developer.username }}</v-list-item-title>
+                                            <v-list-item-subtitle>{{ developer.firstName }} {{ developer.lastName
+                                            }}</v-list-item-subtitle>
+                                            <template v-slot:append>
+                                                <v-chip color="success" variant="tonal" size="small">
+                                                    Developer
+                                                </v-chip>
+                                            </template>
+                                        </v-list-item>
+                                    </v-list>
+                                </div>
+                                <div v-else class="text-center py-8">
+                                    <v-icon color="grey" icon="mdi-account-off" size="48" class="mb-2"></v-icon>
+                                    <div class="text-body-1 text-medium-emphasis">
+                                        No developers assigned to this team
+                                    </div>
+                                </div>
                             </v-card-text>
                         </v-card>
-                    </v-col>
-
-                    <v-col cols="12">
-                        <v-alert type="info" variant="tonal" prominent>
-                            <template v-slot:prepend>
-                                <v-icon icon="mdi-information"></v-icon>
-                            </template>
-                            <div class="text-subtitle-1 mb-2">Manager Access</div>
-                            <div class="text-body-1">
-                                You can view your team details but cannot modify them.
-                                Please contact an administrator for any changes to team settings.
-                            </div>
-                        </v-alert>
                     </v-col>
                 </v-row>
 
@@ -78,7 +94,7 @@
                         <div class="text-body-1 text-medium-emphasis mb-4">
                             You are not currently assigned to manage any team.
                         </div>
-                        <v-btn prepend-icon="mdi-refresh" variant="outlined" @click="refreshTeam">
+                        <v-btn prepend-icon="mdi-refresh" variant="outlined" @click="refreshData">
                             Try Again
                         </v-btn>
                     </v-card-text>
@@ -89,10 +105,12 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue';
 import { useAsyncData } from '@/composables/useAsyncData';
 import authService from '@/services/authService';
 import teamService from '@/services/teamsService';
-import type { Team } from '@/types';
+import usersService from '@/services/usersService';
+import type { Team, User } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 
 const logger = new DevelopmentLogger({ prefix: '[ManagerTeamView]' });
@@ -113,6 +131,45 @@ const {
     },
     loggerPrefix: '[ManagerTeamView]'
 });
+
+const {
+    data: developers,
+    loading: loadingDevelopers,
+    load: loadDevelopers
+} = useAsyncData<User[]>({
+    fetchFunction: async (signal) => {
+        if (team.value?.id) {
+            return await usersService.getDevelopersByTeam(team.value.id, signal);
+        } else {
+            return [];
+        }
+    },
+    loggerPrefix: '[ManagerTeamView]',
+    autoLoad: false
+});
+
+// Watch for team changes to load developers
+watch(team, (newTeam) => {
+    if (newTeam?.id) {
+        loadDevelopers();
+    }
+}, { immediate: true });
+
+const getInitials = (username?: string): string => {
+    if (!username) return 'U'
+    return username.charAt(0).toUpperCase()
+}
+
+const refreshData = async () => {
+    await refreshTeam();
+    if (team.value?.id) {
+        await loadDevelopers();
+    }
+};
 </script>
 
-<style scoped></style>
+<style scoped>
+.v-avatar {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+</style>
