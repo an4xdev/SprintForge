@@ -77,6 +77,14 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
             ServiceType.AuthService);
     }
 
+    [HttpGet("teams/{id:guid}")]
+    [Authorize(Roles = "admin,manager")]
+    public async Task<ActionResult<ApiResponse<List<UserResponse>>>> GetTeamMembers(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<UserResponse>>>(HttpMethod.Get,
+            $"/users/teams/{id}", ServiceType.AuthService);
+    }
+
     [HttpPost("avatar")]
     public async Task<ActionResult<ApiResponse<AvatarResponse>>> UpdateAvatar([FromForm] IFormFile? file,
         [FromForm] Guid userId)

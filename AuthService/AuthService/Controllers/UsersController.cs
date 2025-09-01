@@ -71,6 +71,13 @@ public class UsersController(IUserService userService, IFileService fileService)
         return user.ToActionResult();
     }
 
+    [HttpGet("teams/{id:guid}")]
+    public async Task<ActionResult<ApiResponse<List<UserResponse>>>> GetTeamMembers(Guid id)
+    {
+        var users = await userService.GetDevelopersByTeamId(id);
+        return users.ToActionResult();
+    }
+
     [HttpPost("avatar")]
     public async Task<ActionResult<ApiResponse<AvatarResponse>>> UpdateAvatar(
         [FromForm] IFormFile file,

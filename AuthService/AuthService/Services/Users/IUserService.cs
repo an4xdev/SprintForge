@@ -23,4 +23,6 @@ public interface IUserService
     Task<Result<UserResponse?>> UpdateUser(Guid id, UpdateUserRequest request);
 
     Task<Result<object?>> DeleteUser(Guid id);
+
+    Task<Result<List<UserResponse>>> GetDevelopersByTeamId(Guid teamId);
 }

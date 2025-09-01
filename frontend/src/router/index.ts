@@ -71,8 +71,8 @@ const routes = [
   },
   // Manager routes
   {
-    path: '/manager/teams',
-    name: 'ManagerTeams',
+    path: '/manager/team',
+    name: 'ManagerTeam',
     component: () => import('@/views/manager/ManagerTeamView.vue'),
     meta: { requiresAuth: true, roles: ['manager'] }
   },
