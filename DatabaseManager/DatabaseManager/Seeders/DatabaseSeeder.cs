@@ -38,4 +38,19 @@ public static class DatabaseSeeder
             transaction.Dispose();
         }
     }
+    
+    public static void SeedFromMultipleFiles(AppDbContext context, List<string> filePaths)
+    {
+        foreach (var filePath in filePaths)
+        {
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine($"SQL seed file '{filePath}' not found, skipping...");
+                continue;
+            }
+
+            Console.WriteLine($"Seeding from file: {filePath}");
+            SeedFromSqlFile(context, filePath);
+        }
+    }
 }
