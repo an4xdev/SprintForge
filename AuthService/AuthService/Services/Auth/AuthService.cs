@@ -10,10 +10,11 @@ using SharedObjects.DTOs.Requests;
 using SharedObjects.DTOs.Responses;
 using SharedObjects.Models;
 using SharedObjects.Responses;
+using StackExchange.Redis;
 
 namespace AuthService.Services.Auth;
 
-public class AuthService(AppDbContext context) : IAuthService
+public class AuthService(AppDbContext context, IDatabase redis) : IAuthService
 {
     public async Task<Result<LoginResponse>> LoginAsync(UserLoginRequest request)
     {
@@ -39,11 +40,34 @@ public class AuthService(AppDbContext context) : IAuthService
 
     private async Task<TokenResponse> CreateTokenResponse(User user)
     {
+        var accessToken = CreateToken(user);
+        var refreshToken = await GenerateAndSaveRefreshTokenAsync(user);
+        
+        if (user.Role == "manager")
+        {
+            await SaveManagerTokenInRedis(user.Id.ToString(), accessToken);
+        }
+        
         return new TokenResponse
         {
-            AccessToken = CreateToken(user),
-            RefreshToken = await GenerateAndSaveRefreshTokenAsync(user)
+            AccessToken = accessToken,
+            RefreshToken = refreshToken
         };
+    }
+    
+    private async Task<bool> SaveManagerTokenInRedis(string managerId, string accessToken)
+    {
+        try
+        {
+            var key = $"manager_token:{managerId}";
+            var ok = await redis.StringSetAsync(key, accessToken, TimeSpan.FromDays(1));
+            return ok;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to save manager token in Redis: {ex.Message}");
+        }
+        return false;
     }
 
     public async Task<Result<TokenResponse>> RefreshTokensAsync(RefreshTokenRequestDto request)
@@ -118,7 +142,7 @@ public class AuthService(AppDbContext context) : IAuthService
         return refreshToken;
     }
 
-    private string CreateToken(User user)
+    private static string CreateToken(User user)
     {
         var claims = new List<Claim>
         {

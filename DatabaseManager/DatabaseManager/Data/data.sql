@@ -2,7 +2,7 @@
 
     DO $$
     BEGIN
-        IF EXISTS (SELECT 1
+        IF EXISTS (                                                                    SELECT 1
             FROM public."Companies"
         UNION ALL
             SELECT 1
@@ -363,61 +363,285 @@ INSERT INTO public."TaskHistories"
 VALUES
     ('1f1cd7a6-8297-4dbc-82d9-6d7caa440ead', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 1'), '2025-01-05 09:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 1'), '2025-01-05 09:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('ffd33afd-f6b3-442d-ac2e-a1d4bdb6caaa', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 1'), '2025-01-06 10:00:00', 'Assigned', 'Created'),
+        WHERE "Name" = 'Task 1'), '2025-01-06 10:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created')),
+    ('e207706d-dca8-457d-adf9-709ea3767f48', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 1'), '2025-01-25 09:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned')),
+    ('11a1b1c1-d1e1-41f1-91a1-b1c1d1e1f101', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 1'), '2025-01-26 14:30:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
+    ('11a1b1c1-d1e1-41f1-91a1-b1c1d1e1f102', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 1'), '2025-01-27 09:15:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused')),
+    ('11a1b1c1-d1e1-41f1-91a1-b1c1d1e1f103', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 1'), '2025-01-28 16:45:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Completed'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
     ('2636ae09-3bba-473b-8ee1-e641ad20576f', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 2'), '2025-01-07 11:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 2'), '2025-01-07 11:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('5254c73f-463f-4f42-9e1f-51302a18f7f0', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 2'), '2025-01-08 12:00:00', 'Assigned', 'Created'),
+        WHERE "Name" = 'Task 2'), '2025-01-08 12:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created')),
     ('d259c8f5-68a8-4d42-9623-ee823e1ede2f', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 3'), '2025-01-09 13:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 3'), '2025-01-09 13:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('09e99561-63b3-4b7a-8d28-bebe4baa670d', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 3'), '2025-01-10 14:00:00', 'Assigned', 'Created'),
+        WHERE "Name" = 'Task 3'), '2025-01-10 14:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created')),
+    ('33a3b3c3-d3e3-43f3-93a3-b3c3d3e3f301', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 3'), '2025-01-11 08:30:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned')),
+    ('33a3b3c3-d3e3-43f3-93a3-b3c3d3e3f302', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 3'), '2025-01-12 11:20:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
+    ('33a3b3c3-d3e3-43f3-93a3-b3c3d3e3f303', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 3'), '2025-01-13 13:45:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused')),
+    ('33a3b3c3-d3e3-43f3-93a3-b3c3d3e3f304', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 3'), '2025-01-14 15:10:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Stopped'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
     ('ff8846f3-13ec-41db-b10b-2c72a73fe446', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 4'), '2025-01-11 15:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 4'), '2025-01-11 15:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('87791908-423b-4f7c-a380-015c20fdcbb7', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 4'), '2025-01-12 16:00:00', 'Assigned', 'Created'),
+        WHERE "Name" = 'Task 4'), '2025-01-12 16:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created')),
+    ('44a4b4c4-d4e4-44f4-94a4-b4c4d4e4f401', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 4'), '2025-01-13 10:15:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned')),
+    ('44a4b4c4-d4e4-44f4-94a4-b4c4d4e4f402', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 4'), '2025-01-14 14:25:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
+    ('44a4b4c4-d4e4-44f4-94a4-b4c4d4e4f403', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 4'), '2025-01-15 09:40:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused')),
+    ('44a4b4c4-d4e4-44f4-94a4-b4c4d4e4f404', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 4'), '2025-01-16 17:55:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Stopped'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
     ('a5491e99-b42a-446b-b3fa-a386c8010389', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 5'), '2025-01-13 17:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 5'), '2025-01-13 17:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('153ee98b-ca3a-4470-a98a-9014160e3696', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 5'), '2025-01-14 18:00:00', 'Assigned', 'Created'),
+        WHERE "Name" = 'Task 5'), '2025-01-14 18:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created')),
+    ('55a5b5c5-d5e5-45f5-95a5-b5c5d5e5f501', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 5'), '2025-01-15 08:20:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned')),
+    ('55a5b5c5-d5e5-45f5-95a5-b5c5d5e5f502', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 5'), '2025-01-16 12:35:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
+    ('55a5b5c5-d5e5-45f5-95a5-b5c5d5e5f503', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 5'), '2025-01-17 14:50:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused')),
+    ('55a5b5c5-d5e5-45f5-95a5-b5c5d5e5f504', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 5'), '2025-01-18 16:10:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Stopped'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
     ('0873267e-b469-4ba3-8797-f0cd38f07745', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 6'), '2025-01-15 09:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 6'), '2025-01-15 09:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('eea4ec88-0671-4a3b-85ed-3e8d38e79b2e', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 6'), '2025-01-16 10:00:00', 'Assigned', 'Created'),
+        WHERE "Name" = 'Task 6'), '2025-01-16 10:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created')),
+    ('66a6b6c6-d6e6-46f6-96a6-b6c6d6e6f601', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 6'), '2025-01-17 09:25:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned')),
+    ('66a6b6c6-d6e6-46f6-96a6-b6c6d6e6f602', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 6'), '2025-01-18 13:40:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
+    ('66a6b6c6-d6e6-46f6-96a6-b6c6d6e6f603', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 6'), '2025-01-19 10:15:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused')),
+    ('66a6b6c6-d6e6-46f6-96a6-b6c6d6e6f604', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 6'), '2025-01-20 15:30:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Stopped'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
     ('37b7cb51-0832-48fa-99c2-603fcb321725', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 7'), '2025-01-17 11:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 7'), '2025-01-17 11:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('4fb510f5-8839-4697-ab5a-9ed3a3037466', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 7'), '2025-01-18 12:00:00', 'Assigned', 'Created'),
+        WHERE "Name" = 'Task 7'), '2025-01-18 12:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created')),
     ('9164cac1-cf32-4507-b272-0648ade1c7fa', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 8'), '2025-01-19 13:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 8'), '2025-01-19 13:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('8b688e74-db6f-442a-9175-5a1ade9e47ed', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 8'), '2025-01-20 14:00:00', 'Assigned', 'Created'),
+        WHERE "Name" = 'Task 8'), '2025-01-20 14:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created')),
+    ('88a8b8c8-d8e8-48f8-98a8-b8c8d8e8f801', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 8'), '2025-01-21 11:30:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Assigned')),
+    ('88a8b8c8-d8e8-48f8-98a8-b8c8d8e8f802', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 8'), '2025-01-22 15:45:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
+    ('88a8b8c8-d8e8-48f8-98a8-b8c8d8e8f803', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 8'), '2025-01-23 08:20:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Paused')),
+    ('88a8b8c8-d8e8-48f8-98a8-b8c8d8e8f804', (SELECT "Id"
+        FROM public."Tasks"
+        WHERE "Name" = 'Task 8'), '2025-01-24 17:25:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Stopped'), (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Started')),
     ('f5a6e032-707d-4efd-8854-0bb3bfc64704', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 9'), '2025-01-21 15:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 9'), '2025-01-21 15:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('fd2884a2-a804-4432-8463-223b9f521325', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 10'), '2025-01-22 16:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 10'), '2025-01-22 16:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('e5877ff1-f08b-4cae-a6da-6ed4a8fafc76', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 11'), '2025-01-23 17:00:00', 'Created', ''),
+        WHERE "Name" = 'Task 11'), '2025-01-23 17:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), ''),
     ('42371d27-9348-4470-b737-42a86720bc1c', (SELECT "Id"
         FROM public."Tasks"
-        WHERE "Name" = 'Task 12'), '2025-01-24 18:00:00', 'Created', '');
+        WHERE "Name" = 'Task 12'), '2025-01-24 18:00:00', (SELECT "Name"
+        FROM public."TaskStatuses"
+        WHERE "Name" = 'Created'), '');

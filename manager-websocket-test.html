@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Manager Tasks WebSocket Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        .task {
+            border: 1px solid #555;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #2d2d2d;
+        }
+
+        .task.started {
+            border-color: #4CAF50;
+            background-color: #1b3d1f;
+        }
+
+        .task.paused {
+            border-color: #FF9800;
+            background-color: #3d2a0f;
+        }
+
+        .task.stopped {
+            border-color: #f44336;
+            background-color: #3d1a1a;
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        .logs {
+            height: 300px;
+            overflow-y: scroll;
+            border: 1px solid #555;
+            padding: 10px;
+            background-color: #1e1e1e;
+            color: #00ff00;
+            font-family: monospace;
+            font-size: 12px;
+            width: calc(100% - 22px);
+            resize: vertical;
+        }
+
+        input[type="text"] {
+            width: calc(100% - 200px);
+            padding: 8px;
+            background-color: #2d2d2d;
+            border: 1px solid #555;
+            color: #e0e0e0;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 8px 15px;
+            margin: 5px;
+            background-color: #4a4a4a;
+            border: 1px solid #666;
+            color: #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #5a5a5a;
+        }
+
+        h1,
+        h3 {
+            color: #ffffff;
+        }
+
+        #status {
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        #status.connected {
+            background-color: #1b5e20;
+            color: #4caf50;
+        }
+
+        #status.disconnected {
+            background-color: #5d1a1a;
+            color: #f44336;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Manager Tasks WebSocket Test</h1>
+
+    <div class="controls">
+        <input type="text" id="token" placeholder="Enter JWT token here..." />
+        <button onclick="connectWebSocket()">Connect</button>
+        <button onclick="disconnectWebSocket()">Disconnect</button>
+        <span id="status">Disconnected</span>
+    </div>
+
+    <h3>Tasks</h3>
+    <div id="tasks"></div>
+
+    <h3>Logs</h3>
+    <textarea id="logs" class="logs" readonly></textarea>
+
+    <script>
+        let socket = null;
+        let tasks = {};
+        let timers = {};
+
+        function updateStatus(status) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = status;
+            statusElement.className = status.toLowerCase().replace(' ', '-');
+        }
+
+        function log(message) {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            logs.innerHTML += `[${timestamp}] ${message}\n`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+
+        function connectWebSocket() {
+            const token = document.getElementById('token').value;
+            if (!token) {
+                alert('Please enter a JWT token');
+                return;
+            }
+
+            if (socket) {
+                socket.close();
+            }
+
+            const wsUrl = `ws://localhost:8081/ws`;
+            log(`Connecting to: ${wsUrl}`);
+
+            socket = new WebSocket(wsUrl);
+
+            socket.onopen = function (event) {
+                updateStatus('Connected');
+                log('WebSocket connection opened');
+
+                const authMessage = {
+                    action: 'authenticate',
+                    token: token
+                };
+                socket.send(JSON.stringify(authMessage));
+                log(`Sent authentication message`);
+            };
+
+            socket.onmessage = function (event) {
+                log(`Received: ${event.data}`);
+
+                try {
+                    const message = JSON.parse(event.data);
+                    handleMessage(message);
+                } catch (e) {
+                    log(`Error parsing message: ${e.message}`);
+                }
+            };
+
+            socket.onclose = function (event) {
+                updateStatus('Disconnected');
+                log(`WebSocket connection closed: ${event.code} - ${event.reason}`);
+                Object.keys(timers).forEach(taskId => {
+                    clearInterval(timers[taskId]);
+                    delete timers[taskId];
+                });
+            };
+
+            socket.onerror = function (error) {
+                log(`WebSocket error: ${error}`);
+            };
+        }
+
+        function disconnectWebSocket() {
+            if (socket) {
+                socket.close();
+                socket = null;
+            }
+        }
+
+        function handleMessage(message) {
+            if (message.action === 'auth_success') {
+                log('Authentication successful');
+                return;
+            }
+
+            if (message.action === 'auth_error') {
+                log(`Authentication failed: ${message.error}`);
+                updateStatus('Auth Failed');
+                return;
+            }
+
+            if (message.action === 'initial_tasks') {
+                log('Received initial tasks signal');
+                return;
+            }
+
+            if (message.action === 'task_update' && message.task_data) {
+                updateTask(message.task_data);
+            } else if (message.task_id && message.task_data) {
+                updateTask(message.task_data);
+            }
+        }
+
+        function updateTask(taskData) {
+
+            if (taskData.total_duration && taskData.total_duration > 1000000000) {
+                taskData.total_duration_seconds = Math.floor(taskData.total_duration / 1000000000);
+            } else {
+                taskData.total_duration_seconds = taskData.total_duration || 0;
+            }
+
+            tasks[taskData.id] = taskData;
+
+            if (timers[taskData.id]) {
+                clearInterval(timers[taskData.id]);
+                delete timers[taskData.id];
+            }
+
+            if (taskData.in_progress) {
+                startTaskTimer(taskData.id);
+            }
+
+            renderTasks();
+        }
+
+        function startTaskTimer(taskId) {
+            timers[taskId] = setInterval(() => {
+                const task = tasks[taskId];
+                if (task && task.in_progress) {
+                    task.total_duration_seconds = (task.total_duration_seconds || 0) + 1;
+                    renderTasks();
+                }
+            }, 1000);
+        }
+
+        function formatDuration(seconds) {
+            if (!seconds || seconds < 0) return '00:00:00';
+
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function renderTasks() {
+            const tasksDiv = document.getElementById('tasks');
+            tasksDiv.innerHTML = '';
+
+            Object.values(tasks).forEach(task => {
+                const taskDiv = document.createElement('div');
+                const statusClass = task.in_progress ? 'started' : 'stopped';
+                taskDiv.className = `task ${statusClass}`;
+
+                const duration = formatDuration(task.total_duration_seconds || 0);
+                const statusText = task.in_progress ? 'In Progress' : 'Stopped';
+
+                taskDiv.innerHTML = `
+                    <h4>${task.name} (${statusText})</h4>
+                    <p><strong>Developer:</strong> ${task.developer_name || 'Unassigned'}</p>
+                    <p><strong>ID:</strong> ${task.id}</p>
+                    <p><strong>Total Duration:</strong> ${duration}</p>
+                    ${task.in_progress ? '<p><strong>Status:</strong> <span style="color: #4CAF50;">Running...</span></p>' : ''}
+                `;
+
+                tasksDiv.appendChild(taskDiv);
+            });
+        }
+
+        // Example token for testing - replace with real manager token
+        document.getElementById('token').placeholder = 'Paste your manager JWT token here...';
+    </script>
+</body>
+
+</html>
