@@ -12,3 +12,8 @@ export DB_CONNECTION=pgsql
 php artisan config:clear > /dev/null 2>&1
 php artisan code:models
 cd ..
+cd ..
+cd go/generator
+go run .
+cd .. 
+cd ..
