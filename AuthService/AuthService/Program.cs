@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
 using Minio;
 using SharedObjects.AppDbContext;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +50,10 @@ var minioUsePathStyle = GetRequiredEnvironmentVariable("MINIO_USE_PATH_STYLE_END
 
 _ = GetRequiredEnvironmentVariable("MINIO_PUBLIC_URL");
 
+var redisHost = GetRequiredEnvironmentVariable("REDIS_HOST");
+var redisPort = GetRequiredEnvironmentVariable("REDIS_PORT");
+var redisConnectionString = $"{redisHost}:{redisPort}";
+
 var enableScalar = bool.Parse(GetRequiredEnvironmentVariable("ENABLE_SCALAR"));
 
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -56,7 +61,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 builder.Services.AddHealthChecks()
-    .AddNpgSql(connectionString);
+    .AddNpgSql(connectionString)
+    .AddRedis(redisConnectionString);
+
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => 
+    ConnectionMultiplexer.Connect(redisConnectionString));
+
+builder.Services.AddScoped<IDatabase>(sp =>
+{
+    var multiplexer = sp.GetRequiredService<IConnectionMultiplexer>();
+    return multiplexer.GetDatabase();
+});
 
 builder.Services.Configure<FormOptions>(options =>
 {

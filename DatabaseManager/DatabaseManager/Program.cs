@@ -63,7 +63,7 @@ if (pendingMigrations.Count != 0)
     {
         context.Database.Migrate();
         Console.WriteLine("Migrations completed successfully.");
-        DatabaseSeeder.SeedFromSqlFile(context, Constants.FilePath);
+        DatabaseSeeder.SeedFromMultipleFiles(context, Constants.SeedFiles);
     }
     catch (Exception ex)
     {

@@ -1,14 +1,14 @@
 services:
-    frontend:
-        build:
-            context: ./frontend
-            dockerfile: Dockerfile
-        ports:
-            - 3000:80
-        networks:
-            - mynetwork
-        depends_on:
-            - gateway
+    # frontend:
+    #     build:
+    #         context: ./frontend
+    #         dockerfile: Dockerfile
+    #     ports:
+    #         - 3000:80
+    #     networks:
+    #         - mynetwork
+    #     depends_on:
+    #         - gateway
 
     gateway:
         build:
@@ -66,12 +66,16 @@ services:
             - JWT_TOKEN=${JWT_TOKEN}
             - JWT_ISSUER=${JWT_ISSUER}
             - JWT_AUDIENCE=${JWT_AUDIENCE}
+            - REDIS_HOST=${REDIS_HOST}
+            - REDIS_PORT=${REDIS_PORT}
             - DB_HOST=${DB_HOST}
             - DB_DATABASE=${DB_DATABASE}
             - DB_USERNAME=${DB_USERNAME}
             - DB_PASSWORD=${DB_PASSWORD}
         depends_on:
             db_manager:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
         networks:
             - mynetwork
@@ -131,10 +135,14 @@ services:
         build:
             context: ./go
             dockerfile: Dockerfile
+        ports:
+            - 8081:8080
         depends_on:
             rabbitmq:
                 condition: service_healthy
             db_manager:
+                condition: service_healthy
+            redis:
                 condition: service_healthy
         networks:
             - mynetwork
@@ -143,6 +151,16 @@ services:
             - RABBITMQ_PORT=${RABBITMQ_PORT}
             - RABBITMQ_USER=${RABBITMQ_USER}
             - RABBITMQ_PASS=${RABBITMQ_PASS}
+            - REDIS_HOST=${REDIS_HOST}
+            - REDIS_PORT=${REDIS_PORT}
+            - JWT_TOKEN=${JWT_TOKEN}
+            - JWT_ISSUER=${JWT_ISSUER}
+            - JWT_AUDIENCE=${JWT_AUDIENCE}
+            - DB_HOST=${DB_HOST}
+            - DB_PORT=${DB_PORT}
+            - DB_DATABASE=${DB_DATABASE}
+            - DB_USERNAME=${DB_USERNAME}
+            - DB_PASSWORD=${DB_PASSWORD}
 
     fast_api:
         build:
@@ -151,7 +169,7 @@ services:
         networks:
             - mynetwork
         ports:
-            - 7070:8000
+            - 7071:8000
         depends_on:
             rabbitmq:
                 condition: service_healthy

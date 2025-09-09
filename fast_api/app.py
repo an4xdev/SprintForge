@@ -5,6 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlmodel import Session, desc, select, asc
 from datetime import datetime, timezone
 import uuid
+import time
 from fastapi.exceptions import RequestValidationError
 from database import get_db, check_db_connection
 from api_exception import ApiException
@@ -156,6 +157,11 @@ def update_task_status(task_id: UUID, new_status: str, db: Session):
     task.TaskStatusId = new_status_record.Id
     db.add(task_history)
     db.commit()
+
+    db.refresh(task)
+    db.flush()
+    
+    time.sleep(0.1)
     
     try:
         message = {"action": f"task_{new_status.lower()}", "task_id": str(task_id)}

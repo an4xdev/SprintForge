@@ -14,7 +14,7 @@ public class DatabaseController(AppDbContext context) : ControllerBase
     {
         try
         {
-            DatabaseSeeder.SeedFromSqlFile(context, Constants.Constants.FilePath);
+            DatabaseSeeder.SeedFromMultipleFiles(context, Constants.Constants.SeedFiles);
             var result = Result<bool>.Success(true, "Successfully reset database");
             Console.WriteLine("Successfully reset database from endpoint using file.");
             return Task.FromResult(result.ToActionResult());

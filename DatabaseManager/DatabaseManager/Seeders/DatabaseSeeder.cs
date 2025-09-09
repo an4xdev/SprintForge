@@ -5,7 +5,7 @@ namespace DatabaseManager.Seeders;
 
 public static class DatabaseSeeder
 {
-    public static void SeedFromSqlFile(AppDbContext context, string filePath)
+    private static void SeedFromSqlFile(AppDbContext context, string filePath)
     {
         if (!File.Exists(filePath))
         {
@@ -36,6 +36,21 @@ public static class DatabaseSeeder
         finally
         {
             transaction.Dispose();
+        }
+    }
+    
+    public static void SeedFromMultipleFiles(AppDbContext context, List<string> filePaths)
+    {
+        foreach (var filePath in filePaths)
+        {
+            if (!File.Exists(filePath))
+            {
+                Console.WriteLine($"SQL seed file '{filePath}' not found, skipping...");
+                continue;
+            }
+
+            Console.WriteLine($"Seeding from file: {filePath}");
+            SeedFromSqlFile(context, filePath);
         }
     }
 }

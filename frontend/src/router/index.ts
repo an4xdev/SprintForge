@@ -82,6 +82,12 @@ const routes = [
     component: () => import('@/views/manager/ManagerTasksView.vue'),
     meta: { requiresAuth: true, roles: ['admin', 'manager'] }
   },
+  {
+    path: '/manager/tasks/monitor',
+    name: 'ManagerTasksMonitor',
+    component: () => import('@/views/manager/ManagerTasksMonitorView.vue'),
+    meta: { requiresAuth: true, roles: ['manager'] }
+  },
   // Developer routes
   {
     path: '/developer/tasks',
