@@ -2,7 +2,7 @@
 
     DO $$
     BEGIN
-        IF EXISTS (                                                                    SELECT 1
+        IF EXISTS (SELECT 1
             FROM public."Companies"
         UNION ALL
             SELECT 1

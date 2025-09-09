@@ -5,7 +5,7 @@ namespace DatabaseManager.Seeders;
 
 public static class DatabaseSeeder
 {
-    public static void SeedFromSqlFile(AppDbContext context, string filePath)
+    private static void SeedFromSqlFile(AppDbContext context, string filePath)
     {
         if (!File.Exists(filePath))
         {
