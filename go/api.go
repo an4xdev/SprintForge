@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,12 +18,10 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-
-	"generator/model"
 )
 
 var (
@@ -72,6 +72,9 @@ type TaskInfo struct {
 	InProgress    bool          `json:"in_progress"`
 	DeveloperName string        `json:"developer_name,omitempty"`
 	Status        string        `json:"status,omitempty"`
+	IsStarted     bool          `json:"is_started"`
+	IsPaused      bool          `json:"is_paused"`
+	IsStopped     bool          `json:"is_stopped"`
 	StartTime     *time.Time    `json:"start_time,omitempty"`
 	UpdateTime    time.Time     `json:"update_time,omitempty"`
 }
@@ -198,7 +201,7 @@ func checkTokenInRedis(managerID uuid.UUID, token string) bool {
 
 	storedToken, err := redisClient.Get(ctx, redisKey).Result()
 	if err != nil {
-		if err == redis.Nil {
+		if errors.Is(err, redis.Nil) {
 			logWarn("Token not found in Redis for manager ID: %s", managerID)
 		} else {
 			logError("Redis error while checking token: %v", err)
@@ -206,14 +209,13 @@ func checkTokenInRedis(managerID uuid.UUID, token string) bool {
 		return false
 	}
 
-	isValid := storedToken == token
-	if isValid {
+	if storedToken == token {
 		logInfo("Token validated successfully from Redis for manager ID: %s", managerID)
-	} else {
-		logWarn("Token mismatch in Redis for manager ID: %s", managerID)
+		return true
 	}
 
-	return isValid
+	logWarn("Token mismatch in Redis for manager ID: %s", managerID)
+	return false
 }
 
 func getRabbitMQConfig() RabbitMQConfig {
@@ -233,43 +235,48 @@ func getEnv(key, defaultValue string) string {
 }
 
 func getManagerTeamAndSprint(managerID uuid.UUID) (uuid.UUID, uuid.UUID, error) {
-	logDebug("Getting team and sprint for manager ID: %s", managerID)
+	logDebug("Getting team and sprint for manager ID: %s using procedure", managerID)
 
-	var team model.Team
-	err := db.Where("\"ManagerId\" = ?", managerID.String()).First(&team).Error
+	rows, err := db.Raw("SELECT * FROM GetManagerTeamAndSprint(?)", managerID.String()).Rows()
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			logWarn("No team found for manager ID: %s", managerID)
-		} else {
-			logError("Database error getting manager's team: %v", err)
+		logError("Failed to call GetManagerTeamAndSprint procedure for manager %s: %v", managerID, err)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to call GetManagerTeamAndSprint procedure: %v", err)
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			logError("Error closing rows: %v", err)
 		}
-		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to get manager's team: %v", err)
+	}(rows)
+
+	if !rows.Next() {
+		logWarn("No team found for manager ID: %s", managerID)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("no team found for manager")
 	}
 
-	teamID, err := uuid.Parse(team.ID)
+	var teamIDStr, sprintIDStr string
+	err = rows.Scan(&teamIDStr, &sprintIDStr)
+	if err != nil {
+		logError("Failed to scan team and sprint data: %v", err)
+		return uuid.Nil, uuid.Nil, fmt.Errorf("failed to scan team and sprint data: %v", err)
+	}
+
+	teamID, err := uuid.Parse(teamIDStr)
 	if err != nil {
 		logError("Failed to parse team ID as UUID: %v", err)
 		return uuid.Nil, uuid.Nil, fmt.Errorf("invalid team ID format: %v", err)
 	}
 
-	var sprint model.Sprint
-	err = db.Where("\"TeamId\" = ?", team.ID).
-		Order("\"StartDate\" DESC").
-		First(&sprint).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			logWarn("No sprint found for manager's team %s", teamID)
-			return teamID, uuid.Nil, nil
-		} else {
-			logError("Database error getting latest sprint: %v", err)
-			return teamID, uuid.Nil, fmt.Errorf("failed to get latest sprint: %v", err)
+	var sprintID uuid.UUID
+	if sprintIDStr != "" {
+		sprintID, err = uuid.Parse(sprintIDStr)
+		if err != nil {
+			logError("Failed to parse sprint ID as UUID: %v", err)
+			return teamID, uuid.Nil, fmt.Errorf("invalid sprint ID format: %v", err)
 		}
-	}
-
-	sprintID, err := uuid.Parse(sprint.ID)
-	if err != nil {
-		logError("Failed to parse sprint ID as UUID: %v", err)
-		return teamID, uuid.Nil, fmt.Errorf("invalid sprint ID format: %v", err)
+	} else {
+		logWarn("No sprint found for manager's team %s", teamID)
+		return teamID, uuid.Nil, nil
 	}
 
 	logInfo("Found team ID: %s, sprint ID: %s for manager ID: %s", teamID, sprintID, managerID)
@@ -326,25 +333,30 @@ func parsePostgresInterval(intervalStr string) (time.Duration, error) {
 	return totalDuration, nil
 }
 
-func getManagerTasks(sprintID uuid.UUID) ([]TaskInfo, error) {
-	logInfo("Getting tasks for sprint ID: %s using PostgreSQL procedure", sprintID)
+func getManagerTasks(managerID uuid.UUID) ([]TaskInfo, error) {
+	logInfo("Getting tasks for manager ID: %s using optimized procedure", managerID)
 
-	rows, err := db.Raw("SELECT * FROM GetTaskDurations(?)", sprintID.String()).Rows()
+	rows, err := db.Raw("SELECT * FROM GetManagerTasksWithDetails(?)", managerID.String()).Rows()
 	if err != nil {
-		logError("Failed to call GetTaskDurations procedure for sprint %s: %v", sprintID, err)
-		return nil, fmt.Errorf("failed to call GetTaskDurations procedure: %v", err)
+		logError("Failed to call GetManagerTasksWithDetails procedure for manager %s: %v", managerID, err)
+		return nil, fmt.Errorf("failed to call GetManagerTasksWithDetails procedure: %v", err)
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			logError("Error closing rows: %v", err)
+		}
+	}(rows)
 
 	var taskInfos []TaskInfo
 
 	for rows.Next() {
-		var taskID string
-		var taskName string
-		var totalDurationStr string
-		var inProgress bool
+		var taskID, sprintID, teamID, taskName, totalDurationStr, currentStatus, developerName string
+		var isStarted, isPaused, isStopped bool
+		var startTime, updateTime *time.Time
 
-		err := rows.Scan(&taskID, &taskName, &totalDurationStr, &inProgress)
+		err := rows.Scan(&taskID, &taskName, &totalDurationStr, &isStarted, &isPaused, &isStopped,
+			&currentStatus, &developerName, &startTime, &updateTime, &sprintID, &teamID)
 		if err != nil {
 			logError("Failed to scan task row: %v", err)
 			continue
@@ -362,64 +374,24 @@ func getManagerTasks(sprintID uuid.UUID) ([]TaskInfo, error) {
 			totalDuration = 0
 		}
 
-		var developer model.User
-		var developerName string
-		var task model.Task
-
-		err = db.Where("\"Id\" = ?", taskID).First(&task).Error
-		if err == nil {
-			if task.DeveloperID != "" {
-				err = db.Where("\"Id\" = ?", task.DeveloperID).First(&developer).Error
-				if err == nil {
-					developerName = developer.Username
-				} else {
-					developerName = "Unknown"
-				}
-			} else {
-				developerName = "Unassigned"
-			}
-		}
-
-		var status model.TaskStatus
-		var statusName string
-		if task.TaskStatusID != 0 {
-			err = db.Where("\"Id\" = ?", task.TaskStatusID).First(&status).Error
-			if err == nil {
-				statusName = status.Name
-			}
-		}
-
-		var history model.TaskHistory
-		var updateTime time.Time
-		err = db.Where("\"TaskId\" = ?", taskID).
-			Order("\"ChangeDate\" DESC").
-			First(&history).Error
-		if err == nil {
-			updateTime = history.ChangeDate
-		} else {
-			updateTime = time.Now()
-		}
-
-		var startTime *time.Time
-		if inProgress {
-			startTime = getTaskStartTime(taskUUID)
-		}
-
 		taskInfo := TaskInfo{
 			ID:            taskUUID,
 			Name:          taskName,
 			TotalDuration: totalDuration,
-			InProgress:    inProgress,
+			InProgress:    isStarted,
 			DeveloperName: developerName,
-			Status:        statusName,
+			Status:        currentStatus,
+			IsStarted:     isStarted,
+			IsPaused:      isPaused,
+			IsStopped:     isStopped,
 			StartTime:     startTime,
-			UpdateTime:    updateTime,
+			UpdateTime:    *updateTime,
 		}
 
 		taskInfos = append(taskInfos, taskInfo)
 
-		logDebug("Task %s (%s) - Duration: %v, InProgress: %t, Developer: %s, Status: %s",
-			taskUUID, taskName, totalDuration, inProgress, developerName, statusName)
+		logDebug("Task %s (%s) - Duration: %v, IsStarted: %t, IsPaused: %t, IsStopped: %t, Developer: %s, Status: %s",
+			taskUUID, taskName, totalDuration, isStarted, isPaused, isStopped, developerName, currentStatus)
 	}
 
 	if err = rows.Err(); err != nil {
@@ -427,26 +399,8 @@ func getManagerTasks(sprintID uuid.UUID) ([]TaskInfo, error) {
 		return nil, fmt.Errorf("error iterating over task rows: %v", err)
 	}
 
-	logInfo("Successfully retrieved %d tasks from GetTaskDurations procedure for sprint %s", len(taskInfos), sprintID)
+	logInfo("Successfully retrieved %d tasks for manager %s", len(taskInfos), managerID)
 	return taskInfos, nil
-}
-
-func getTaskStartTime(taskID uuid.UUID) *time.Time {
-	logDebug("Getting start time for task ID: %s", taskID)
-
-	var history model.TaskHistory
-	err := db.Joins("JOIN \"TaskStatuses\" ON \"TaskHistories\".\"TaskStatusId\" = \"TaskStatuses\".\"Id\"").
-		Where("\"TaskHistories\".\"TaskId\" = ? AND \"TaskStatuses\".\"Name\" = ?", taskID.String(), "Started").
-		Order("\"ChangeDate\" DESC").
-		First(&history).Error
-
-	if err != nil {
-		logWarn("No start time found for task %s: %v", taskID, err)
-		return nil
-	}
-
-	logDebug("Found start time for task %s: %v", taskID, history.ChangeDate)
-	return &history.ChangeDate
 }
 
 func checkRabbitMQConnection() bool {
@@ -459,7 +413,12 @@ func checkRabbitMQConnection() bool {
 		log.Printf("Error connecting to RabbitMQ: %v", err)
 		return false
 	}
-	defer conn.Close()
+	defer func(conn *amqp.Connection) {
+		err := conn.Close()
+		if err != nil {
+			log.Printf("Error closing RabbitMQ connection: %v", err)
+		}
+	}(conn)
 
 	return true
 }
@@ -471,18 +430,24 @@ func healthHandler(w http.ResponseWriter, _ *http.Request) {
 
 	if !rabbitmqOK {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		json.NewEncoder(w).Encode(map[string]string{
+		err := json.NewEncoder(w).Encode(map[string]string{
 			"status":   "unhealthy",
 			"rabbitmq": "disconnected",
 		})
+		if err != nil {
+			return
+		}
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{
+	err := json.NewEncoder(w).Encode(map[string]string{
 		"status":   "healthy",
 		"rabbitmq": "connected",
 	})
+	if err != nil {
+		return
+	}
 }
 
 func handleConnections(w http.ResponseWriter, r *http.Request) {
@@ -493,7 +458,12 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 		logError("WebSocket upgrade failed: %v", err)
 		return
 	}
-	defer ws.Close()
+	defer func(ws *websocket.Conn) {
+		err := ws.Close()
+		if err != nil {
+			logError("Error closing WebSocket connection: %v", err)
+		}
+	}(ws)
 
 	logInfo("WebSocket connection established, waiting for authentication")
 
@@ -507,13 +477,21 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(msgBytes, &authMsg)
 	if err != nil {
 		logError("Failed to parse authentication message: %v", err)
-		ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Invalid message format"}`))
+		err := ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Invalid message format"}`))
+		if err != nil {
+			logError("Failed to send auth error message: %v", err)
+			return
+		}
 		return
 	}
 
 	if authMsg.Action != "authenticate" || authMsg.Token == "" {
 		logWarn("Invalid authentication message from %s", r.RemoteAddr)
-		ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Missing authentication"}`))
+		err := ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Missing authentication"}`))
+		if err != nil {
+			logError("Failed to send auth error message: %v", err)
+			return
+		}
 		return
 	}
 
@@ -522,7 +500,11 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	managerID, err := validateJWT(authMsg.Token)
 	if err != nil {
 		logError("JWT validation failed for WebSocket connection: %v", err)
-		ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Invalid token"}`))
+		err := ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Invalid token"}`))
+		if err != nil {
+			logError("Failed to send auth error message: %v", err)
+			return
+		}
 		return
 	}
 
@@ -530,7 +512,11 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 
 	if !checkTokenInRedis(managerID, authMsg.Token) {
 		logWarn("Token validation failed in Redis for manager %s", managerID)
-		ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Token not found or expired"}`))
+		err := ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Token not found or expired"}`))
+		if err != nil {
+			logError("Failed to send auth error message: %v", err)
+			return
+		}
 		return
 	}
 
@@ -539,7 +525,11 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	teamID, sprintID, err := getManagerTeamAndSprint(managerID)
 	if err != nil {
 		logError("Failed to get manager data for %s: %v", managerID, err)
-		ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Manager data not found"}`))
+		err := ws.WriteMessage(websocket.TextMessage, []byte(`{"action":"auth_error","error":"Manager data not found"}`))
+		if err != nil {
+			logError("Failed to send auth error message: %v", err)
+			return
+		}
 		return
 	}
 
@@ -565,7 +555,7 @@ func handleConnections(w http.ResponseWriter, r *http.Request) {
 	clients[ws] = session
 	logInfo("Added manager %s to active WebSocket clients (total: %d)", managerID, len(clients))
 
-	tasks, err := getManagerTasks(sprintID)
+	tasks, err := getManagerTasks(managerID)
 	if err != nil {
 		logError("Failed to get initial tasks for manager %s: %v", managerID, err)
 	} else {
@@ -623,14 +613,14 @@ func handleMessages() {
 			clientCount++
 
 			if msg.TaskData != nil {
-				taskBelongsToManager := checkTaskBelongsToSprint(msg.TaskID, session.SprintID)
+				taskBelongsToManager := checkTaskBelongsToManager(msg.TaskID, session.ManagerID)
 				if !taskBelongsToManager {
-					logDebug("Task %s does not belong to manager %s's sprint %s, skipping",
-						msg.TaskID, session.ManagerID, session.SprintID)
+					logDebug("Task %s does not belong to manager %s, skipping",
+						msg.TaskID, session.ManagerID)
 					continue
 				}
-				logDebug("Task %s belongs to manager %s's sprint %s, sending update",
-					msg.TaskID, session.ManagerID, session.SprintID)
+				logDebug("Task %s belongs to manager %s, sending update",
+					msg.TaskID, session.ManagerID)
 			}
 
 			msgBytes, err := json.Marshal(msg)
@@ -642,7 +632,11 @@ func handleMessages() {
 			err = conn.WriteMessage(websocket.TextMessage, msgBytes)
 			if err != nil {
 				logError("Error sending message to manager %s: %v", session.ManagerID, err)
-				conn.Close()
+				err := conn.Close()
+				if err != nil {
+					logError("Error closing WebSocket connection for manager %s: %v", session.ManagerID, err)
+					return
+				}
 				delete(clients, conn)
 			} else {
 				sentCount++
@@ -655,96 +649,78 @@ func handleMessages() {
 }
 
 func getTaskInfo(taskID uuid.UUID) (*TaskInfo, error) {
-	logDebug("Getting task info for task ID: %s", taskID)
+	logDebug("Getting task info for task ID: %s using optimized procedure", taskID)
 
-	var task model.Task
-	err := db.Where("\"Id\" = ?", taskID.String()).First(&task).Error
+	rows, err := db.Raw("SELECT * FROM GetSingleTaskDetails(?)", taskID.String()).Rows()
 	if err != nil {
-		logError("Failed to get task info for task %s: %v", taskID, err)
-		return nil, fmt.Errorf("failed to get task info: %v", err)
+		logError("Failed to call GetSingleTaskDetails procedure for task %s: %v", taskID, err)
+		return nil, fmt.Errorf("failed to call GetSingleTaskDetails procedure: %v", err)
 	}
-	rows, err := db.Raw("SELECT * FROM GetTaskDurations(?) WHERE task_id = ?", task.SprintID, taskID.String()).Rows()
-	if err != nil {
-		logError("Failed to call GetTaskDurations for task %s: %v", taskID, err)
-		return nil, fmt.Errorf("failed to call GetTaskDurations: %v", err)
-	}
-	defer rows.Close()
-
-	var totalDuration time.Duration
-	var inProgress bool
-
-	if rows.Next() {
-		var taskIDFromProc, taskName, totalDurationStr string
-		err := rows.Scan(&taskIDFromProc, &taskName, &totalDurationStr, &inProgress)
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
 		if err != nil {
-			logError("Failed to scan task duration row: %v", err)
-		} else {
-			totalDuration, err = parsePostgresInterval(totalDurationStr)
-			if err != nil {
-				logWarn("Failed to parse duration for task %s: %v, using 0", taskID, err)
-				totalDuration = 0
-			}
+			logError("Error closing rows: %v", err)
 		}
+	}(rows)
+
+	if !rows.Next() {
+		logWarn("Task %s not found", taskID)
+		return nil, fmt.Errorf("task not found")
 	}
 
-	var developerName string
-	if task.DeveloperID != "" {
-		var developer model.User
-		err := db.Where("\"Id\" = ?", task.DeveloperID).First(&developer).Error
-		if err == nil {
-			developerName = developer.Username
-		} else {
-			developerName = "Unknown"
-		}
-	} else {
-		developerName = "Unassigned"
+	var taskIDStr, sprintID, teamID, managerID, taskName, totalDurationStr, currentStatus, developerName string
+	var isStarted, isPaused, isStopped bool
+	var startTime, updateTime *time.Time
+
+	err = rows.Scan(&taskIDStr, &taskName, &totalDurationStr, &isStarted, &isPaused, &isStopped,
+		&currentStatus, &developerName, &startTime, &updateTime, &sprintID, &teamID, &managerID)
+	if err != nil {
+		logError("Failed to scan task row: %v", err)
+		return nil, fmt.Errorf("failed to scan task row: %v", err)
 	}
 
-	var statusName string
-	var status model.TaskStatus
-	err = db.Where("\"Id\" = ?", task.TaskStatusID).First(&status).Error
-	if err == nil {
-		statusName = status.Name
+	taskUUID, err := uuid.Parse(taskIDStr)
+	if err != nil {
+		logError("Failed to parse task ID as UUID: %v", err)
+		return nil, fmt.Errorf("invalid task ID format: %v", err)
 	}
 
-	var history model.TaskHistory
-	var updateTime time.Time
-	err = db.Where("\"TaskId\" = ?", task.ID).
-		Order("\"ChangeDate\" DESC").
-		First(&history).Error
-	if err == nil {
-		updateTime = history.ChangeDate
-	} else {
-		updateTime = time.Now()
+	totalDuration, err := parsePostgresInterval(totalDurationStr)
+	if err != nil {
+		logWarn("Failed to parse duration for task %s: %v, using 0", taskID, err)
+		totalDuration = 0
 	}
 
 	taskInfo := TaskInfo{
-		ID:            taskID,
-		Name:          task.Name,
+		ID:            taskUUID,
+		Name:          taskName,
 		TotalDuration: totalDuration,
-		InProgress:    inProgress,
+		InProgress:    isStarted,
 		DeveloperName: developerName,
-		Status:        statusName,
-		UpdateTime:    updateTime,
+		Status:        currentStatus,
+		IsStarted:     isStarted,
+		IsPaused:      isPaused,
+		IsStopped:     isStopped,
+		StartTime:     startTime,
+		UpdateTime:    *updateTime,
 	}
 
-	if inProgress {
-		taskInfo.StartTime = getTaskStartTime(taskID)
-		logDebug("Task %s (%s) is in progress, start time: %v", taskID, task.Name, taskInfo.StartTime)
-	}
-
-	logInfo("Retrieved task info: %s (%s) - Duration: %v, InProgress: %t, Developer: %s, Status: %s",
-		taskID, task.Name, totalDuration, inProgress, developerName, statusName)
+	logInfo("Retrieved task info: %s (%s) - Duration: %v, Status: %s, Developer: %s",
+		taskID, taskName, totalDuration, currentStatus, developerName)
 	return &taskInfo, nil
 }
 
-func checkTaskBelongsToSprint(taskID, sprintID uuid.UUID) bool {
-	logDebug("Checking if task %s belongs to sprint %s", taskID, sprintID)
+func checkTaskBelongsToManager(taskID, managerID uuid.UUID) bool {
+	logDebug("Checking if task %s belongs to manager %s", taskID, managerID)
 
-	var count int64
-	db.Model(&model.Task{}).Where("\"Id\" = ? AND \"SprintId\" = ?", taskID.String(), sprintID.String()).Count(&count)
-	belongs := count > 0
-	logDebug("Task %s belongs to sprint %s: %t", taskID, sprintID, belongs)
+	var belongs bool
+	err := db.Raw("SELECT CheckTaskBelongsToManager(?, ?)", taskID.String(), managerID.String()).Row().Scan(&belongs)
+	if err != nil {
+		logError("Failed to check if task belongs to manager: %v", err)
+		return false
+	}
+
+	logDebug("Task %s belongs to manager %s: %t", taskID, managerID, belongs)
 	return belongs
 }
 
@@ -763,9 +739,13 @@ func consumeRabbitMQ() {
 	if err != nil {
 		logError("Failed to connect to RabbitMQ: %v", err)
 		log.Fatalf("Failed to connect to RabbitMQ after 5 attempts: %v", err)
-		panic(err)
 	}
-	defer conn.Close()
+	defer func(conn *amqp.Connection) {
+		err := conn.Close()
+		if err != nil {
+			logError("Error closing RabbitMQ connection: %v", err)
+		}
+	}(conn)
 	logInfo("Successfully connected to RabbitMQ")
 
 	ch, err := conn.Channel()
@@ -773,7 +753,12 @@ func consumeRabbitMQ() {
 		logError("Error opening RabbitMQ channel: %v", err)
 		log.Fatalf("Error opening channel: %v", err)
 	}
-	defer ch.Close()
+	defer func(ch *amqp.Channel) {
+		err := ch.Close()
+		if err != nil {
+			logError("Error closing RabbitMQ channel: %v", err)
+		}
+	}(ch)
 	logInfo("RabbitMQ channel opened successfully")
 
 	q, err := ch.QueueDeclare(
@@ -790,7 +775,7 @@ func consumeRabbitMQ() {
 	}
 	logInfo("Queue 'task_queue' declared successfully")
 
-	msgs, err := ch.Consume(
+	messages, err := ch.Consume(
 		q.Name,
 		"",
 		true,
@@ -805,7 +790,7 @@ func consumeRabbitMQ() {
 	}
 	logInfo("Started consuming messages from task_queue")
 
-	for d := range msgs {
+	for d := range messages {
 		logInfo("Received message from RabbitMQ queue: %s", string(d.Body))
 
 		var rabbitMsg map[string]any
@@ -833,6 +818,8 @@ func consumeRabbitMQ() {
 		}
 
 		logInfo("Processing RabbitMQ message - TaskID: %s, Action: %s", taskID, action)
+
+		time.Sleep(200 * time.Millisecond)
 
 		taskInfo, err := getTaskInfo(taskID)
 		if err != nil {

@@ -224,6 +224,18 @@ const allMenuItems = [
     },
     // manager
     {
+        title: 'Tasks Monitor',
+        to: '/manager/tasks/monitor',
+        icon: 'mdi-monitor-dashboard',
+        roles: ['manager']
+    },
+    {
+        title: 'Tasks',
+        to: '/manager/tasks',
+        icon: 'mdi-format-list-bulleted',
+        roles: ['manager']
+    },
+    {
         title: 'Team',
         to: '/manager/team',
         icon: 'mdi-account-group',
@@ -233,12 +245,6 @@ const allMenuItems = [
         title: 'Sprints',
         to: '/sprints',
         icon: 'mdi-rocket-launch',
-        roles: ['manager']
-    },
-    {
-        title: 'Tasks',
-        to: '/manager/tasks',
-        icon: 'mdi-format-list-bulleted',
         roles: ['manager']
     },
     // developer

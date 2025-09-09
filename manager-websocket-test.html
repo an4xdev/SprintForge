@@ -225,12 +225,14 @@
 
             tasks[taskData.id] = taskData;
 
+
             if (timers[taskData.id]) {
                 clearInterval(timers[taskData.id]);
                 delete timers[taskData.id];
             }
 
-            if (taskData.in_progress) {
+
+            if (taskData.in_progress && taskData.status === 'Started') {
                 startTaskTimer(taskData.id);
             }
 
@@ -263,18 +265,34 @@
 
             Object.values(tasks).forEach(task => {
                 const taskDiv = document.createElement('div');
-                const statusClass = task.in_progress ? 'started' : 'stopped';
+
+
+                let statusClass, statusText, statusColor;
+
+                if (task.in_progress) {
+                    statusClass = 'started';
+                    statusText = 'In Progress';
+                    statusColor = '#4CAF50';
+                } else if (task.status === 'Paused') {
+                    statusClass = 'paused';
+                    statusText = 'Paused';
+                    statusColor = '#FF9800';
+                } else {
+                    statusClass = 'stopped';
+                    statusText = 'Stopped';
+                    statusColor = '#f44336';
+                }
+
                 taskDiv.className = `task ${statusClass}`;
 
                 const duration = formatDuration(task.total_duration_seconds || 0);
-                const statusText = task.in_progress ? 'In Progress' : 'Stopped';
 
                 taskDiv.innerHTML = `
                     <h4>${task.name} (${statusText})</h4>
                     <p><strong>Developer:</strong> ${task.developer_name || 'Unassigned'}</p>
                     <p><strong>ID:</strong> ${task.id}</p>
                     <p><strong>Total Duration:</strong> ${duration}</p>
-                    ${task.in_progress ? '<p><strong>Status:</strong> <span style="color: #4CAF50;">Running...</span></p>' : ''}
+                    <p><strong>Status:</strong> <span style="color: ${statusColor};">${task.status || statusText}</span></p>
                 `;
 
                 tasksDiv.appendChild(taskDiv);
