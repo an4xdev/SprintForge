@@ -11,7 +11,3 @@ set DB_CONNECTION=pgsql
 php artisan config:clear >nul 2>&1
 php artisan code:models
 cd ..
-cd go\generator
-go run .
-cd .. 
-cd ..
