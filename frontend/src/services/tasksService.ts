@@ -124,6 +124,70 @@ class TasksService {
             seconds: 0
         };
     }
+
+    async getTaskTime(taskId: string, signal?: AbortSignal): Promise<any> {
+        try {
+            const response = await apiService.get<ApiResponse<any>>(`/tasks/${taskId}/time`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching task time:', error);
+            throw new Error('Failed to fetch task time');
+        }
+    }
+
+    async getDeveloperTaskTimes(developerId: string, signal?: AbortSignal): Promise<any[]> {
+        try {
+            const response = await apiService.get<ApiResponse<any[]>>(`/tasks/developer/${developerId}/times`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching developer task times:', error);
+            throw new Error('Failed to fetch developer task times');
+        }
+    }
+
+    formatSecondsToTime(totalSeconds: number): { hours: number, minutes: number, seconds: number } {
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+
+        return { hours, minutes, seconds };
+    }
+
+    calculateCurrentSessionTime(sessionStart: string): number {
+        const start = new Date(sessionStart);
+        const now = new Date();
+        return Math.floor((now.getTime() - start.getTime()) / 1000);
+    }
+
+    async startTask(taskId: string, signal?: AbortSignal): Promise<any> {
+        try {
+            const response = await apiService.put<ApiResponse<any>>(`/tasks/${taskId}/start`, {}, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error starting task:', error);
+            throw new Error('Failed to start task');
+        }
+    }
+
+    async pauseTask(taskId: string, signal?: AbortSignal): Promise<any> {
+        try {
+            const response = await apiService.put<ApiResponse<any>>(`/tasks/${taskId}/pause`, {}, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error pausing task:', error);
+            throw new Error('Failed to pause task');
+        }
+    }
+
+    async stopTask(taskId: string, signal?: AbortSignal): Promise<any> {
+        try {
+            const response = await apiService.put<ApiResponse<any>>(`/tasks/${taskId}/stop`, {}, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error stopping task:', error);
+            throw new Error('Failed to stop task');
+        }
+    }
 }
 
 export default new TasksService();
