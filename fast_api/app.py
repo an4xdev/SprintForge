@@ -371,3 +371,120 @@ def delete_sprint(sprint_id: UUID, db: Session=Depends(get_db)):
         db.rollback()
         raise ApiException(status_code=500, message=str(e))
 
+
+# Task time tracking
+@app.get("/api/tasks/{task_id}/time")
+def get_task_time(task_id: UUID, db: Session=Depends(get_db)):
+    """Get current time tracking information for a task"""
+    try:
+        
+        task = db.exec(select(Tasks).where(Tasks.Id == task_id)).first()
+        if not task:
+            raise ApiException(status_code=404, message="Task not found")
+        
+        total_seconds = calculate_task_total_time(task_id, db)
+        
+        current_status = db.exec(
+            select(TaskStatuses).where(TaskStatuses.Id == task.TaskStatusId)
+        ).first()
+        
+        last_history = db.exec(
+            select(TaskHistories)
+            .where(TaskHistories.TaskId == task_id)
+            .order_by(desc(TaskHistories.ChangeDate))
+            .limit(1)
+        ).first()
+        
+        is_running = current_status and current_status.Name == "Started"
+        current_session_start = None
+        
+        if is_running and last_history:
+            current_session_start = last_history.ChangeDate
+        
+        return ApiResponse(
+            message="Task time retrieved",
+            data={
+                "taskId": str(task_id),
+                "totalSeconds": total_seconds,
+                "isRunning": is_running,
+                "currentStatus": current_status.Name if current_status else "Unknown",
+                "currentSessionStart": current_session_start.isoformat() if current_session_start else None
+            }
+        ).model_dump()
+        
+    except Exception as e:
+        raise ApiException(status_code=500, message=str(e))
+
+
+@app.get("/api/tasks/developer/{developer_id}/times")
+def get_developer_task_times(developer_id: UUID, db: Session=Depends(get_db)):
+    """Get time tracking information for all tasks assigned to a developer"""
+    try:
+        tasks = db.exec(
+            select(Tasks).where(Tasks.DeveloperId == developer_id)
+        ).all()
+        
+        task_times = []
+        for task in tasks:
+            total_seconds = calculate_task_total_time(task.Id, db)
+            
+            current_status = db.exec(
+                select(TaskStatuses).where(TaskStatuses.Id == task.TaskStatusId)
+            ).first()
+            
+            last_history = db.exec(
+                select(TaskHistories)
+                .where(TaskHistories.TaskId == task.Id)
+                .order_by(desc(TaskHistories.ChangeDate))
+                .limit(1)
+            ).first()
+            
+            is_running = current_status and current_status.Name == "Started"
+            current_session_start = None
+            
+            if is_running and last_history:
+                current_session_start = last_history.ChangeDate
+            
+            task_times.append({
+                "taskId": str(task.Id),
+                "taskName": task.Name,
+                "totalSeconds": total_seconds,
+                "isRunning": is_running,
+                "currentStatus": current_status.Name if current_status else "Unknown",
+                "currentSessionStart": current_session_start.isoformat() if current_session_start else None
+            })
+        
+        return ApiResponse(
+            message="Developer task times retrieved",
+            data=task_times
+        ).model_dump()
+        
+    except Exception as e:
+        raise ApiException(status_code=500, message=str(e))
+
+
+def calculate_task_total_time(task_id: UUID, db: Session) -> int:
+    """Calculate total time spent on a task in seconds"""
+    histories = db.exec(
+        select(TaskHistories)
+        .where(TaskHistories.TaskId == task_id)
+        .order_by(asc(TaskHistories.ChangeDate))
+    ).all()
+    
+    total_seconds = 0
+    current_start = None
+    
+    for history in histories:
+        if history.NewStatus == "Started":
+            current_start = history.ChangeDate
+        elif history.NewStatus in ["Paused", "Stopped"] and current_start:
+            duration = history.ChangeDate - current_start
+            total_seconds += int(duration.total_seconds())
+            current_start = None
+    
+    if current_start:
+        current_duration = datetime.now(timezone.utc) - current_start
+        total_seconds += int(current_duration.total_seconds())
+    
+    return total_seconds
+

@@ -106,6 +106,9 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { DeveloperTask, DeveloperTaskStatus } from '@/types'
 import tasksService from '@/services/tasksService'
 import { useAuthStore } from '@/stores/auth'
+import { DevelopmentLogger } from '@/utils/logger';
+
+const logger = new DevelopmentLogger({ prefix: '[DeveloperDashboard]' });
 
 const authStore = useAuthStore();
 
@@ -129,11 +132,33 @@ const loadTasks = async () => {
     loading.value = true;
     try {
         const userTasks = await tasksService.getTasksByDeveloper(authStore.user.id)
-        tasks.value = userTasks.map(task =>
-            tasksService.mapTaskToDeveloperTask(task, 'Project Name') // TODO:
-        )
+        const taskTimes = await tasksService.getDeveloperTaskTimes(authStore.user.id)
+
+        tasks.value = userTasks.map(task => {
+            const timeData = taskTimes.find(t => t.taskId === task.id);
+            const timeInfo = timeData ? tasksService.formatSecondsToTime(timeData.totalSeconds) : { hours: 0, minutes: 0, seconds: 0 };
+
+            const developerTask: DeveloperTask = {
+                ...tasksService.mapTaskToDeveloperTask(task, 'Project Name'), // TODO: get actual project name
+                ...timeInfo
+            };
+
+            if (timeData) {
+                if (timeData.isRunning) {
+                    developerTask.status = 'STARTED';
+                } else if (timeData.currentStatus === 'Paused') {
+                    developerTask.status = 'PAUSED';
+                } else if (timeData.currentStatus === 'Stopped') {
+                    developerTask.status = 'STOPPED';
+                } else {
+                    developerTask.status = 'NONE';
+                }
+            }
+
+            return developerTask;
+        });
     } catch (error) {
-        console.error('Error loading tasks:', error);
+        logger.error('Error loading tasks:', error);
     } finally {
         loading.value = false;
     }
@@ -182,18 +207,109 @@ const getStatusChipColor = (status: DeveloperTaskStatus): string => {
     }
 }
 
-const startTask = (task: DeveloperTask) => {
-    const runningTask = tasks.value.find(t => t.status === 'STARTED' && t.id !== task.id);
-    if (runningTask) {
-        stopTask(runningTask);
-    }
+const startTask = async (task: DeveloperTask) => {
+    try {
+        const runningTask = tasks.value.find(t => t.status === 'STARTED' && t.id !== task.id);
+        if (runningTask) {
+            await stopTask(runningTask);
+        }
 
-    task.status = 'STARTED';
-    startTimer(task);
+        await tasksService.startTask(task.id);
+
+        task.status = 'STARTED';
+        startTimer(task);
+
+
+        await syncTaskTimes();
+
+    } catch (error) {
+        logger.error('Error starting task:', error);
+        task.status = 'NONE';
+    }
+}
+
+const pauseTask = async (task: DeveloperTask) => {
+    try {
+        await tasksService.pauseTask(task.id);
+
+        task.status = 'PAUSED';
+        const interval = timerIntervals.get(task.id);
+        if (interval) {
+            clearInterval(interval);
+            timerIntervals.delete(task.id);
+        }
+
+        await syncTaskTimes();
+
+    } catch (error) {
+        logger.error('Error pausing task:', error);
+    }
+}
+
+const resumeTask = async (task: DeveloperTask) => {
+    try {
+        await tasksService.startTask(task.id);
+
+        task.status = 'STARTED';
+        startTimer(task);
+
+        await syncTaskTimes();
+
+    } catch (error) {
+        logger.error('Error resuming task:', error);
+    }
+}
+
+const stopTask = async (task: DeveloperTask) => {
+    try {
+        await tasksService.stopTask(task.id);
+
+        task.status = 'STOPPED';
+        const interval = timerIntervals.get(task.id);
+        if (interval) {
+            clearInterval(interval);
+            timerIntervals.delete(task.id);
+        }
+
+        await syncTaskTimes();
+
+    } catch (error) {
+        logger.error('Error stopping task:', error);
+    }
+}
+
+const syncTaskTimes = async () => {
+    if (!authStore.user?.id) return;
+
+    try {
+        const taskTimes = await tasksService.getDeveloperTaskTimes(authStore.user.id);
+
+        tasks.value.forEach(task => {
+            const timeData = taskTimes.find(t => t.taskId === task.id);
+            if (timeData) {
+                const timeInfo = tasksService.formatSecondsToTime(timeData.totalSeconds);
+                task.hours = timeInfo.hours;
+                task.minutes = timeInfo.minutes;
+                task.seconds = timeInfo.seconds;
+
+                if (timeData.isRunning) {
+                    task.status = 'STARTED';
+                } else if (timeData.currentStatus === 'Paused') {
+                    task.status = 'PAUSED';
+                } else if (timeData.currentStatus === 'Stopped') {
+                    task.status = 'STOPPED';
+                } else {
+                    task.status = 'NONE';
+                }
+            }
+        });
+    } catch (error) {
+        logger.error('Error syncing task times:', error);
+    }
 }
 
 const startTimer = (task: DeveloperTask) => {
-    const interval = setInterval(() => {
+    const interval = setInterval(async () => {
         task.seconds++;
         if (task.seconds >= 60) {
             task.seconds = 0;
@@ -208,32 +324,26 @@ const startTimer = (task: DeveloperTask) => {
     timerIntervals.set(task.id, interval);
 }
 
-const pauseTask = (task: DeveloperTask) => {
-    task.status = 'PAUSED';
-    const interval = timerIntervals.get(task.id);
-    if (interval) {
-        clearInterval(interval);
-        timerIntervals.delete(task.id);
-    }
-}
+let syncInterval: number;
 
-const resumeTask = (task: DeveloperTask) => {
-    task.status = 'STARTED';
-    startTimer(task);
-}
+onMounted(async () => {
+    await loadTasks();
 
-const stopTask = (task: DeveloperTask) => {
-    task.status = 'STOPPED';
-    const interval = timerIntervals.get(task.id);
-    if (interval) {
-        clearInterval(interval);
-        timerIntervals.delete(task.id);
-    }
-}
+    tasks.value.forEach(task => {
+        if (task.status === 'STARTED') {
+            startTimer(task);
+        }
+    })
+
+    syncInterval = setInterval(syncTaskTimes, 30000);
+})
 
 onUnmounted(() => {
     timerIntervals.forEach(interval => clearInterval(interval));
     timerIntervals.clear();
+    if (syncInterval) {
+        clearInterval(syncInterval);
+    }
 })
 </script>
 
