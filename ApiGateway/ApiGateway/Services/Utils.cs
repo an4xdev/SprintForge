@@ -17,6 +17,7 @@ public static class Utils
             ServiceType.LaravelService => "http://nginx:80/api",
             // ServiceType.ExpressService => "http://localhost:6713/api",
             ServiceType.ExpressService => "http://js_express:6713/api",
+            ServiceType.ReportsService => "http://reports:8080/api",
             _ => throw new ArgumentOutOfRangeException(nameof(serviceType), serviceType, null)
         };
     }

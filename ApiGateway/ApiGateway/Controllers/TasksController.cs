@@ -126,4 +126,20 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
         return await sendRequestService.SendRequestAsync<ApiResponse<List<ManagerTaskDto>>>(HttpMethod.Get,
             $"/tasks/sprint/{id}/count", ServiceType.LaravelService);
     }
+
+    [Authorize(Roles = "admin,developer")]
+    [HttpGet("{id:guid}/time")]
+    public async Task<ActionResult<ApiResponse<TaskTimeDto>>> GetTaskTime(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<TaskTimeDto>>(HttpMethod.Get,
+            $"/tasks/{id}/time", ServiceType.FastApiService);
+    }
+
+    [Authorize(Roles = "admin,developer")]
+    [HttpGet("developer/{id:guid}/times")]
+    public async Task<ActionResult<ApiResponse<List<TaskTimeDto>>>> GetDeveloperTaskTimes(Guid id)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<List<TaskTimeDto>>>(HttpMethod.Get,
+            $"/tasks/developer/{id}/times", ServiceType.FastApiService);
+    }
 }
