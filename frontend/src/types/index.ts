@@ -167,5 +167,47 @@ export interface UpdateUser {
     email: string | null;
     firstName: string | null;
     lastName: string | null;
+}
 
+export interface TeamReportDto {
+    developerCount: number;
+    developerIds: string[];
+    sprintsNames: string[];
+    taskCount: number;
+    taskCountCompleted: number;
+    totalTaskTime: string;
+}
+
+export interface SprintReportDto {
+    sprintId: string;
+    sprintName: string;
+    taskCount: number;
+    taskCountCompleted: number;
+    totalTaskTime: string;
+    completedRatio: number;
+}
+
+export interface ProjectReportDto {
+    projectId: string;
+    projectName: string;
+    companyName: string;
+    sprintCount: number;
+    taskCount: number;
+    taskCountCompleted: number;
+    totalTaskTime: string;
+    projectStartDate: Date;
+    projectEndDate: Date;
+    completedRatio: number;
+}
+
+export interface ReportFilters {
+    startDate?: Date;
+    endDate?: Date;
+    managerId?: string;
+}
+
+export interface ReportExportOptions {
+    format: 'pdf';
+    includeCharts: boolean;
+    title?: string;
 }

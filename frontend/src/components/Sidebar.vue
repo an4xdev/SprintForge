@@ -222,6 +222,12 @@ const allMenuItems = [
         icon: 'mdi-account-multiple',
         roles: ['admin']
     },
+    {
+        title: 'Reports',
+        to: '/admin/reports',
+        icon: 'mdi-chart-box',
+        roles: ['admin']
+    },
     // manager
     {
         title: 'Tasks Monitor',
@@ -245,6 +251,12 @@ const allMenuItems = [
         title: 'Sprints',
         to: '/sprints',
         icon: 'mdi-rocket-launch',
+        roles: ['manager']
+    },
+    {
+        title: 'Reports',
+        to: '/manager/reports',
+        icon: 'mdi-chart-line',
         roles: ['manager']
     },
     // developer

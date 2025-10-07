@@ -69,6 +69,12 @@ const routes = [
     component: () => import('@/views/admin/AdminTeamsView.vue'),
     meta: { requiresAuth: true, roles: ['admin'] }
   },
+  {
+    path: '/admin/reports',
+    name: 'AdminReports',
+    component: () => import('@/views/admin/AdminReportsView.vue'),
+    meta: { requiresAuth: true, roles: ['admin'] }
+  },
   // Manager routes
   {
     path: '/manager/team',
@@ -87,6 +93,12 @@ const routes = [
     name: 'ManagerTasksMonitor',
     component: () => import('@/views/manager/ManagerTasksMonitorView.vue'),
     meta: { requiresAuth: true, roles: ['manager'] }
+  },
+  {
+    path: '/manager/reports',
+    name: 'ManagerReports',
+    component: () => import('@/views/manager/ManagerReportsView.vue'),
+    meta: { requiresAuth: true, roles: ['admin', 'manager'] }
   },
   // Developer routes
   {

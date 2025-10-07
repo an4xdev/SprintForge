@@ -7,5 +7,6 @@ public enum ServiceType
     FastApiService,
     SpringService,
     LaravelService,
-    ExpressService
+    ExpressService,
+    ReportsService
 }

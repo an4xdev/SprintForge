@@ -42,6 +42,8 @@ services:
                 condition: service_healthy
             js_express:
                 condition: service_healthy
+            reports:
+                condition: service_healthy
         networks:
             - mynetwork
         volumes:
@@ -232,6 +234,24 @@ services:
             timeout: 5s
             retries: 3
             start_period: 30s
+
+    reports:
+        build:
+            context: ./reports-service
+            dockerfile: Dockerfile
+        networks:
+            - mynetwork
+        ports:
+            - 8069:8080
+        depends_on:
+            db_manager:
+                condition: service_started
+        environment:
+            - DB_HOST=${DB_HOST}
+            - DB_PORT=${DB_PORT}
+            - DB_NAME=${DB_DATABASE}
+            - DB_USER=${DB_USERNAME}
+            - DB_PASSWORD=${DB_PASSWORD}
 
     nginx:
         image: nginx:alpine
