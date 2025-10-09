@@ -74,10 +74,16 @@ services:
             - DB_DATABASE=${DB_DATABASE}
             - DB_USERNAME=${DB_USERNAME}
             - DB_PASSWORD=${DB_PASSWORD}
+            - RABBITMQ_HOST=${RABBITMQ_HOST}
+            - RABBITMQ_PORT=${RABBITMQ_PORT}
+            - RABBITMQ_USER=${RABBITMQ_USER}
+            - RABBITMQ_PASS=${RABBITMQ_PASS}
         depends_on:
             db_manager:
                 condition: service_healthy
             redis:
+                condition: service_healthy
+            rabbitmq:
                 condition: service_healthy
         networks:
             - mynetwork
@@ -200,8 +206,15 @@ services:
             - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
             - DB_USERNAME=${DB_USERNAME}
             - DB_PASSWORD=${DB_PASSWORD}
+            - SPRING_RABBITMQ_HOST=${RABBITMQ_HOST}
+            - SPRING_RABBITMQ_PORT=${RABBITMQ_PORT}
+            - SPRING_RABBITMQ_USERNAME=${RABBITMQ_USER}
+            - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASS}
         depends_on:
-            - db_manager
+            db_manager:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
 
     laravel:
         build:
@@ -223,10 +236,16 @@ services:
             - DB_DATABASE=${DB_DATABASE}
             - DB_USERNAME=${DB_USERNAME}
             - DB_PASSWORD=${DB_PASSWORD}
+            - RABBITMQ_HOST=${RABBITMQ_HOST}
+            - RABBITMQ_PORT=${RABBITMQ_PORT}
+            - RABBITMQ_USER=${RABBITMQ_USER}
+            - RABBITMQ_PASS=${RABBITMQ_PASS}
         networks:
             - mynetwork
         depends_on:
             db_manager:
+                condition: service_healthy
+            rabbitmq:
                 condition: service_healthy
         healthcheck:
             test: ["CMD-SHELL", "php-fpm -t && php artisan --version"]
@@ -245,13 +264,19 @@ services:
             - 8069:8080
         depends_on:
             db_manager:
-                condition: service_started
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
         environment:
             - DB_HOST=${DB_HOST}
             - DB_PORT=${DB_PORT}
-            - DB_NAME=${DB_DATABASE}
+            - DB_DATABASE=${DB_DATABASE}
             - DB_USER=${DB_USERNAME}
             - DB_PASSWORD=${DB_PASSWORD}
+            - RABBITMQ_HOST=${RABBITMQ_HOST}
+            - RABBITMQ_PORT=${RABBITMQ_PORT}
+            - RABBITMQ_USER=${RABBITMQ_USER}
+            - RABBITMQ_PASS=${RABBITMQ_PASS}
 
     nginx:
         image: nginx:alpine
@@ -284,8 +309,14 @@ services:
             - DB_DATABASE=${DB_DATABASE}
             - DB_USERNAME=${DB_USERNAME}
             - DB_PASSWORD=${DB_PASSWORD}
+            - RABBITMQ_HOST=${RABBITMQ_HOST}
+            - RABBITMQ_PORT=${RABBITMQ_PORT}
+            - RABBITMQ_USER=${RABBITMQ_USER}
+            - RABBITMQ_PASS=${RABBITMQ_PASS}
         depends_on:
             db_manager:
+                condition: service_healthy
+            rabbitmq:
                 condition: service_healthy
 
     pgadmin:

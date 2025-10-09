@@ -211,3 +211,12 @@ export interface ReportExportOptions {
     includeCharts: boolean;
     title?: string;
 }
+
+export interface AuditLog {
+    id: number;
+    timestamp: string;
+    service: string;
+    action: string;
+    entity: string;
+    description: string;
+}

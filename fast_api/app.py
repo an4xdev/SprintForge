@@ -13,6 +13,7 @@ from api_response import ApiResponse
 from models import Tasks, TaskHistories, TaskStatuses, Sprints, Users, \
     Teams, Projects, SprintCreate, SprintUpdate
 from rabbit_mq_config import RabbitMQConfig
+from audit_service import audit_service
 
 app = FastAPI()
 
@@ -121,6 +122,7 @@ async def validation_exception_handler(_: Request, exc: RequestValidationError):
 def update_task_status(task_id: UUID, new_status: str, db: Session):
     task = db.exec(select(Tasks).where(Tasks.Id == task_id)).first()
     if not task:
+        audit_service.log_action("UPDATE_FAILED", "Task", f"Failed to update task with ID {task_id}: task not found.")
         raise ApiException(status_code=404, message="Task not found")
     
     current_status = db.exec(
@@ -128,6 +130,7 @@ def update_task_status(task_id: UUID, new_status: str, db: Session):
     ).first()
     
     if not current_status:
+        audit_service.log_action("UPDATE_FAILED", "Task", f"Failed to update task with ID {task_id}: current status not found.")
         raise ApiException(status_code=500, message="Current task status not found")
     
     task_history_prev = db.exec(
@@ -152,6 +155,7 @@ def update_task_status(task_id: UUID, new_status: str, db: Session):
     ).first()
     
     if not new_status_record:
+        audit_service.log_action("UPDATE_FAILED", "Task", f"Failed to update task with ID {task_id}: new status not found.")
         raise ApiException(status_code=500, message=f"{new_status} status not found")
     
     task.TaskStatusId = new_status_record.Id
@@ -168,7 +172,8 @@ def update_task_status(task_id: UUID, new_status: str, db: Session):
         rabbitmq.publish_message(message)
     except Exception as e:
         print(f"Failed to send RabbitMQ message: {e}")
-    
+
+    audit_service.log_action("UPDATE_SUCCESS", "Task", f"Task {task.Name} status changed from {old_status} to {new_status}")
     return {"status": f"Task {new_status.lower()}", "taskId": str(task_id)}
 
 
@@ -279,14 +284,18 @@ def create_sprint(sprint: SprintCreate, db: Session=Depends(get_db)):
     try:
         user = db.exec(select(Users).where(Users.Id == sprint.ManagerId)).first()
         if not user:
+            audit_service.log_action("CREATE_FAILED", "Sprint", f"Failed to create sprint {sprint.Name}: manager not found.")
             raise ApiException(status_code=404, message="Manager not found")
         if user.Role != "manager":
+            audit_service.log_action("CREATE_FAILED", "Sprint", f"Failed to create sprint {sprint.Name}: user is not a manager.")
             raise ApiException(status_code=403, message="User is not a manager")
         team = db.exec(select(Teams).where(Teams.Id == sprint.TeamId)).first()
         if not team:
+            audit_service.log_action("CREATE_FAILED", "Sprint", f"Failed to create sprint {sprint.Name}: team not found.")
             raise ApiException(status_code=404, message="Team not found")
         project = db.exec(select(Projects).where(Projects.Id == sprint.ProjectId)).first()
         if not project:
+            audit_service.log_action("CREATE_FAILED", "Sprint", f"Failed to create sprint {sprint.Name}: project not found.")
             raise ApiException(status_code=404, message="Project not found")
         new_sprint = Sprints(
             Id=uuid.uuid4(),
@@ -300,6 +309,9 @@ def create_sprint(sprint: SprintCreate, db: Session=Depends(get_db)):
         db.add(new_sprint)
         db.commit()
         db.refresh(new_sprint)
+
+        audit_service.log_action("CREATE_SUCCESS", "Sprint", f"Created new sprint: {sprint.Name}")
+
         return ApiResponse(message="Sprint created", data=new_sprint.Id).model_dump()
     except Exception as e:
         db.rollback()
@@ -322,23 +334,28 @@ def update_sprint(sprint_id: UUID, sprint_update: SprintUpdate, db: Session=Depe
         db_sprint = db.exec(statement).first()
         
         if db_sprint is None:
+            audit_service.log_action("UPDATE_FAILED", "Sprint", f"Failed to update sprint with ID {sprint_id}: sprint not found.")
             raise ApiException(status_code=404, message="Sprint not found")
         
         if sprint_update.ManagerId:
             user = db.exec(select(Users).where(Users.Id == sprint_update.ManagerId)).first()
             if not user:
+                audit_service.log_action("UPDATE_FAILED", "Sprint", f"Failed to update sprint with ID {sprint_id}: manager not found.")
                 raise ApiException(status_code=404, message="Manager not found")
             if user.Role != "manager":
+                audit_service.log_action("UPDATE_FAILED", "Sprint", f"Failed to update sprint with ID {sprint_id}: user is not a manager.")
                 raise ApiException(status_code=403, message="User is not a manager")
         
         if sprint_update.TeamId:
             team = db.exec(select(Teams).where(Teams.Id == sprint_update.TeamId)).first()
             if not team:
+                audit_service.log_action("UPDATE_FAILED", "Sprint", f"Failed to update sprint with ID {sprint_id}: team not found.")
                 raise ApiException(status_code=404, message="Team not found")
         
         if sprint_update.ProjectId:
             project = db.exec(select(Projects).where(Projects.Id == sprint_update.ProjectId)).first()
             if not project:
+                audit_service.log_action("UPDATE_FAILED", "Sprint", f"Failed to update sprint with ID {sprint_id}: project not found.")
                 raise ApiException(status_code=404, message="Project not found")
         
         update_data = sprint_update.model_dump(exclude_unset=True)
@@ -349,6 +366,7 @@ def update_sprint(sprint_id: UUID, sprint_update: SprintUpdate, db: Session=Depe
         db.add(db_sprint)
         db.commit()
         db.refresh(db_sprint)
+        audit_service.log_action("UPDATE_SUCCESS", "Sprint", f"Updated sprint with ID {sprint_id}.")
         return ApiResponse(message="Sprint updated", data=db_sprint).model_dump()
     except Exception as e:
         db.rollback()
@@ -362,10 +380,12 @@ def delete_sprint(sprint_id: UUID, db: Session=Depends(get_db)):
         sprint = db.exec(statement).first()
         
         if sprint is None:
+            audit_service.log_action("DELETE_FAILED", "Sprint", f"Failed to delete sprint with ID {sprint_id}: sprint not found.")
             raise ApiException(status_code=404, message="Sprint not found")
         
         db.delete(sprint)
         db.commit()
+        audit_service.log_action("DELETE_SUCCESS", "Sprint", f"Deleted sprint with ID {sprint_id}.")
         return Response(status_code=204)
     except Exception as e:
         db.rollback()
@@ -375,9 +395,7 @@ def delete_sprint(sprint_id: UUID, db: Session=Depends(get_db)):
 # Task time tracking
 @app.get("/api/tasks/{task_id}/time")
 def get_task_time(task_id: UUID, db: Session=Depends(get_db)):
-    """Get current time tracking information for a task"""
     try:
-        
         task = db.exec(select(Tasks).where(Tasks.Id == task_id)).first()
         if not task:
             raise ApiException(status_code=404, message="Task not found")
@@ -418,7 +436,6 @@ def get_task_time(task_id: UUID, db: Session=Depends(get_db)):
 
 @app.get("/api/tasks/developer/{developer_id}/times")
 def get_developer_task_times(developer_id: UUID, db: Session=Depends(get_db)):
-    """Get time tracking information for all tasks assigned to a developer"""
     try:
         tasks = db.exec(
             select(Tasks).where(Tasks.DeveloperId == developer_id)
@@ -464,7 +481,6 @@ def get_developer_task_times(developer_id: UUID, db: Session=Depends(get_db)):
 
 
 def calculate_task_total_time(task_id: UUID, db: Session) -> int:
-    """Calculate total time spent on a task in seconds"""
     histories = db.exec(
         select(TaskHistories)
         .where(TaskHistories.TaskId == task_id)

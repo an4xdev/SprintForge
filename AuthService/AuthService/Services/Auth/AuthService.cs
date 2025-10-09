@@ -14,7 +14,7 @@ using StackExchange.Redis;
 
 namespace AuthService.Services.Auth;
 
-public class AuthService(AppDbContext context, IDatabase redis) : IAuthService
+public class AuthService(AppDbContext context, IDatabase redis, IAuditService auditService) : IAuthService
 {
     public async Task<Result<LoginResponse>> LoginAsync(UserLoginRequest request)
     {
@@ -23,6 +23,7 @@ public class AuthService(AppDbContext context, IDatabase redis) : IAuthService
                 user.PasswordSalt + request.Password)
             == PasswordVerificationResult.Failed)
         {
+            await auditService.SendAuditLogAsync("LOGIN_FAILED", "User", $"{request.Username} failed to log in: invalid credentials.");
             return Result<LoginResponse>.BadRequest("Invalid username or password");
         }
 
@@ -88,6 +89,7 @@ public class AuthService(AppDbContext context, IDatabase redis) : IAuthService
 
         if (user is null)
         {
+            await auditService.SendAuditLogAsync("CHANGE_PASSWORD_FAILED", "User", $"User with ID {request.UserId} failed to change password: user not found.");
             return Result<object?>.NotFound("No user found");
         }
 
@@ -95,6 +97,7 @@ public class AuthService(AppDbContext context, IDatabase redis) : IAuthService
                 user.PasswordSalt + request.OldPassword)
             == PasswordVerificationResult.Failed)
         {
+            await auditService.SendAuditLogAsync("CHANGE_PASSWORD_FAILED", "User", $"{user.Username} failed to change their password: invalid old password.");
             return Result<object?>.BadRequest("Invalid old password");
         }
 
@@ -109,6 +112,8 @@ public class AuthService(AppDbContext context, IDatabase redis) : IAuthService
         }
 
         await context.SaveChangesAsync();
+
+        await auditService.SendAuditLogAsync("CHANGE_PASSWORD_SUCCESS", "User", $"{user.Username} changed their password.");
 
         return Result<object?>.Success(null, "Successfully changed password");
     }

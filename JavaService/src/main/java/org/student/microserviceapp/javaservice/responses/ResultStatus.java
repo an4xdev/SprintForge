@@ -4,7 +4,7 @@ import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 @Getter
-enum ResultStatus {
+public enum ResultStatus {
     OK(HttpStatus.OK),
     CREATED(HttpStatus.CREATED),
     NO_CONTENT(HttpStatus.NO_CONTENT),

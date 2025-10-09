@@ -8,6 +8,7 @@ import org.student.microserviceapp.javaservice.models.Project;
 import org.student.microserviceapp.javaservice.repositories.ProjectRepository;
 import org.student.microserviceapp.javaservice.repositories.TeamRepository;
 import org.student.microserviceapp.javaservice.responses.Result;
+import org.student.microserviceapp.javaservice.services.AuditService;
 import org.student.microserviceapp.javaservice.services.company.ICompanyService;
 
 import java.time.LocalDate;
@@ -18,12 +19,14 @@ public class ProjectService implements IProjectService {
     private final ProjectRepository projectRepository;
     private final ICompanyService companyService;
     private final TeamRepository teamRepository;
+    private final AuditService auditService;
 
     public ProjectService(ProjectRepository projectRepository, ICompanyService companyService,
-                          TeamRepository teamRepository) {
+                          TeamRepository teamRepository, AuditService auditService) {
         this.projectRepository = projectRepository;
         this.companyService = companyService;
         this.teamRepository = teamRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -56,6 +59,7 @@ public class ProjectService implements IProjectService {
     public Result<UUID> createProject(CreateProjectDTO createProjectDTO) {
 
         if (createProjectDTO.getStartDate().isAfter(createProjectDTO.getEndDate())) {
+            auditService.logAction("CREATE_FAILED", "Project", "Failed to create project: start date after end date");
             return Result.badRequest("Start date cannot be after end date");
         }
 
@@ -64,17 +68,20 @@ public class ProjectService implements IProjectService {
         if (createProjectDTO.getCompanyId() != null) {
             var company = companyService.getCompanyById(createProjectDTO.getCompanyId());
             if (company.isEmpty()) {
+                auditService.logAction("CREATE_FAILED", "Company", "Failed to create project: company not found");
                 return Result.badRequest("Company not found");
             }
             project.setCompany(company.get());
         } else {
             var defaultCompany = companyService.getDefaultCompany();
             if (defaultCompany.isEmpty()) {
+                auditService.logAction("CREATE_FAILED", "Company", "Failed to create project: no default company");
                 return Result.internalError("No company provided and could not find default company.");
             }
             project.setCompany(defaultCompany.get());
         }
         projectRepository.save(project);
+        auditService.logAction("CREATE_SUCCESS", "Project", "Successfully created project: " + project.getName());
         return Result.success(project.getId(), "Project created successfully");
     }
 
@@ -83,11 +90,13 @@ public class ProjectService implements IProjectService {
     public Result<ProjectDTO> updateProject(UUID id, CreateProjectDTO createProjectDTO) {
         var project = projectRepository.findById(id);
         if (project.isEmpty()) {
+            auditService.logAction("UPDATE_FAILED", "Project", "Failed to update project: project not found");
             return Result.notFound("Project not found");
         }
         var existingProject = project.get();
 
         if (Objects.equals(existingProject.getName(), "Default")) {
+            auditService.logAction("UPDATE_FAILED", "Project", "Failed to update project: tried to modify default project");
             return Result.badRequest("Default project cannot be modified");
         }
 
@@ -97,17 +106,20 @@ public class ProjectService implements IProjectService {
 
         if (createProjectDTO.getStartDate() != null && createProjectDTO.getEndDate() != null) {
             if (createProjectDTO.getStartDate().isAfter(createProjectDTO.getEndDate())) {
+                auditService.logAction("UPDATE_FAILED", "Project", "Failed to update project: start date after end date");
                 return Result.badRequest("Start date cannot be after end date");
             }
             existingProject.setStartDate(createProjectDTO.getStartDate());
             existingProject.setEndDate(createProjectDTO.getEndDate());
         } else if (createProjectDTO.getStartDate() != null) {
             if (createProjectDTO.getStartDate().isAfter(existingProject.getEndDate())) {
+                auditService.logAction("UPDATE_FAILED", "Project", "Failed to update project: start date after existing end date");
                 return Result.badRequest("Start date cannot be after existing end date");
             }
             existingProject.setStartDate(createProjectDTO.getStartDate());
         } else if (createProjectDTO.getEndDate() != null) {
             if (createProjectDTO.getEndDate().isBefore(existingProject.getStartDate())) {
+                auditService.logAction("UPDATE_FAILED", "Project", "Failed to update project: end date before existing start date");
                 return Result.badRequest("End date cannot be before existing start date");
             }
             existingProject.setEndDate(createProjectDTO.getEndDate());
@@ -116,6 +128,7 @@ public class ProjectService implements IProjectService {
         if (createProjectDTO.getCompanyId() != null) {
             var company = companyService.getCompanyById(createProjectDTO.getCompanyId());
             if (company.isEmpty()) {
+                auditService.logAction("UPDATE_FAILED", "Company", "Failed to update project: company not found");
                 return Result.badRequest("Company not found");
             }
             existingProject.setCompany(company.get());
@@ -123,6 +136,7 @@ public class ProjectService implements IProjectService {
 
         projectRepository.save(existingProject);
         var projectDTO = new ProjectDTO(existingProject);
+        auditService.logAction("UPDATE_SUCCESS", "Project", "Successfully updated project: " + existingProject.getName());
         return Result.success(projectDTO, "Project updated successfully");
     }
 
@@ -137,6 +151,7 @@ public class ProjectService implements IProjectService {
             return Result.badRequest("Default project cannot be deleted");
         }
         projectRepository.delete(project.get());
+        auditService.logAction("DELETE_SUCCESS", "Project", "Successfully deleted project: " + project.get().getName());
         return Result.noContent();
     }
 

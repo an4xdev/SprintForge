@@ -6,9 +6,11 @@ using System.Text;
 using AuthService.Services.Auth;
 using AuthService.Services.File;
 using AuthService.Services.Users;
+using AuthService.Services;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
 using Minio;
+using RabbitMQ.Client;
 using SharedObjects.AppDbContext;
 using StackExchange.Redis;
 
@@ -60,9 +62,16 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(connectionString)
 );
 
+var rabbitmqHost = GetRequiredEnvironmentVariable("RABBITMQ_HOST");
+var rabbitmqPort = GetRequiredEnvironmentVariable("RABBITMQ_PORT");
+var rabbitmqUser = GetRequiredEnvironmentVariable("RABBITMQ_USER");
+var rabbitmqPass = GetRequiredEnvironmentVariable("RABBITMQ_PASS");
+var rabbitmqConnectionString = $"amqp://{rabbitmqUser}:{rabbitmqPass}@{rabbitmqHost}:{rabbitmqPort}";
+
 builder.Services.AddHealthChecks()
     .AddNpgSql(connectionString)
-    .AddRedis(redisConnectionString);
+    .AddRedis(redisConnectionString)
+    .AddRabbitMQ();
 
 builder.Services.AddSingleton<IConnectionMultiplexer>(_ => 
     ConnectionMultiplexer.Connect(redisConnectionString));
@@ -72,6 +81,11 @@ builder.Services.AddScoped<IDatabase>(sp =>
     var multiplexer = sp.GetRequiredService<IConnectionMultiplexer>();
     return multiplexer.GetDatabase();
 });
+
+builder.Services.AddSingleton<RabbitMqConnectionManager>(sp =>
+    new RabbitMqConnectionManager(rabbitmqConnectionString));
+
+builder.Services.AddSingleton<IConnection>(sp => sp.GetRequiredService<RabbitMqConnectionManager>().Connection);
 
 builder.Services.Configure<FormOptions>(options =>
 {
@@ -118,6 +132,7 @@ builder.Services.AddSingleton(sp =>
 builder.Services.AddScoped<IAuthService, AuthService.Services.Auth.AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IFileService, MinioFileService>();
+builder.Services.AddSingleton<IAuditService, AuditService>();
 
 var app = builder.Build();
 

@@ -5,13 +5,14 @@ import type {
     SprintReportDto,
     ProjectReportDto,
     ReportFilters,
-    ApiResponse
+    ApiResponse,
+    AuditLog
 } from '@/types';
 
 class ReportsService {
     private readonly baseUrl = '/reports';
 
-    async getTeamReports(managerId?: string | null, filters?: ReportFilters): Promise<TeamReportDto[]> {
+    async getTeamReports(managerId?: string | null, filters?: ReportFilters, signal?: AbortSignal): Promise<TeamReportDto[]> {
         try {
             reportsLogger.info('Fetching team reports', { managerId, filters });
 
@@ -29,7 +30,7 @@ class ReportsService {
             }
 
             const response = await apiService.get<ApiResponse<TeamReportDto[]>>(
-                `${this.baseUrl}/teams?${params.toString()}`
+                `${this.baseUrl}/teams?${params.toString()}`, signal
             );
 
             reportsLogger.info('Team reports fetched successfully');
@@ -40,7 +41,7 @@ class ReportsService {
         }
     }
 
-    async getSprintReports(managerId?: string | null, filters?: ReportFilters): Promise<SprintReportDto[]> {
+    async getSprintReports(managerId?: string | null, filters?: ReportFilters, signal?: AbortSignal): Promise<SprintReportDto[]> {
         try {
             reportsLogger.info('Fetching sprint reports', { managerId, filters });
 
@@ -58,7 +59,7 @@ class ReportsService {
             }
 
             const response = await apiService.get<ApiResponse<SprintReportDto[]>>(
-                `${this.baseUrl}/sprints?${params.toString()}`
+                `${this.baseUrl}/sprints?${params.toString()}`, signal
             );
 
             reportsLogger.info('Sprint reports fetched successfully');
@@ -69,7 +70,7 @@ class ReportsService {
         }
     }
 
-    async getProjectReports(managerId?: string | null, filters?: ReportFilters): Promise<ProjectReportDto[]> {
+    async getProjectReports(managerId?: string | null, filters?: ReportFilters, signal?: AbortSignal): Promise<ProjectReportDto[]> {
         try {
             reportsLogger.info('Fetching project reports', { managerId, filters });
 
@@ -87,7 +88,7 @@ class ReportsService {
             }
 
             const response = await apiService.get<ApiResponse<ProjectReportDto[]>>(
-                `${this.baseUrl}/projects?${params.toString()}`
+                `${this.baseUrl}/projects?${params.toString()}`, signal
             );
 
             reportsLogger.info('Project reports fetched successfully');
@@ -161,6 +162,26 @@ class ReportsService {
     calculateCompletionPercentage(completed: number, total: number): number {
         if (total === 0) return 0;
         return Math.round((completed / total) * 100);
+    }
+
+    async getAuditLogs(limit: number = 10, offset: number = 0, signal?: AbortSignal): Promise<ApiResponse<{ logs: AuditLog[], totalCount: number, limit: number, offset: number }>> {
+        try {
+            reportsLogger.info('Fetching audit logs', { limit, offset });
+
+            const params = new URLSearchParams();
+            params.append('limit', limit.toString());
+            params.append('offset', offset.toString());
+
+            const response = await apiService.get<ApiResponse<{ logs: AuditLog[], totalCount: number, limit: number, offset: number }>>(
+                `${this.baseUrl}/audit?${params.toString()}`, signal
+            );
+
+            reportsLogger.info('Audit logs fetched successfully', { count: response.data.logs?.length });
+            return response;
+        } catch (error) {
+            reportsLogger.error('Failed to fetch audit logs', error);
+            throw error;
+        }
     }
 }
 

@@ -3,7 +3,7 @@ FROM composer:2 AS build
 WORKDIR /app
 
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction --optimize-autoloader
+RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction --optimize-autoloader --ignore-platform-req=ext-sockets
 
 COPY . .
 
@@ -21,6 +21,7 @@ RUN apk add --no-cache \
     libpng-dev \
     libjpeg-turbo-dev \
     libzip-dev \
+    linux-headers \
     && docker-php-ext-configure zip \
     && docker-php-ext-install \
     pdo \
@@ -28,6 +29,7 @@ RUN apk add --no-cache \
     pgsql \
     zip \
     gd \
+    sockets \
     && apk del .build-deps
 
 RUN echo "memory_limit=256M" > /usr/local/etc/php/conf.d/memory-limit.ini \
