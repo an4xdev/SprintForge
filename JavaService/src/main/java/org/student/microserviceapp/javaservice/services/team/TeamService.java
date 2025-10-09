@@ -8,6 +8,7 @@ import org.student.microserviceapp.javaservice.models.Roles;
 import org.student.microserviceapp.javaservice.repositories.ProjectRepository;
 import org.student.microserviceapp.javaservice.repositories.TeamRepository;
 import org.student.microserviceapp.javaservice.responses.Result;
+import org.student.microserviceapp.javaservice.services.AuditService;
 import org.student.microserviceapp.javaservice.services.user.IUserService;
 
 import java.util.ArrayList;
@@ -20,11 +21,13 @@ public class TeamService implements ITeamService {
     private final TeamRepository teamRepository;
     private final IUserService userService;
     private final ProjectRepository projectRepository;
+    private final AuditService auditService;
 
-    public TeamService(TeamRepository teamRepository, IUserService userService, ProjectRepository projectRepository) {
+    public TeamService(TeamRepository teamRepository, IUserService userService, ProjectRepository projectRepository, AuditService auditService) {
         this.teamRepository = teamRepository;
         this.userService = userService;
         this.projectRepository = projectRepository;
+        this.auditService = auditService;
     }
 
     @Override
@@ -56,18 +59,21 @@ public class TeamService implements ITeamService {
     public Result<UUID> createTeam(CreateTeamDTO createTeamDTO) {
         var user = userService.findById(createTeamDTO.getManagerId());
         if (user.isEmpty()) {
+            auditService.logAction("CREATE_FAILED", "Team", "Failed to create team. Reason: User not found");
             return Result.badRequest("User not found");
         }
 
         var existingUser = user.get();
 
         if (!Objects.equals(existingUser.getRole(), Roles.MANAGER)) {
+            auditService.logAction("CREATE_FAILED", "Team", "Failed to create team. Reason: User is not a manager");
             return Result.badRequest("User is not a manager");
         }
 
         if (createTeamDTO.projectId != null) {
             var project = projectRepository.findById(createTeamDTO.projectId);
             if (project.isEmpty()) {
+                auditService.logAction("CREATE_FAILED", "Team", "Failed to create team. Reason: Project not found");
                 return Result.badRequest("Project not found");
             }
         }
@@ -82,6 +88,7 @@ public class TeamService implements ITeamService {
         else {
             var project = projectRepository.findByName("Default");
             if(project.isEmpty()) {
+                auditService.logAction("CREATE_FAILED", "Team", "Failed to create team. Reason: No project provided and could not find default project");
                 return Result.internalError("No project provided and could not find default project");
             }
             else {
@@ -89,6 +96,7 @@ public class TeamService implements ITeamService {
             }
         }
         teamRepository.save(team);
+        auditService.logAction("CREATE_SUCCESS", "Team", "Successfully created team: " + team.getName());
         return Result.success(team.getId(), "Team created successfully");
     }
 
@@ -98,6 +106,7 @@ public class TeamService implements ITeamService {
         var team = teamRepository.findById(id);
 
         if (team.isEmpty()) {
+            auditService.logAction("UPDATE_FAILED", "Team", "Failed to update team. Reason: Team not found");
             return Result.notFound("Team not found");
         }
 
@@ -106,10 +115,12 @@ public class TeamService implements ITeamService {
         if (createTeamDTO.getManagerId() != null) {
             var user = userService.findById(createTeamDTO.getManagerId());
             if (user.isEmpty()) {
+                auditService.logAction("UPDATE_FAILED", "Team", "Failed to create team. Reason: User not found");
                 return Result.badRequest("User not found");
             }
             var existingUser = user.get();
             if (!Objects.equals(existingUser.getRole(), Roles.MANAGER)) {
+                auditService.logAction("UPDATE_FAILED", "Team", "Failed to create team. Reason: User is not a manager");
                 return Result.badRequest("User is not a manager");
             }
             existingTeam.setManager(existingUser);
@@ -122,6 +133,7 @@ public class TeamService implements ITeamService {
         if (createTeamDTO.projectId != null) {
             var project = projectRepository.findById(createTeamDTO.projectId);
             if (project.isEmpty()) {
+                auditService.logAction("UPDATE_FAILED", "Team", "Failed to create team. Reason: Project not found");
                 return Result.badRequest("Project not found");
             }
             existingTeam.setProject(project.get());
@@ -129,6 +141,8 @@ public class TeamService implements ITeamService {
 
         teamRepository.save(existingTeam);
         var teamDTO = new TeamDTO(existingTeam);
+
+        auditService.logAction("UPDATE_SUCCESS", "Team", "Successfully updated team: " + existingTeam.getName());
 
         return Result.success(teamDTO, "Team updated successfully");
     }
@@ -138,6 +152,7 @@ public class TeamService implements ITeamService {
     public Result<Void> deleteTeam(UUID id) {
         var team = teamRepository.findById(id);
         if (team.isEmpty()) {
+            auditService.logAction("DELETE_FAILED", "Team", "Failed to delete team. Reason: Team not found with id: " + id);
             return Result.notFound("Team not found");
         }
         teamRepository.delete(team.get());
