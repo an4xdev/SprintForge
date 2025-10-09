@@ -6,6 +6,7 @@ const port = process.env.PORT || 6713;
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import ApiResponse from "../models/ApiResponse";
+import { auditService } from "./auditService";
 
 app.use(express.json());
 
@@ -56,23 +57,38 @@ const sequelize = new Sequelize(
 
 const models = initModels(sequelize);
 
-// health check
 app.get("/health", async (_req, res) => {
+  let dbStatus = "Connected";
+  let rabbitStatus = "Connected";
+  let overallStatus = "UP";
+  let statusCode = 200;
+
   try {
     await sequelize.authenticate();
-    res.status(200).json({
-      status: "UP",
-      message: "Service is running",
-      database: "Connected",
-    });
   } catch (error) {
     console.error("Database connection error:", error);
-    res.status(500).json({
-      status: "DOWN",
-      message: "Service is running, but database connection failed",
-      database: "Disconnected",
-    });
+    dbStatus = "Disconnected";
+    overallStatus = "DOWN";
+    statusCode = 503;
   }
+
+  try {
+    if (!auditService) {
+      throw new Error("Audit service not initialized");
+    }
+  } catch (error) {
+    console.error("RabbitMQ connection error:", error);
+    rabbitStatus = "Disconnected";
+    overallStatus = "DOWN";
+    statusCode = 503;
+  }
+
+  res.status(statusCode).json({
+    status: overallStatus,
+    message: "Service is running",
+    database: dbStatus,
+    rabbitmq: rabbitStatus,
+  });
 });
 
 // Task Types
@@ -114,9 +130,12 @@ app.post("/api/taskTypes", async (req, res) => {
       name: taskType.Name
     };
 
+    await auditService.logAction("CREATE_SUCCESS", "TaskType", `Created new task type: ${name}`);
+
     let response = ApiResponse.Created("Task type created successfully", transformedTaskType);
     res.status(201).json(response);
   } catch (error) {
+    await auditService.logAction("CREATE_FAILED", "TaskType", `Error creating task type: ${name}`);
     console.error("Error creating task type:", error);
     let response = ApiResponse.InternalError("Internal server error");
     res.status(500).json(response);
@@ -155,6 +174,7 @@ app.put("/api/taskTypes/:id", async (req, res) => {
   try {
     const taskType = await TaskTypes.findByPk(id);
     if (!taskType) {
+      await auditService.logAction("UPDATE_FAILED", "TaskType", `Task type not found: ${id}`);
       let response = ApiResponse.BadRequest("Task type not found");
       res.status(400).json(response);
       return;
@@ -167,9 +187,11 @@ app.put("/api/taskTypes/:id", async (req, res) => {
       name: taskType.Name
     };
 
+    await auditService.logAction("UPDATE_SUCCESS", "TaskType", `Updated task type: ${name}`);
     let response = ApiResponse.Success("Task type updated successfully", transformedTaskType);
     res.status(200).json(response);
   } catch (error) {
+    await auditService.logAction("UPDATE_FAILED", "TaskType", `Error updating task type: ${id}`);
     console.error("Error updating task type:", error);
     res.status(500).json({ error: "Internal server error" });
   }
@@ -181,15 +203,18 @@ app.delete("/api/taskTypes/:id", async (req, res) => {
   try {
     const taskType = await TaskTypes.findByPk(id);
     if (!taskType) {
+      await auditService.logAction("DELETE_FAILED", "TaskType", `Task type not found: ${id}`);
       let response = ApiResponse.NotFound("Task type not found");
       res.status(404).json(response);
       return;
     }
     await taskType.destroy();
+    await auditService.logAction("DELETE_SUCCESS", "TaskType", `Deleted task type: ${taskType.Name}`);
     res.status(204).send();
   } catch (error) {
     console.error("Error deleting task type:", error);
     let response = ApiResponse.InternalError("Internal server error");
+    await auditService.logAction("DELETE_FAILED", "TaskType", `Error deleting task type: ${id}`);
     res.status(500).json(response);
   }
 });
@@ -271,10 +296,13 @@ app.post("/api/companies", async (req, res) => {
       name: company.Name
     };
 
+    await auditService.logAction("CREATE_SUCCESS", "Company", `Created new company: ${name}`);
+
     let response = ApiResponse.Created("Company created successfully", transformedCompany);
     res.status(201).json(response);
   } catch (error) {
     console.error("Error creating company:", error);
+    await auditService.logAction("CREATE_FAILED", "Company", `Error creating company: ${name}`);
     let response = ApiResponse.InternalError("Internal server error");
     res.status(500).json(response);
   }
@@ -287,17 +315,21 @@ app.put("/api/companies/:id", async (req, res) => {
   try {
     const company = await Companies.findByPk(id);
     if (!company) {
+      await auditService.logAction("UPDATE_FAILED", "Company", `Company not found: ${id}`);
       let response = ApiResponse.BadRequest("Company not found");
       res.status(400).json(response);
       return;
     }
     if (company.Name === "Default") {
+      await auditService.logAction("UPDATE_FAILED", "Company", `Attempted to modify default company: ${id}`);
       let response = ApiResponse.BadRequest("Default company cannot be modified");
       res.status(400).json(response);
       return;
     }
     company.Name = name;
     await company.save();
+
+    await auditService.logAction("UPDATE_SUCCESS", "Company", `Updated company: ${name}`);
 
     const transformedCompany = {
       id: company.Id,
@@ -307,6 +339,7 @@ app.put("/api/companies/:id", async (req, res) => {
     let response = ApiResponse.Success("Company updated successfully", transformedCompany);
     res.status(200).json(response);
   } catch (error) {
+    await auditService.logAction("UPDATE_FAILED", "Company", `Error updating company: ${id}`);
     console.error("Error updating company:", error);
     let response = ApiResponse.InternalError("Internal server error");
     res.status(500).json(response);
@@ -319,25 +352,32 @@ app.delete("/api/companies/:id", async (req, res) => {
   try {
     const company = await Companies.findByPk(id);
     if (!company) {
+      await auditService.logAction("DELETE_FAILED", "Company", `Company not found: ${id}`);
       let response = ApiResponse.NotFound("Company not found");
       res.status(404).json(response);
       return;
     }
     if (company.Name === "Default") {
+      await auditService.logAction("DELETE_FAILED", "Company", `Attempted to delete default company: ${id}`);
       let response = ApiResponse.BadRequest("Default company cannot be deleted");
       res.status(400).json(response);
       return;
     }
     await company.destroy();
+    await auditService.logAction("DELETE_SUCCESS", "Company", `Deleted company: ${company.Name}`);
     res.status(204).send();
   } catch (error) {
     console.error("Error deleting company:", error);
+    await auditService.logAction("DELETE_FAILED", "Company", `Error deleting company: ${id}`);
     let response = ApiResponse.InternalError("Internal server error");
     res.status(500).json(response);
   }
 });
 
-sequelize.authenticate()
+Promise.all([
+  sequelize.authenticate(),
+  auditService.initialize()
+])
   .then(() => {
     console.log('Database connection has been established successfully.');
     app.listen(port, () => {
@@ -345,5 +385,5 @@ sequelize.authenticate()
     });
   })
   .catch(err => {
-    console.error('Unable to connect to the database:', err);
+    console.error('Unable to connect to the database or initialize audit service:', err);
   });
