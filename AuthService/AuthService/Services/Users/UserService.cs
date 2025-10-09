@@ -10,12 +10,13 @@ using Task = System.Threading.Tasks.Task;
 
 namespace AuthService.Services.Users;
 
-public class UserService(AppDbContext context, IConfiguration configuration) : IUserService
+public class UserService(AppDbContext context, IConfiguration configuration, IAuditService auditService) : IUserService
 {
     public async Task<Result<UserResponse>> RegisterAsync(AdminRegisterRequest request)
     {
         if (await context.Users.AnyAsync(u => u.Username == request.Username))
         {
+            await auditService.SendAuditLogAsync("CREATE_FAILED", "User", $"Failed to create user with username {request.Username}: username already exists.");
             return Result<UserResponse>.BadRequest("Username already exists.");
         }
 
@@ -47,6 +48,8 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
             FirstName = user.FirstName,
             LastName = user.LastName,
         };
+
+        await auditService.SendAuditLogAsync("CREATE_SUCCESS", "User", $"{user.Username} created.");
 
         return Result<UserResponse>.Success(result, "Registration Successful");
     }
@@ -110,6 +113,8 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
 
         await context.SaveChangesAsync();
 
+        await auditService.SendAuditLogAsync("UPDATE_SUCCESS", "User", $"{user.Username} updated their avatar.");
+
         return avatar;
     }
 
@@ -161,6 +166,7 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
     {
         if (!await IsUserInDatabase(id))
         {
+            await auditService.SendAuditLogAsync("UPDATE_FAILED", "User", $"Failed to update user with ID {id}: user not found.");
             return Result<UserResponse?>.NotFound("User not found");
         }
 
@@ -195,11 +201,14 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
             }
             else
             {
+                await auditService.SendAuditLogAsync("UPDATE_FAILED", "User", $"Failed to update user with ID {id}: invalid role {request.Role}.");
                 return Result<UserResponse?>.BadRequest("Invalid role");
             }
         }
 
         await context.SaveChangesAsync();
+
+        await auditService.SendAuditLogAsync("UPDATE_SUCCESS", "User", $"{user!.Username} was updated.");
 
         return Result<UserResponse?>.Success(new UserResponse
         {
@@ -216,6 +225,7 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
     {
         if (!await IsUserInDatabase(id))
         {
+            await auditService.SendAuditLogAsync("DELETE_FAILED", "User", $"Failed to delete user with ID {id}: user not found.");
             return Result<object?>.NotFound("User not found");
         }
 
@@ -223,6 +233,8 @@ public class UserService(AppDbContext context, IConfiguration configuration) : I
 
         context.Users.Remove(user!);
         await context.SaveChangesAsync();
+
+        await auditService.SendAuditLogAsync("DELETE_SUCCESS", "User", $"{user!.Username} was deleted.");
 
         return Result<object?>.NoContent();
     }
