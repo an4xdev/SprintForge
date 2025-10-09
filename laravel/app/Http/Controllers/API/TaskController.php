@@ -9,6 +9,7 @@ use App\Models\Task;
 use App\Models\TaskStatus;
 use App\Models\TaskType;
 use App\Models\User;
+use App\Services\AuditService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Str;
@@ -16,6 +17,13 @@ use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 class TaskController extends Controller
 {
+    private AuditService $auditService;
+
+    public function __construct(AuditService $auditService)
+    {
+        $this->auditService = $auditService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -37,18 +45,21 @@ class TaskController extends Controller
         ]);
 
         if ($request->has('taskStatusId')) {
+            $this->auditService->logAction('CREATE_FAILED', 'Task', 'Task status ID provided in request');
             $response = ApiResponse::BadRequest('Task status ID automatically assigned to `Created` status. Do not provide it in the request.');
             return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
         }
 
         $statusId = TaskStatus::where('Name', 'Created')->value('Id');
         if (!$statusId) {
+            $this->auditService->logAction('CREATE_FAILED', 'Task', 'Default task status "Created" not found');
             $response = ApiResponse::InternalError('Default task status "Created" not found');
             return response()->json($response, ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         if ($request->has('developerId') && $request->input('developerId') !== null) {
             if (User::where('Id', $request->input('developerId'))->doesntExist()) {
+                $this->auditService->logAction('CREATE_FAILED', 'Task', 'Developer not found');
                 $response = ApiResponse::BadRequest('Developer not found');
                 return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
             }
@@ -56,6 +67,7 @@ class TaskController extends Controller
 
         if ($request->has('taskTypeId') && $request->input('taskTypeId') !== null) {
             if (!TaskType::where('Id', $request->input('taskTypeId'))->exists()) {
+                $this->auditService->logAction('CREATE_FAILED', 'Task', 'Task Type not found');
                 $response = ApiResponse::BadRequest('Task Type not found');
                 return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
             }
@@ -63,6 +75,7 @@ class TaskController extends Controller
 
         if ($request->has('sprintId') && $request->input('sprintId') !== null) {
             if (Sprint::where('Id', $request->input('sprintId'))->doesntExist()) {
+                $this->auditService->logAction('CREATE_FAILED', 'Task', 'Sprint not found');
                 $response = ApiResponse::BadRequest('Sprint not found');
                 return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
             }
@@ -79,6 +92,9 @@ class TaskController extends Controller
         ];
 
         $task = Task::create($taskData);
+
+        $this->auditService->logAction('CREATE_SUCCESS', 'Task', 'Created new task: ' . $request->input('name'));
+
         $response = ApiResponse::Created('Task created successfully', $task);
         return response()->json($response, Response::HTTP_CREATED);
     }
@@ -102,6 +118,7 @@ class TaskController extends Controller
     public function update(Request $request, Task $task)
     {
         if (!$task) {
+            $this->auditService->logAction('UPDATE_FAILED', 'Task', 'Task not found');
             $response = ApiResponse::NotFound('Task not found');
             return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
@@ -112,11 +129,13 @@ class TaskController extends Controller
         ]);
 
         if ($request->has('developerId')) {
+            $this->auditService->logAction('UPDATE_FAILED', 'Task', 'Cannot update developerId directly. Use assign task to developer method.');
             $response = ApiResponse::BadRequest('Cannot update developerId directly. Use assign task to developer method.');
             return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
         }
 
         if ($request->has('sprintId')) {
+            $this->auditService->logAction('UPDATE_FAILED', 'Task', 'Cannot update sprintId directly. Use move task to another sprint method.');
             $response = ApiResponse::BadRequest('Cannot update sprintId directly. Use move task to another sprint method.');
             return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
         }
@@ -129,6 +148,7 @@ class TaskController extends Controller
             ]
         );
 
+        $this->auditService->logAction('UPDATE_SUCCESS', 'Task', 'Updated task: ' . $task->Name);
         $response = ApiResponse::Success('Task updated successfully', $task);
         return response()->json($response);
     }
@@ -139,6 +159,7 @@ class TaskController extends Controller
     public function assignDeveloper(Request $request, Task $task)
     {
         if (!$task) {
+            $this->auditService->logAction('UPDATE_FAILED', 'Task', 'Task not found');
             $response = ApiResponse::NotFound('Task not found');
             return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
@@ -150,6 +171,7 @@ class TaskController extends Controller
         $task->DeveloperId = $request->input('developerId');
         $task->save();
 
+        $this->auditService->logAction('UPDATE_SUCCESS', 'Task', 'Assigned developer to task: ' . $task->Name);
         $response = ApiResponse::Success('Developer assigned to task successfully', $task);
         return response()->json($response);
     }
@@ -160,6 +182,7 @@ class TaskController extends Controller
     public function moveToSprint(Request $request, Task $task)
     {
         if (!$task) {
+            $this->auditService->logAction('UPDATE_FAILED', 'Task', 'Task not found');
             $response = ApiResponse::NotFound('Task not found');
             return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
@@ -171,6 +194,8 @@ class TaskController extends Controller
         $sprintId = $request->input('sprintId');
         $task->SprintId = $sprintId;
         $task->save();
+
+        $this->auditService->logAction('UPDATE_SUCCESS', 'Task', 'Moved task to sprint: ' . $task->Name);
 
         $response = ApiResponse::Success('Task moved to sprint successfully', $task);
         return response()->json($response);
@@ -205,10 +230,16 @@ class TaskController extends Controller
     public function destroy(Task $task)
     {
         if (!$task) {
+            $this->auditService->logAction('DELETE_FAILED', 'Task', 'Task not found');
             $response = ApiResponse::NotFound('Task not found');
             return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
+        
+        $taskName = $task->Name;
         $task->delete();
+
+        $this->auditService->logAction('DELETE_SUCCESS', 'Task', 'Deleted task: ' . $taskName);
+
         return response(status: ResponseAlias::HTTP_NO_CONTENT);
     }
 

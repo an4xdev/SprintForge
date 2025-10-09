@@ -9,9 +9,17 @@ use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Http\Response;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
+use App\Services\AuditService;
 
 class TaskStatusController extends Controller
 {
+    private AuditService $auditService;
+
+    public function __construct(AuditService $auditService)
+    {
+        $this->auditService = $auditService;
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -39,6 +47,7 @@ class TaskStatusController extends Controller
         $taskStatus = TaskStatus::create([
             'Name' => $request->input('name'),
         ]);
+        $this->auditService->logAction('CREATE_SUCCESS', 'TaskStatus', 'Created new task status: ' . $request->input('name'));
         $response = ApiResponse::Created('Task Status created successfully', $taskStatus);
         return response()->json($response, ResponseAlias::HTTP_CREATED);
     }
@@ -62,6 +71,7 @@ class TaskStatusController extends Controller
     public function update(Request $request, TaskStatus $taskStatus)
     {
         if (!$taskStatus) {
+            $this->auditService->logAction('UPDATE_FAILED', 'TaskStatus', 'Task Status not found');
             $response = ApiResponse::BadRequest('Task Status not found');
             return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
@@ -81,10 +91,12 @@ class TaskStatusController extends Controller
     public function destroy(TaskStatus $taskStatus)
     {
         if (!$taskStatus) {
+            $this->auditService->logAction('DELETE_FAILED', 'TaskStatus', 'Task Status not found');
             $response = ApiResponse::NotFound('Task Status not found');
             return response()->json($response, ResponseAlias::HTTP_NOT_FOUND);
         }
         $taskStatus->delete();
+        $this->auditService->logAction('DELETE_SUCCESS', 'TaskStatus', 'Deleted task status: ' . $taskStatus->Name);
         return response(status: Response::HTTP_NO_CONTENT);
     }
 }
