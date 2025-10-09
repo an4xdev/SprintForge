@@ -425,7 +425,7 @@ func getSprintsReport(c *gin.Context) {
 		args = append(args, nil)
 	}
 
-	query := `SELECT * FROM GetSprintsReport($1, $2, $3)`
+	query := `SELECT * FROM getsprintsreport($1::UUID, $2::DATE, $3::DATE)`
 
 	rows, err := db.Raw(query, args...).Rows()
 	if err != nil {
@@ -533,7 +533,7 @@ func getTeamsReport(c *gin.Context) {
 		args = append(args, nil)
 	}
 
-	query := `SELECT * FROM GetTeamsReport($1, $2, $3)`
+	query := `SELECT * FROM getteamsreport($1::UUID, $2::DATE, $3::DATE)`
 
 	rows, err := db.Raw(query, args...).Rows()
 	if err != nil {
@@ -655,7 +655,7 @@ func getProjectsReport(c *gin.Context) {
 		args = append(args, nil)
 	}
 
-	query := `SELECT * FROM GetProjectsReport($1, $2, $3)`
+	query := `SELECT * FROM getprojectsreport($1::UUID, $2::DATE, $3::DATE)`
 
 	rows, err := db.Raw(query, args...).Rows()
 	if err != nil {
