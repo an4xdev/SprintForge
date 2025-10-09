@@ -2,6 +2,7 @@ using ApiGateway.Models;
 using ApiGateway.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SharedObjects.Models;
 using SharedObjects.Responses;
 
 namespace ApiGateway.Controllers;
@@ -86,6 +87,29 @@ public class ReportsController(ISendRequestService sendRequestService) : Control
         var url = $"/reports/projects{queryString}";
 
         return await sendRequestService.SendRequestAsync<ApiResponse<List<ProjectReportDto>>>(
+            HttpMethod.Get,
+            url,
+            ServiceType.ReportsService
+        );
+    }
+
+    [HttpGet("audit")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<AuditLogsDto>>> GetAuditLogs(int? limit = null,
+        int? offset = null)
+    {
+        var queryParameters = new List<string>();
+
+        if (limit.HasValue)
+            queryParameters.Add($"limit={limit.Value}");
+        if (offset.HasValue)
+            queryParameters.Add($"offset={offset.Value}");
+
+        var queryString = queryParameters.Count != 0 ? "?" + string.Join("&", queryParameters) : string.Empty;
+
+        var url = $"/reports/audit-logs{queryString}";
+
+        return await sendRequestService.SendRequestAsync<ApiResponse<AuditLogsDto>>(
             HttpMethod.Get,
             url,
             ServiceType.ReportsService

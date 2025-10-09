@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -11,16 +12,50 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
 var db *gorm.DB
+var rabbitConn *amqp.Connection
+var rabbitChannel *amqp.Channel
 
 type ApiResponse struct {
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
+}
+
+// AuditLog model
+type AuditLog struct {
+	ID          int       `json:"id" gorm:"column:Id;primaryKey"`
+	Timestamp   time.Time `json:"timestamp" gorm:"column:Timestamp"`
+	Service     string    `json:"service" gorm:"column:Service"`
+	Action      string    `json:"action" gorm:"column:Action"`
+	Entity      string    `json:"entity" gorm:"column:Entity"`
+	Description string    `json:"description" gorm:"column:Description"`
+}
+
+// Table name for AuditLog model
+func (AuditLog) TableName() string {
+	return "AuditLogs"
+}
+
+// AuditMessage for RabbitMQ messaging
+type AuditMessage struct {
+	Timestamp   string `json:"timestamp"`
+	Service     string `json:"service"`
+	Action      string `json:"action"`
+	Entity      string `json:"entity"`
+	Description string `json:"description"`
+}
+
+type RabbitMQConfig struct {
+	Host     string
+	Port     string
+	User     string
+	Password string
 }
 
 func parseUUIDArray(arrayStr string) ([]uuid.UUID, error) {
@@ -118,15 +153,150 @@ func checkDatabaseConnection() bool {
 	return sqlDB.Ping() == nil
 }
 
+func checkRabbitMQConnection() bool {
+	if rabbitConn == nil {
+		return false
+	}
+	return !rabbitConn.IsClosed()
+}
+
+func getRabbitMQConfig() RabbitMQConfig {
+	return RabbitMQConfig{
+		Host:     getEnv("RABBITMQ_HOST", "rabbitmq"),
+		Port:     getEnv("RABBITMQ_PORT", "5672"),
+		User:     getEnv("RABBITMQ_USER", "user"),
+		Password: getEnv("RABBITMQ_PASS", "password"),
+	}
+}
+
+func initRabbitMQ() {
+	config := getRabbitMQConfig()
+	connectionString := fmt.Sprintf("amqp://%s:%s@%s:%s/",
+		config.User, config.Password, config.Host, config.Port)
+
+	var err error
+	rabbitConn, err = amqp.Dial(connectionString)
+	if err != nil {
+		log.Fatal("Failed to connect to RabbitMQ:", err)
+	}
+
+	rabbitChannel, err = rabbitConn.Channel()
+	if err != nil {
+		log.Fatal("Failed to open RabbitMQ channel:", err)
+	}
+
+	err = rabbitChannel.ExchangeDeclare(
+		"audit_logs",
+		"topic",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Failed to declare audit exchange:", err)
+	}
+
+	_, err = rabbitChannel.QueueDeclare(
+		"audit_queue",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Failed to declare audit queue:", err)
+	}
+
+	err = rabbitChannel.QueueBind(
+		"audit_queue",
+		"audit.*",
+		"audit_logs",
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Failed to bind audit queue:", err)
+	}
+
+	log.Println("RabbitMQ initialized successfully")
+
+	go consumeAuditMessages()
+}
+
+func consumeAuditMessages() {
+	msgs, err := rabbitChannel.Consume(
+		"audit_queue",
+		"",
+		true,
+		false,
+		false,
+		false,
+		nil,
+	)
+	if err != nil {
+		log.Fatal("Failed to register audit consumer:", err)
+	}
+
+	log.Println("Started consuming audit messages...")
+
+	for msg := range msgs {
+		var auditMsg AuditMessage
+		log.Printf("Received audit message: %s", string(msg.Body))
+		if err := json.Unmarshal(msg.Body, &auditMsg); err != nil {
+			log.Printf("Error unmarshaling audit message: %v", err)
+			continue
+		}
+
+		timestamp, err := time.Parse(time.RFC3339, auditMsg.Timestamp)
+		if err != nil {
+			log.Printf("Error parsing timestamp: %v, using current time", err)
+			timestamp = time.Now()
+		}
+
+		auditLog := AuditLog{
+			Timestamp:   timestamp,
+			Service:     auditMsg.Service,
+			Action:      auditMsg.Action,
+			Entity:      auditMsg.Entity,
+			Description: auditMsg.Description,
+		}
+
+		if err := db.Create(&auditLog).Error; err != nil {
+			log.Printf("Error saving audit log: %v", err)
+		} else {
+			log.Printf("Saved audit log: %s - %s - %s", auditLog.Service, auditLog.Action, auditLog.Entity)
+		}
+	}
+}
+
 func healthCheck(c *gin.Context) {
 	dbOK := checkDatabaseConnection()
+	rabbitOK := checkRabbitMQConnection()
 
-	if !dbOK {
+	if !dbOK || !rabbitOK {
 		c.JSON(503, ApiResponse{
 			Message: "Service unavailable",
 			Data: gin.H{
-				"status":   "unhealthy",
-				"database": "disconnected",
+				"status": "unhealthy",
+				"database": map[string]string{
+					"status": func() string {
+						if dbOK {
+							return "connected"
+						}
+						return "disconnected"
+					}(),
+				},
+				"rabbitmq": map[string]string{
+					"status": func() string {
+						if rabbitOK {
+							return "connected"
+						}
+						return "disconnected"
+					}(),
+				},
 			},
 		})
 		return
@@ -136,13 +306,15 @@ func healthCheck(c *gin.Context) {
 		Message: "Service healthy",
 		Data: gin.H{
 			"status":   "healthy",
-			"database": "connected",
+			"database": map[string]string{"status": "connected"},
+			"rabbitmq": map[string]string{"status": "connected"},
 		},
 	})
 }
 
 func main() {
 	initDatabase()
+	initRabbitMQ()
 
 	r := gin.Default()
 
@@ -152,6 +324,7 @@ func main() {
 		api.GET("/reports/sprints", getSprintsReport)
 		api.GET("/reports/teams", getTeamsReport)
 		api.GET("/reports/projects", getProjectsReport)
+		api.GET("/reports/audit-logs", getAuditLogs)
 	}
 
 	port := getEnv("PORT", "8080")
@@ -536,4 +709,51 @@ func getProjectsReport(c *gin.Context) {
 		Message: "Projects report retrieved",
 		Data:    reports,
 	})
+}
+
+// GET /api/reports/audit-logs?limit={number}&offset={number}
+func getAuditLogs(c *gin.Context) {
+	limit := 10
+	offset := 0
+
+	if limitStr := c.Query("limit"); limitStr != "" {
+		if parsedLimit, err := parseToInt(limitStr); err == nil && parsedLimit > 0 && parsedLimit <= 1000 {
+			limit = parsedLimit
+		}
+	}
+
+	if offsetStr := c.Query("offset"); offsetStr != "" {
+		if parsedOffset, err := parseToInt(offsetStr); err == nil && parsedOffset >= 0 {
+			offset = parsedOffset
+		}
+	}
+
+	var auditLogs []AuditLog
+	var totalCount int64
+
+	if err := db.Model(&AuditLog{}).Count(&totalCount).Error; err != nil {
+		c.JSON(500, ApiResponse{Message: "Database error: " + err.Error()})
+		return
+	}
+
+	if err := db.Order("timestamp DESC").Limit(limit).Offset(offset).Find(&auditLogs).Error; err != nil {
+		c.JSON(500, ApiResponse{Message: "Database error: " + err.Error()})
+		return
+	}
+
+	c.JSON(200, ApiResponse{
+		Message: "Audit logs retrieved",
+		Data: gin.H{
+			"logs":       auditLogs,
+			"totalCount": totalCount,
+			"limit":      limit,
+			"offset":     offset,
+		},
+	})
+}
+
+func parseToInt(s string) (int, error) {
+	var result int
+	_, err := fmt.Sscanf(s, "%d", &result)
+	return result, err
 }

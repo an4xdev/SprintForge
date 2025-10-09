@@ -14,6 +14,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Models.TaskStatus> TaskStatuses { get; set; }
     public DbSet<TaskType> TaskTypes { get; set; }
     public DbSet<Team> Teams { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
