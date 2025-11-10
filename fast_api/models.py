@@ -148,6 +148,14 @@ class SprintCreate(SQLModel):
     ManagerId: uuid.UUID
     TeamId: uuid.UUID
     ProjectId: uuid.UUID
+
+    @field_validator('ManagerId', 'TeamId', 'ProjectId')
+    @classmethod
+    def validate_not_empty_guid(cls, value):
+        empty_guid = uuid.UUID("00000000-0000-0000-0000-000000000000")
+        if value == empty_guid:
+            raise ValueError("GUID cannot be empty (00000000-0000-0000-0000-000000000000)")
+        return value
     
     @field_validator('StartDate', 'EndDate', mode='before')
     @classmethod

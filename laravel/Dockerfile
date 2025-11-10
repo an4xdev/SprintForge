@@ -43,7 +43,9 @@ COPY docker/start.sh /usr/local/bin/start.sh
 
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache \
     && chmod -R 775 /var/www/storage /var/www/bootstrap/cache \
-    && chmod +x /usr/local/bin/start.sh
+    && chmod +x /usr/local/bin/start.sh \
+    && ln -sf /dev/stdout /var/www/storage/logs/laravel.log \
+    && ln -sf /dev/stderr /var/www/storage/logs/laravel-error.log
 
 USER www-data
 

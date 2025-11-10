@@ -99,47 +99,6 @@ class ReportsService {
         }
     }
 
-    async exportToPdf(reportType: 'team' | 'sprint' | 'project', data: any, title: string): Promise<void> {
-        try {
-            reportsLogger.info('Exporting report to PDF (client-side)', { reportType, title });
-
-            const { default: pdfExportService } = await import('./pdfExportService');
-
-            switch (reportType) {
-                case 'team':
-                    await pdfExportService.exportTeamReport(data, title);
-                    break;
-                case 'sprint':
-                    await pdfExportService.exportSprintReports(data, title);
-                    break;
-                case 'project':
-                    await pdfExportService.exportProjectReports(data, title);
-                    break;
-                default:
-                    throw new Error(`Unsupported report type: ${reportType}`);
-            }
-
-            reportsLogger.info('Report exported to PDF successfully (client-side)');
-        } catch (error) {
-            reportsLogger.error('Failed to export report to PDF (client-side)', error);
-            throw error;
-        }
-    }
-
-    async exportChartToPdf(chartElement: HTMLElement, title: string): Promise<void> {
-        try {
-            reportsLogger.info('Exporting chart to PDF', { title });
-
-            const { default: pdfExportService } = await import('./pdfExportService');
-            await pdfExportService.exportChartToPdf(chartElement, title);
-
-            reportsLogger.info('Chart exported to PDF successfully');
-        } catch (error) {
-            reportsLogger.error('Failed to export chart to PDF', error);
-            throw error;
-        }
-    }
-
     formatDuration(timeString: string): string {
         if (!timeString || timeString === '00:00:00') {
             return '0h 0m';

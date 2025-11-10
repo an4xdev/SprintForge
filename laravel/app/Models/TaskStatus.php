@@ -8,6 +8,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class TaskStatus
@@ -38,7 +39,7 @@ class TaskStatus extends Model
 		];
 	}
 
-	public function tasks(): \Illuminate\Database\Eloquent\Relations\HasMany|TaskStatus
+	public function tasks(): HasMany|TaskStatus
     {
 		return $this->hasMany(Task::class, 'TaskStatusId');
 	}

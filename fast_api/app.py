@@ -185,6 +185,9 @@ def start_task(task_id: UUID, db: Session=Depends(get_db)):
             message="Task started",
             data=result
         ).model_dump()
+    except ApiException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise ApiException(status_code=500, message=str(e))
@@ -198,6 +201,9 @@ def pause_task(task_id: UUID, db: Session=Depends(get_db)):
             message="Task paused",
             data=result
         ).model_dump()
+    except ApiException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise ApiException(status_code=500, message=str(e))
@@ -211,6 +217,9 @@ def stop_task(task_id: UUID, db: Session=Depends(get_db)):
             message="Task stopped",
             data=result
         ).model_dump()
+    except ApiException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise ApiException(status_code=500, message=str(e))
@@ -312,7 +321,10 @@ def create_sprint(sprint: SprintCreate, db: Session=Depends(get_db)):
 
         audit_service.log_action("CREATE_SUCCESS", "Sprint", f"Created new sprint: {sprint.Name}")
 
-        return ApiResponse(message="Sprint created", data=new_sprint.Id).model_dump()
+        return ApiResponse(message="Sprint created", data=new_sprint.model_dump(by_alias=True)).model_dump()
+    except ApiException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise ApiException(status_code=500, message=str(e))
@@ -368,6 +380,9 @@ def update_sprint(sprint_id: UUID, sprint_update: SprintUpdate, db: Session=Depe
         db.refresh(db_sprint)
         audit_service.log_action("UPDATE_SUCCESS", "Sprint", f"Updated sprint with ID {sprint_id}.")
         return ApiResponse(message="Sprint updated", data=db_sprint).model_dump()
+    except ApiException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise ApiException(status_code=500, message=str(e))
@@ -387,6 +402,9 @@ def delete_sprint(sprint_id: UUID, db: Session=Depends(get_db)):
         db.commit()
         audit_service.log_action("DELETE_SUCCESS", "Sprint", f"Deleted sprint with ID {sprint_id}.")
         return Response(status_code=204)
+    except ApiException:
+        db.rollback()
+        raise
     except Exception as e:
         db.rollback()
         raise ApiException(status_code=500, message=str(e))

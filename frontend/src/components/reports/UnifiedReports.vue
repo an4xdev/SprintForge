@@ -78,11 +78,6 @@
                                 <div class="tab-content">
                                     <div class="d-flex justify-space-between align-center pa-4 border-b">
                                         <h3 class="text-h6">Team Reports</h3>
-                                        <v-btn color="primary" variant="elevated" prepend-icon="mdi-download"
-                                            @click="exportCurrentTab"
-                                            :disabled="!teamReports || teamReports.length === 0">
-                                            Export to PDF
-                                        </v-btn>
                                     </div>
 
                                     <div class="pa-4">
@@ -169,11 +164,6 @@
                                 <div class="tab-content">
                                     <div class="d-flex justify-space-between align-center pa-4 border-b">
                                         <h3 class="text-h6">Sprint Reports</h3>
-                                        <v-btn color="primary" variant="elevated" prepend-icon="mdi-download"
-                                            @click="exportCurrentTab"
-                                            :disabled="!sprintReports || sprintReports.length === 0">
-                                            Export to PDF
-                                        </v-btn>
                                     </div>
 
                                     <div class="pa-4">
@@ -223,11 +213,6 @@
                                 <div class="tab-content">
                                     <div class="d-flex justify-space-between align-center pa-4 border-b">
                                         <h3 class="text-h6">Project Reports</h3>
-                                        <v-btn color="primary" variant="elevated" prepend-icon="mdi-download"
-                                            @click="exportCurrentTab"
-                                            :disabled="!projectReports || projectReports.length === 0">
-                                            Export to PDF
-                                        </v-btn>
                                     </div>
 
                                     <div class="pa-4">
@@ -418,41 +403,6 @@ const getProgressColor = (ratio: number): string => {
     if (ratio >= 0.8) return 'success';
     if (ratio >= 0.5) return 'warning';
     return 'error';
-};
-
-const exportCurrentTab = async () => {
-    try {
-        const currentDate = new Date().toLocaleDateString('pl-PL');
-
-        switch (activeTab.value) {
-            case 'teams':
-                if (teamReports.value.length === 0) return;
-                await reportsService.exportToPdf(
-                    'team',
-                    teamReports.value,
-                    `Team Reports - ${currentDate}`
-                );
-                break;
-            case 'sprints':
-                if (sprintReports.value.length === 0) return;
-                await reportsService.exportToPdf(
-                    'sprint',
-                    sprintReports.value,
-                    `Sprint Reports - ${currentDate}`
-                );
-                break;
-            case 'projects':
-                if (projectReports.value.length === 0) return;
-                await reportsService.exportToPdf(
-                    'project',
-                    projectReports.value,
-                    `Project Reports - ${currentDate}`
-                );
-                break;
-        }
-    } catch (err) {
-        console.error('Failed to export report:', err);
-    }
 };
 
 watch(activeTab, () => {

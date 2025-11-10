@@ -8,6 +8,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Class Task
@@ -26,6 +27,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property User|null $user
  * @property Sprint|null $sprint
  * @property Project|null $project
+ * @property Collection|TaskHistory[] $taskHistories
  *
  * @package App\Models
  */
@@ -56,22 +58,22 @@ class Task extends Model
 		'ProjectId'
 	];
 
-	public function taskType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+	public function taskType(): BelongsTo
     {
 		return $this->belongsTo(TaskType::class, 'TaskTypeId');
 	}
 
-	public function taskStatus(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+	public function taskStatus(): BelongsTo
     {
 		return $this->belongsTo(TaskStatus::class, 'TaskStatusId');
 	}
 
-	public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+	public function user(): BelongsTo
     {
 		return $this->belongsTo(User::class, 'DeveloperId');
 	}
 
-	public function sprint(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+	public function sprint(): BelongsTo
     {
 		return $this->belongsTo(Sprint::class, 'SprintId');
 	}
