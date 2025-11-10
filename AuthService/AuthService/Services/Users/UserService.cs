@@ -162,7 +162,7 @@ public class UserService(AppDbContext context, IConfiguration configuration, IAu
         return Result<List<UserResponse>>.Success(users, $"Successfully retrieved all users by role: {role}");
     }
 
-    public async Task<Result<UserResponse?>> UpdateUser(Guid id, UpdateUserRequest request)
+    public async Task<Result<UserResponse?>> AdminUpdateUser(Guid id, AdminUpdateUserRequest request)
     {
         if (!await IsUserInDatabase(id))
         {
@@ -212,7 +212,52 @@ public class UserService(AppDbContext context, IConfiguration configuration, IAu
 
         return Result<UserResponse?>.Success(new UserResponse
         {
-            Id = user!.Id,
+            Id = user.Id,
+            Username = user.Username,
+            Avatar = user.Avatar,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName
+        }, "Successfully updated the user");
+    }
+
+    public async Task<Result<UserResponse?>> UpdateUser(Guid id, UpdateUserRequest request)
+    {
+        if (!await IsUserInDatabase(id))
+        {
+            await auditService.SendAuditLogAsync("UPDATE_FAILED", "User", $"Failed to update user with ID {id}: user not found.");
+            return Result<UserResponse?>.NotFound("User not found");
+        }
+
+        var user = await context.Users.FindAsync(id);
+
+        if (request.Username != null)
+        {
+            user!.Username = request.Username;
+        }
+
+        if (request.FirstName != null)
+        {
+            user!.FirstName = request.FirstName;
+        }
+
+        if (request.LastName != null)
+        {
+            user!.LastName = request.LastName;
+        }
+
+        if (request.Email != null)
+        {
+            user!.Email = request.Email;
+        }
+
+        await context.SaveChangesAsync();
+
+        await auditService.SendAuditLogAsync("UPDATE_SUCCESS", "User", $"{user!.Username} was updated.");
+
+        return Result<UserResponse?>.Success(new UserResponse
+        {
+            Id = user.Id,
             Username = user.Username,
             Avatar = user.Avatar,
             Email = user.Email,

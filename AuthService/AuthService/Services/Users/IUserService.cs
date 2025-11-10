@@ -20,6 +20,7 @@ public interface IUserService
 
     Task<Result<List<UserResponse>>> GetAllUsersByRole(string role);
 
+    Task<Result<UserResponse?>> AdminUpdateUser(Guid id, AdminUpdateUserRequest request);
     Task<Result<UserResponse?>> UpdateUser(Guid id, UpdateUserRequest request);
 
     Task<Result<object?>> DeleteUser(Guid id);

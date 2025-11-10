@@ -18,6 +18,7 @@ public class UsersController(IUserService userService, IFileService fileService)
 
         return result.ToActionResult();
     }
+
     [HttpGet]
     public async Task<ActionResult<ApiResponse<List<UserResponse>>>> GetAllUsers()
     {
@@ -58,6 +59,14 @@ public class UsersController(IUserService userService, IFileService fileService)
     }
 
     [HttpPost("{userId:guid}")]
+    public async Task<ActionResult<ApiResponse<UserResponse?>>> AdminEditUser(Guid userId,
+        AdminUpdateUserRequest request)
+    {
+        var user = await userService.AdminUpdateUser(userId, request);
+        return user.ToActionResult();
+    }
+
+    [HttpPost("{userId:guid}/update")]
     public async Task<ActionResult<ApiResponse<UserResponse?>>> EditUser(Guid userId, UpdateUserRequest request)
     {
         var user = await userService.UpdateUser(userId, request);

@@ -62,10 +62,19 @@ public class UsersController(ISendRequestService sendRequestService) : Controlle
 
     [HttpPost("{id:guid}")]
     [Authorize(Roles = "admin")]
-    public async Task<ActionResult<ApiResponse<UserResponse>>> UpdateUser(Guid id, UpdateUserRequest request)
+    public async Task<ActionResult<ApiResponse<UserResponse>>> AdminUpdateUser(Guid id, AdminUpdateUserRequest request)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<UserResponse>>(HttpMethod.Post,
             $"/users/{id}",
+            ServiceType.AuthService, body: request);
+    }
+
+    [HttpPost("{id:guid}/update")]
+    [Authorize]
+    public async Task<ActionResult<ApiResponse<UserResponse>>> UpdateUser(Guid id, AdminUpdateUserRequest request)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<UserResponse>>(HttpMethod.Post,
+            $"/users/{id}/update",
             ServiceType.AuthService, body: request);
     }
 
