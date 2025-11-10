@@ -44,6 +44,8 @@ services:
                 condition: service_healthy
             reports:
                 condition: service_healthy
+            task-histories:
+                condition: service_healthy
         networks:
             - mynetwork
         volumes:
@@ -79,7 +81,7 @@ services:
             - RABBITMQ_USER=${RABBITMQ_USER}
             - RABBITMQ_PASS=${RABBITMQ_PASS}
         depends_on:
-            db_manager:
+            database:
                 condition: service_healthy
             redis:
                 condition: service_healthy
@@ -148,7 +150,7 @@ services:
         depends_on:
             rabbitmq:
                 condition: service_healthy
-            db_manager:
+            database:
                 condition: service_healthy
             redis:
                 condition: service_healthy
@@ -181,8 +183,8 @@ services:
         depends_on:
             rabbitmq:
                 condition: service_healthy
-            db_manager:
-                condition: service_started
+            database:
+                condition: service_healthy
         environment:
             - RABBITMQ_HOST=${RABBITMQ_HOST}
             - RABBITMQ_PORT=${RABBITMQ_PORT}
@@ -211,7 +213,7 @@ services:
             - SPRING_RABBITMQ_USERNAME=${RABBITMQ_USER}
             - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASS}
         depends_on:
-            db_manager:
+            database:
                 condition: service_healthy
             rabbitmq:
                 condition: service_healthy
@@ -243,7 +245,7 @@ services:
         networks:
             - mynetwork
         depends_on:
-            db_manager:
+            database:
                 condition: service_healthy
             rabbitmq:
                 condition: service_healthy
@@ -263,7 +265,7 @@ services:
         ports:
             - 8069:8080
         depends_on:
-            db_manager:
+            database:
                 condition: service_healthy
             rabbitmq:
                 condition: service_healthy
@@ -277,6 +279,26 @@ services:
             - RABBITMQ_PORT=${RABBITMQ_PORT}
             - RABBITMQ_USER=${RABBITMQ_USER}
             - RABBITMQ_PASS=${RABBITMQ_PASS}
+
+    task-histories:
+        build:
+            context: ./task-histories
+            dockerfile: Dockerfile
+        networks:
+            - mynetwork
+        ports:
+            - 8070:8080
+        depends_on:
+            database:
+                condition: service_healthy
+            rabbitmq:
+                condition: service_healthy
+        environment:
+            - DB_HOST=${DB_HOST}
+            - DB_PORT=${DB_PORT}
+            - DB_DATABASE=${DB_DATABASE}
+            - DB_USER=${DB_USERNAME}
+            - DB_PASSWORD=${DB_PASSWORD}
 
     nginx:
         image: nginx:alpine
@@ -314,7 +336,7 @@ services:
             - RABBITMQ_USER=${RABBITMQ_USER}
             - RABBITMQ_PASS=${RABBITMQ_PASS}
         depends_on:
-            db_manager:
+            database:
                 condition: service_healthy
             rabbitmq:
                 condition: service_healthy
@@ -349,7 +371,7 @@ services:
             - POSTGRES_PASSWORD=${DB_PASSWORD}
             - POSTGRES_DB=${DB_DATABASE}
         volumes:
-            - pgdata:/var/lib/postgresql/data
+            - pgdata:/var/lib/postgresql
         healthcheck:
             test: ["CMD-SHELL", "pg_isready -U postgres"]
             interval: 5s

@@ -8,5 +8,6 @@ public enum ServiceType
     SpringService,
     LaravelService,
     ExpressService,
-    ReportsService
+    ReportsService,
+    TaskHistoriesService
 }

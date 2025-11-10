@@ -18,6 +18,7 @@ public static class Utils
             // ServiceType.ExpressService => "http://localhost:6713/api",
             ServiceType.ExpressService => "http://js_express:6713/api",
             ServiceType.ReportsService => "http://reports:8080/api",
+            ServiceType.TaskHistoriesService => "http://task-histories:8080/api",
             _ => throw new ArgumentOutOfRangeException(nameof(serviceType), serviceType, null)
         };
     }

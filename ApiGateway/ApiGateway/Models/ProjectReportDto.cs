@@ -13,5 +13,5 @@ public class ProjectReportDto
     [JsonPropertyName("totalTaskTime")] public string TotalTaskTime { get; set; }
     [JsonPropertyName("projectStartDate")] public DateTime ProjectStartDate { get; set; }
     [JsonPropertyName("projectEndDate")] public DateTime ProjectEndDate { get; set; }
-    [JsonPropertyName("completedRatio")] public float CompletedRatio { get; set; }
+    [JsonPropertyName("completedRatio")] public float? CompletedRatio { get; set; }
 }

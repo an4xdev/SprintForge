@@ -9,5 +9,5 @@ public class SprintReportDto
     [JsonPropertyName("taskCount")] public int TaskCount { get; set; }
     [JsonPropertyName("taskCountCompleted")] public int TaskCountCompleted { get; set; }
     [JsonPropertyName("totalTaskTime")] public string TotalTaskTime { get; set; } = string.Empty;
-    [JsonPropertyName("completedRatio")] public float CompletedRatio { get; set; }
+    [JsonPropertyName("completedRatio")] public float? CompletedRatio { get; set; }
 }
