@@ -21,7 +21,8 @@
                             </template>
 
                             <template v-slot:item.name="{ value }">
-                                <v-chip :text="value" border="thin opacity-25" prepend-icon="mdi-shape" label>
+                                <v-chip :text="value" :color="getTaskTypeColor(value)" border="thin opacity-25"
+                                    prepend-icon="mdi-shape" label>
                                     <template v-slot:prepend>
                                         <v-icon color="medium-emphasis"></v-icon>
                                     </template>
@@ -92,6 +93,7 @@ import { useAsyncData } from '@/composables/useAsyncData';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref, computed } from 'vue';
 import taskTypesService from '@/services/taskTypesService';
+import { getTaskTypeColor } from '@/utils/taskColors';
 
 const logger = new DevelopmentLogger({ prefix: '[TaskTypesView]' });
 

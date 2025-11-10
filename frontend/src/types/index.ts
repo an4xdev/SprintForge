@@ -78,6 +78,14 @@ export interface Project {
     companyDto: Company;
 }
 
+export interface ProjectExt {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+    company: Company;
+}
+
 export interface Profile {
     id: string;
     username: string;
@@ -102,6 +110,29 @@ export interface Sprint {
     teamId: string;
     managerId: string;
     projectId: string;
+}
+
+export interface SprintExt {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+    manager: {
+        id: string;
+        username: string;
+        firstName: string;
+        lastName: string;
+    };
+    team: {
+        id: string;
+        name: string;
+    };
+    project: {
+        id: string;
+        name: string;
+        startDate: Date;
+        endDate: Date;
+    };
 }
 
 export interface Task {
@@ -206,12 +237,6 @@ export interface ReportFilters {
     managerId?: string;
 }
 
-export interface ReportExportOptions {
-    format: 'pdf';
-    includeCharts: boolean;
-    title?: string;
-}
-
 export interface AuditLog {
     id: number;
     timestamp: string;
@@ -219,4 +244,58 @@ export interface AuditLog {
     action: string;
     entity: string;
     description: string;
+}
+
+export interface TaskExt {
+    id: string;
+    name: string;
+    description: string | null;
+    taskType: TaskType;
+    taskStatus: TaskStatus;
+    developer: DeveloperBasic | null;
+    sprint: SprintBasic | null;
+    project: ProjectBasic | null;
+}
+
+export interface SprintBasic {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+}
+
+export interface ProjectBasic {
+    id: string;
+    name: string;
+    startDate: Date;
+    endDate: Date;
+}
+
+export interface DeveloperBasic {
+    id: string;
+    username: string;
+    firstName: string;
+    lastName: string;
+}
+
+export interface TaskHistory {
+    id: string;
+    task_id: string;
+    change_date: Date;
+    old_status: string | null;
+    new_status: string;
+}
+
+export interface TaskHistoryExt {
+    id: string;
+    task: TaskBasic;
+    change_date: Date;
+    old_status: TaskStatus | null;
+    new_status: TaskStatus;
+}
+
+export interface TaskBasic {
+    id: string;
+    name: string;
+    description: string | null;
 }

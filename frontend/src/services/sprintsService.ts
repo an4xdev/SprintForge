@@ -1,6 +1,6 @@
 import { sprintsLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, Sprint } from '@/types';
+import type { ApiResponse, Sprint, SprintExt } from '@/types';
 
 class SprintsService {
     async getSprints(signal?: AbortSignal): Promise<Sprint[]> {
@@ -69,6 +69,36 @@ class SprintsService {
         } catch (error) {
             sprintsLogger.error('Error fetching last sprint by manager:', error);
             throw new Error('Failed to fetch last sprint by manager');
+        }
+    }
+
+    async getSprintsExt(signal?: AbortSignal): Promise<SprintExt[]> {
+        try {
+            const response = await apiService.get<ApiResponse<SprintExt[]>>('/sprints/all-ext', signal);
+            return response.data;
+        } catch (error) {
+            sprintsLogger.error('Error fetching extended sprints:', error);
+            throw new Error('Failed to fetch extended sprints');
+        }
+    }
+
+    async getSprintExtById(id: string, signal?: AbortSignal): Promise<SprintExt> {
+        try {
+            const response = await apiService.get<ApiResponse<SprintExt>>(`/sprints/${id}-ext`, signal);
+            return response.data;
+        } catch (error) {
+            sprintsLogger.error('Error fetching extended sprint:', error);
+            throw new Error('Failed to fetch extended sprint');
+        }
+    }
+
+    async getByManagerExt(managerId: string, signal?: AbortSignal): Promise<SprintExt[]> {
+        try {
+            const response = await apiService.get<ApiResponse<SprintExt[]>>(`/sprints/manager/${managerId}-ext`, signal);
+            return response.data;
+        } catch (error) {
+            sprintsLogger.error('Error fetching extended sprints by manager:', error);
+            throw new Error('Failed to fetch extended sprints by manager');
         }
     }
 }

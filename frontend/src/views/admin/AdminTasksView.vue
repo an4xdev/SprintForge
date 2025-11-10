@@ -21,45 +21,48 @@
                                 </v-toolbar>
                             </template>
 
-                            <template v-slot:item.name="{ value }">
+                            <template v-slot:item.name="{ value, item }">
                                 <v-chip :text="value" border="thin opacity-25" prepend-icon="mdi-format-list-bulleted"
-                                    label>
+                                    label @click="showTaskDetails(item)">
                                     <template v-slot:prepend>
                                         <v-icon color="medium-emphasis"></v-icon>
                                     </template>
                                 </v-chip>
                             </template>
 
-                            <template v-slot:item.developerId="{ value }">
+                            <template v-slot:item.developer="{ value }">
                                 <span v-if="value">
-                                    {{developers.find(d => d.id === value)?.username || 'Unknown'}}
+                                    {{ value.firstName }} {{ value.lastName }} ({{ value.username }})
                                 </span>
                                 <span v-else class="text-medium-emphasis">Not assigned</span>
                             </template>
 
-                            <template v-slot:item.sprintId="{ value }">
+                            <template v-slot:item.sprint="{ value }">
                                 <span v-if="value">
-                                    {{sprints.find(s => s.id === value)?.name || 'Unknown'}}
+                                    {{ value.name }}
                                 </span>
                                 <span v-else class="text-medium-emphasis">No sprint</span>
                             </template>
 
-                            <template v-slot:item.taskStatusId="{ value }">
-                                <span v-if="value">
-                                    {{taskStatuses.find(ts => ts.id === value)?.name || 'Unknown'}}
-                                </span>
+                            <template v-slot:item.taskStatus="{ value }">
+                                <v-chip v-if="value" :color="getTaskStatusColor(value.name)" size="small">
+                                    {{ value.name }}
+                                </v-chip>
                                 <span v-else class="text-medium-emphasis">No status</span>
                             </template>
 
-                            <template v-slot:item.taskTypeId="{ value }">
-                                <span v-if="value">
-                                    {{taskTypes.find(tt => tt.id === value)?.name || 'Unknown'}}
-                                </span>
+                            <template v-slot:item.taskType="{ value }">
+                                <v-chip v-if="value" :color="getTaskTypeColor(value.name)" size="small">
+                                    {{ value.name }}
+                                </v-chip>
                                 <span v-else class="text-medium-emphasis">No type</span>
                             </template>
 
                             <template v-slot:item.actions="{ item }">
                                 <div class="d-flex ga-2 justify-end">
+                                    <v-icon color="medium-emphasis" icon="mdi-eye" size="small"
+                                        @click="showTaskDetails(item)" title="View Details" />
+
                                     <v-icon color="medium-emphasis" icon="mdi-pencil" size="small"
                                         @click="editTask(item.id)" />
 
@@ -162,6 +165,9 @@
                         </v-card>
                     </v-dialog>
                 </div>
+
+                <!-- Task Details Modal -->
+                <TaskDetailsModal v-model="taskDetailsDialog" :task="selectedTaskDetails" />
             </v-container>
         </v-main>
     </v-layout>
@@ -174,19 +180,21 @@ import usersService from '@/services/usersService';
 import sprintsService from '@/services/sprintsService';
 import taskStatusesService from '@/services/taskStatusesService';
 import taskTypesService from '@/services/taskTypesService';
-import type { Task, CreateTask, User, Sprint, TaskStatus, TaskType } from '@/types';
+import type { Task, CreateTask, User, Sprint, TaskStatus, TaskType, TaskExt } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref, toRef, computed, onMounted } from 'vue';
+import TaskDetailsModal from '@/components/modals/TaskDetailsModal.vue';
+import { getTaskStatusColor, getTaskTypeColor } from '@/utils/taskColors';
 
 const logger = new DevelopmentLogger({ prefix: '[AdminTasksView]' });
 
 const headers = [
     { title: 'Name', key: 'name', align: "start" as const },
     { title: 'Description', key: 'description' },
-    { title: 'Developer', key: 'developerId' },
-    { title: 'Sprint', key: 'sprintId' },
-    { title: 'Status', key: 'taskStatusId' },
-    { title: 'Type', key: 'taskTypeId' },
+    { title: 'Developer', key: 'developer' },
+    { title: 'Sprint', key: 'sprint' },
+    { title: 'Status', key: 'taskStatus' },
+    { title: 'Type', key: 'taskType' },
     { title: 'Actions', key: 'actions', align: 'end' as const, sortable: false }
 ];
 
@@ -194,8 +202,8 @@ const {
     data: tasks,
     load: refreshTasks,
     loading
-} = useAsyncData<Task[]>({
-    fetchFunction: (signal) => tasksService.getTasks(signal),
+} = useAsyncData<TaskExt[]>({
+    fetchFunction: (signal) => tasksService.getAllTasksExt(signal),
     loggerPrefix: '[AdminTasksView]'
 });
 
@@ -208,14 +216,16 @@ const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
 const assignDeveloperDialog = ref(false);
 const moveToSprintDialog = ref(false);
+const taskDetailsDialog = ref(false);
 const saving = ref(false);
 const deleting = ref(false);
 const assigning = ref(false);
 const moving = ref(false);
 
 const formModel = ref<CreateTask & { id?: string }>(createNewRecord());
-const taskToDelete = ref<Task | null>(null);
+const taskToDelete = ref<TaskExt | null>(null);
 const taskNameToDelete = computed(() => taskToDelete.value?.name || '');
+const selectedTaskDetails = ref<TaskExt | null>(null);
 const taskToAssign = ref<string | null>(null);
 const taskToMove = ref<string | null>(null);
 const selectedDeveloperId = ref<string | null>(null);
@@ -262,15 +272,20 @@ function editTask(id: string) {
         formModel.value = {
             id: task.id,
             name: task.name,
-            description: task.description,
-            developerId: task.developerId,
-            sprintId: task.sprintId,
-            taskTypeId: task.taskTypeId
+            description: task.description || undefined,
+            developerId: task.developer?.id || null,
+            sprintId: task.sprint?.id || null,
+            taskTypeId: task.taskType.id
         };
         newEditDialog.value = true;
     } else {
         logger.error(`Task with ID ${id} not found.`);
     }
+}
+
+function showTaskDetails(task: TaskExt) {
+    selectedTaskDetails.value = task;
+    taskDetailsDialog.value = true;
 }
 
 function showDeleteConfirmation(id: string) {

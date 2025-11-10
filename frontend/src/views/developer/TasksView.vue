@@ -26,6 +26,21 @@
                                     </template>
                                 </v-chip>
                             </template>
+
+                            <template v-slot:item.taskType="{ value }">
+                                <v-chip v-if="value" :color="getTaskTypeColor(value.name)" size="small">
+                                    {{ value.name }}
+                                </v-chip>
+                                <span v-else class="text-medium-emphasis">No type</span>
+                            </template>
+
+                            <template v-slot:item.taskStatus="{ value }">
+                                <v-chip v-if="value" :color="getTaskStatusColor(value.name)" size="small">
+                                    {{ value.name }}
+                                </v-chip>
+                                <span v-else class="text-medium-emphasis">No status</span>
+                            </template>
+
                             <template v-slot:no-data>
                                 <v-btn prepend-icon="mdi-backup-restore" rounded="lg" text="Refresh" variant="text"
                                     border @click="loadTasks"></v-btn>
@@ -41,22 +56,23 @@
 <script setup lang="ts">
 import authService from '@/services/authService';
 import tasksService from '@/services/tasksService';
-import type { Task } from '@/types';
+import type { TaskExt } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
-import { onMounted, ref, toRef } from 'vue';
+import { getTaskStatusColor, getTaskTypeColor } from '@/utils/taskColors';
+import { onMounted, ref } from 'vue';
 
 const logger = new DevelopmentLogger({ prefix: '[TasksView]' });
 
 const headers = [
     { title: 'Name', key: 'name', align: "start" as const },
     { title: 'Description', key: 'description' },
-    { title: 'Developer id', key: 'developerId' },
-    { title: 'Sprint id', key: 'sprintId' },
-    { title: 'Task Status id', key: 'taskStatusId' },
-    { title: 'Task Type id', key: 'taskTypeId' }
+    { title: 'Task Type', key: 'taskType' },
+    { title: 'Task Status', key: 'taskStatus' },
+    { title: 'Sprint', key: 'sprint.name' },
+    { title: 'Project', key: 'project.name' }
 ];
 
-const tasks = ref<Task[] | null>(null);
+const tasks = ref<TaskExt[] | null>(null);
 
 onMounted(async () => {
     await loadTasks();
@@ -65,9 +81,10 @@ onMounted(async () => {
 async function loadTasks() {
     try {
         const currentUser = authService.getStoredUser();
-        tasks.value = await tasksService.getTasksByDeveloper(currentUser!.id);
+        tasks.value = await tasksService.getTasksByDeveloperExt(currentUser!.id);
+        logger.log('Loaded extended tasks:', tasks.value);
     } catch (error) {
-        console.error('Error loading tasks:', error);
+        logger.error('Error loading tasks:', error);
     }
 }
 

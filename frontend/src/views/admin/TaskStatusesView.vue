@@ -23,7 +23,8 @@
                             </template>
 
                             <template v-slot:item.name="{ value }">
-                                <v-chip :text="value" border="thin opacity-25" prepend-icon="mdi-tag-multiple" label>
+                                <v-chip :text="value" :color="getTaskStatusColor(value)" border="thin opacity-25"
+                                    prepend-icon="mdi-tag-multiple" label>
                                     <template v-slot:prepend>
                                         <v-icon color="medium-emphasis"></v-icon>
                                     </template>
@@ -95,6 +96,7 @@ import { useAsyncData } from '@/composables/useAsyncData';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref, toRef } from 'vue';
 import taskStatusesService from '@/services/taskStatusesService';
+import { getTaskStatusColor } from '@/utils/taskColors';
 
 const logger = new DevelopmentLogger({ prefix: '[CompaniesView]' });
 

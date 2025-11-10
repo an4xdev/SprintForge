@@ -1,6 +1,6 @@
 import { tasksLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, Task, DeveloperTask, CreateTask } from '@/types';
+import type { ApiResponse, Task, DeveloperTask, CreateTask, TaskExt, TaskHistory, TaskHistoryExt } from '@/types';
 
 class TasksService {
     async getTasks(signal?: AbortSignal): Promise<Task[]> {
@@ -89,6 +89,16 @@ class TasksService {
         } catch (error) {
             tasksLogger.error('Error fetching tasks by developer:', error);
             throw new Error('Failed to fetch tasks by developer');
+        }
+    }
+
+    async getTasksByDeveloperExt(developerId: string, signal?: AbortSignal): Promise<TaskExt[]> {
+        try {
+            const response = await apiService.get<ApiResponse<TaskExt[]>>(`/tasks/developer/${developerId}-ext`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching extended tasks by developer:', error);
+            throw new Error('Failed to fetch extended tasks by developer');
         }
     }
 
@@ -186,6 +196,75 @@ class TasksService {
         } catch (error) {
             tasksLogger.error('Error stopping task:', error);
             throw new Error('Failed to stop task');
+        }
+    }
+
+    async getAllTasksExt(signal?: AbortSignal): Promise<TaskExt[]> {
+        try {
+            const response = await apiService.get<ApiResponse<TaskExt[]>>('/tasks/all-ext', signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching extended tasks:', error);
+            throw new Error('Failed to fetch extended tasks');
+        }
+    }
+
+    async getTaskExtById(id: string, signal?: AbortSignal): Promise<TaskExt> {
+        try {
+            const response = await apiService.get<ApiResponse<TaskExt>>(`/tasks/${id}-ext`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching extended task:', error);
+            throw new Error('Failed to fetch extended task');
+        }
+    }
+    async getAllTaskHistories(signal?: AbortSignal): Promise<TaskHistory[]> {
+        try {
+            const response = await apiService.get<ApiResponse<TaskHistory[]>>('/taskHistories', signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching task histories:', error);
+            throw new Error('Failed to fetch task histories');
+        }
+    }
+
+    async getAllTaskHistoriesExt(signal?: AbortSignal): Promise<TaskHistoryExt[]> {
+        try {
+            const response = await apiService.get<ApiResponse<TaskHistoryExt[]>>('/taskHistories/ext', signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching extended task histories:', error);
+            throw new Error('Failed to fetch extended task histories');
+        }
+    }
+
+    async getTaskHistoriesByTask(taskId: string, signal?: AbortSignal): Promise<TaskHistory[]> {
+        try {
+            const response = await apiService.get<ApiResponse<TaskHistory[]>>(`/taskHistories/task/${taskId}`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching task histories by task:', error);
+            throw new Error('Failed to fetch task histories by task');
+        }
+    }
+
+    async getTaskHistoriesByTaskExt(taskId: string, signal?: AbortSignal): Promise<TaskHistoryExt[]> {
+        try {
+            const response = await apiService.get<ApiResponse<TaskHistoryExt[]>>(`/taskHistories/task/${taskId}/ext`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching extended task histories by task:', error);
+            throw new Error('Failed to fetch extended task histories by task');
+        }
+    }
+
+    async getTaskHistoriesByManagerExt(managerId: string, signal?: AbortSignal): Promise<TaskHistoryExt[]> {
+        try {
+            const response = await apiService.get<ApiResponse<TaskHistoryExt[]>>(`/taskHistories/manager/${managerId}/ext`, signal);
+            return response.data;
+        } catch (error) {
+            tasksLogger.error('Error fetching extended task histories by manager:', error);
+            throw new Error('Failed to fetch extended task histories by manager');
         }
     }
 }

@@ -1,6 +1,6 @@
 import { projectsLogger } from '@/utils/logger';
 import apiService from './apiService';
-import type { ApiResponse, Project } from '@/types';
+import type { ApiResponse, Project, ProjectExt } from '@/types';
 
 class ProjectsService {
     async getProjects(signal?: AbortSignal): Promise<Project[]> {
@@ -59,6 +59,26 @@ class ProjectsService {
         } catch (error) {
             projectsLogger.error('Error fetching current project by manager ID:', error);
             throw new Error('Failed to fetch current project');
+        }
+    }
+
+    async getProjectsExt(signal?: AbortSignal): Promise<ProjectExt[]> {
+        try {
+            const response = await apiService.get<ApiResponse<ProjectExt[]>>('/projects/all-ext', signal);
+            return response.data;
+        } catch (error) {
+            projectsLogger.error('Error fetching extended projects:', error);
+            throw new Error('Failed to fetch extended projects');
+        }
+    }
+
+    async getProjectExtById(id: string, signal?: AbortSignal): Promise<ProjectExt> {
+        try {
+            const response = await apiService.get<ApiResponse<ProjectExt>>(`/projects/${id}-ext`, signal);
+            return response.data;
+        } catch (error) {
+            projectsLogger.error('Error fetching extended project:', error);
+            throw new Error('Failed to fetch extended project');
         }
     }
 }
