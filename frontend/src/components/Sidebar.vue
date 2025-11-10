@@ -228,6 +228,12 @@ const allMenuItems = [
         icon: 'mdi-chart-box',
         roles: ['admin']
     },
+    {
+        title: 'Task History',
+        to: '/admin/task-history',
+        icon: 'mdi-history',
+        roles: ['admin']
+    },
     // manager
     {
         title: 'Tasks Monitor',
@@ -257,6 +263,12 @@ const allMenuItems = [
         title: 'Reports',
         to: '/manager/reports',
         icon: 'mdi-chart-line',
+        roles: ['manager']
+    },
+    {
+        title: 'Task History',
+        to: '/manager/task-history',
+        icon: 'mdi-history',
         roles: ['manager']
     },
     // developer

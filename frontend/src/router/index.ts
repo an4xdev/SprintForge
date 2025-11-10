@@ -75,6 +75,12 @@ const routes = [
     component: () => import('@/views/admin/AdminReportsView.vue'),
     meta: { requiresAuth: true, roles: ['admin'] }
   },
+  {
+    path: '/admin/task-history',
+    name: 'AdminTaskHistory',
+    component: () => import('@/views/admin/AdminTaskHistoryView.vue'),
+    meta: { requiresAuth: true, roles: ['admin'] }
+  },
   // Manager routes
   {
     path: '/manager/team',
@@ -99,6 +105,12 @@ const routes = [
     name: 'ManagerReports',
     component: () => import('@/views/manager/ManagerReportsView.vue'),
     meta: { requiresAuth: true, roles: ['admin', 'manager'] }
+  },
+  {
+    path: '/manager/task-history',
+    name: 'ManagerTaskHistory',
+    component: () => import('@/views/manager/ManagerTaskHistoryView.vue'),
+    meta: { requiresAuth: true, roles: ['manager'] }
   },
   // Developer routes
   {
