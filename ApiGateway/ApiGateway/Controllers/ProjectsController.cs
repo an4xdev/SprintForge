@@ -63,4 +63,113 @@ public class ProjectsController(ISendRequestService sendRequestService) : Contro
         return await sendRequestService.SendRequestAsync<ApiResponse<Guid>>(HttpMethod.Get, $"/projects/current/{id}",
             ServiceType.SpringService);
     }
+
+    [HttpGet("all-ext")]
+    public async Task<ActionResult<ApiResponse<List<ProjectExtDto>>>> GetAllProjectsExt()
+    {
+        try
+        {
+            var projectsResponse = await sendRequestService.SendRequestAsync<ApiResponse<List<ProjectDto>>>(
+                HttpMethod.Get, "/projects", ServiceType.SpringService);
+
+            var companiesResponse = await sendRequestService.SendRequestAsync<ApiResponse<List<CompanyDto>>>(
+                HttpMethod.Get, "/companies", ServiceType.ExpressService);
+
+            if (!Utils.IsSuccessResult(projectsResponse) || !Utils.IsSuccessResult(companiesResponse))
+            {
+                return Result<List<ProjectExtDto>>.InternalError("Failed to retrieve projects or companies data").ToActionResult();
+            }
+
+            var projectsData = ApiResponseExtensions.GetResultDataReference(projectsResponse);
+            var companiesData = ApiResponseExtensions.GetResultDataReference(companiesResponse);
+
+            if (projectsData == null)
+            {
+                return Result<List<ProjectExtDto>>.NotFound("No projects found").ToActionResult();
+            }
+
+            if (!projectsData.Any())
+            {
+                return Result<List<ProjectExtDto>>.Success([], "No projects available").ToActionResult();
+            }
+
+            var companiesDict = companiesData?.ToDictionary(c => c.Id, c => c) ?? new Dictionary<int, CompanyDto>();
+
+            var projectsExt = projectsData.Select(project =>
+            {
+                var extendedCompany = companiesDict.TryGetValue(project.CompanyDto.Id, out var company) 
+                    ? company 
+                    : project.CompanyDto;
+
+                return new ProjectExtDto
+                {
+                    Id = project.Id,
+                    Name = project.Name,
+                    StartDate = project.StartDate,
+                    EndDate = project.EndDate,
+                    Company = extendedCompany
+                };
+            }).ToList();
+
+            return Result<List<ProjectExtDto>>.Success(projectsExt, "Projects retrieved with extended company data").ToActionResult();
+        }
+        catch (Exception)
+        {
+            return Result<List<ProjectExtDto>>.InternalError("An unexpected error occurred while retrieving projects").ToActionResult();
+        }
+    }
+
+    [HttpGet("{id:guid}-ext")]
+    public async Task<ActionResult<ApiResponse<ProjectExtDto>>> GetProjectExt(Guid id)
+    {
+        try
+        {
+            var projectResponse = await sendRequestService.SendRequestAsync<ApiResponse<ProjectDto>>(
+                HttpMethod.Get, $"/projects/{id}", ServiceType.SpringService);
+
+            if (!Utils.IsSuccessResult(projectResponse))
+            {
+                return Result<ProjectExtDto>.InternalError("Failed to retrieve project data").ToActionResult();
+            }
+
+            var projectData = ApiResponseExtensions.GetResultDataReference(projectResponse);
+            if (projectData == null)
+            {
+                return Result<ProjectExtDto>.NotFound("Project not found").ToActionResult();
+            }
+
+            var project = projectData;
+            
+            var companyResponse = await sendRequestService.SendRequestAsync<ApiResponse<CompanyDto>>(
+                HttpMethod.Get, $"/companies/{project.CompanyDto.Id}", ServiceType.ExpressService);
+
+            CompanyDto extendedCompany;
+            
+            if (!Utils.IsSuccessResult(companyResponse))
+            {
+
+                extendedCompany = project.CompanyDto;
+            }
+            else
+            {
+                var companyData = ApiResponseExtensions.GetResultDataReference(companyResponse);
+                extendedCompany = companyData ?? project.CompanyDto;
+            }
+
+            var projectExt = new ProjectExtDto
+            {
+                Id = project.Id,
+                Name = project.Name,
+                StartDate = project.StartDate,
+                EndDate = project.EndDate,
+                Company = extendedCompany
+            };
+
+            return Result<ProjectExtDto>.Success(projectExt, "Project retrieved with extended company data").ToActionResult();
+        }
+        catch (Exception)
+        {
+            return Result<ProjectExtDto>.InternalError("An unexpected error occurred while retrieving project").ToActionResult();
+        }
+    }
 }

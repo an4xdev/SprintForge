@@ -29,8 +29,53 @@
                                 </v-chip>
                             </template>
 
+                            <template v-slot:item.team.name="{ item }">
+                                <v-chip color="success" variant="tonal" size="small">
+                                    <v-icon start size="small">mdi-account-group</v-icon>
+                                    {{ item.team.name }}
+                                </v-chip>
+                            </template>
+
+                            <template v-slot:item.project.name="{ item }">
+                                <v-chip color="info" variant="tonal" size="small">
+                                    <v-icon start size="small">mdi-folder</v-icon>
+                                    {{ item.project.name }}
+                                </v-chip>
+                            </template>
+
+                            <template v-slot:item.startDate="{ value }">
+                                <v-chip color="primary" variant="tonal" size="small">
+                                    {{ formatDate(value) }}
+                                </v-chip>
+                            </template>
+
+                            <template v-slot:item.endDate="{ value }">
+                                <v-chip color="warning" variant="tonal" size="small">
+                                    {{ formatDate(value) }}
+                                </v-chip>
+                            </template>
+
+                            <template v-if="isAdmin" v-slot:item.manager.username="{ item }">
+                                <div class="d-flex align-center">
+                                    <v-avatar size="24" color="primary" class="me-2">
+                                        <span class="text-caption">{{ item.manager.firstName.charAt(0) }}{{
+                                            item.manager.lastName.charAt(0) }}</span>
+                                    </v-avatar>
+                                    <div>
+                                        <div class="text-body-2 font-weight-medium">{{ item.manager.username }}</div>
+                                        <div class="text-caption text-medium-emphasis">{{ item.manager.firstName }} {{
+                                            item.manager.lastName }}</div>
+                                    </div>
+                                </div>
+                            </template>
+
                             <template v-slot:item.actions="{ item }">
                                 <div class="d-flex ga-2 justify-end">
+                                    <v-btn size="small" color="info" variant="tonal" prepend-icon="mdi-information"
+                                        @click="showSprintDetails(item.id)">
+                                        Details
+                                    </v-btn>
+
                                     <v-icon color="medium-emphasis" icon="mdi-pencil" size="small"
                                         @click="editSprint(item.id)"></v-icon>
 
@@ -107,6 +152,172 @@
                         </v-card>
                     </v-dialog>
 
+                    <!-- Sprint Details Modal -->
+                    <v-dialog v-model="detailsDialog" max-width="700">
+                        <v-card v-if="selectedSprintDetails">
+                            <v-card-title class="d-flex align-center">
+                                <v-icon class="me-3" color="primary">mdi-rocket-launch</v-icon>
+                                Sprint Details
+                            </v-card-title>
+
+                            <v-card-text>
+                                <v-container>
+                                    <v-row>
+                                        <v-col cols="12">
+                                            <div class="text-h5 mb-3 d-flex align-center">
+                                                <v-icon class="me-2" color="primary">mdi-rocket</v-icon>
+                                                {{ selectedSprintDetails.name }}
+                                            </div>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <v-card variant="outlined" class="pa-3 mb-3">
+                                                <div class="text-subtitle-2 text-medium-emphasis mb-2">
+                                                    <v-icon size="small" class="me-1">mdi-calendar-start</v-icon>
+                                                    Start Date
+                                                </div>
+                                                <div class="text-body-1 font-weight-medium">{{
+                                                    formatDate(selectedSprintDetails.startDate)
+                                                }}</div>
+                                            </v-card>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <v-card variant="outlined" class="pa-3 mb-3">
+                                                <div class="text-subtitle-2 text-medium-emphasis mb-2">
+                                                    <v-icon size="small" class="me-1">mdi-calendar-end</v-icon>
+                                                    End Date
+                                                </div>
+                                                <div class="text-body-1 font-weight-medium">{{
+                                                    formatDate(selectedSprintDetails.endDate) }}
+                                                </div>
+                                            </v-card>
+                                        </v-col>
+
+                                        <v-col cols="12">
+                                            <v-card variant="outlined" class="pa-3 mb-3">
+                                                <div class="text-subtitle-2 text-medium-emphasis mb-2">
+                                                    <v-icon size="small" class="me-1">mdi-timer-outline</v-icon>
+                                                    Duration
+                                                </div>
+                                                <div class="text-body-1 font-weight-medium">
+                                                    {{ calculateSprintDuration(selectedSprintDetails.startDate,
+                                                        selectedSprintDetails.endDate) }} days
+                                                </div>
+                                            </v-card>
+                                        </v-col>
+
+                                        <v-col cols="12">
+                                            <v-divider class="mb-3"></v-divider>
+                                            <div class="text-subtitle-1 mb-3 d-flex align-center">
+                                                <v-icon class="me-2" color="primary">mdi-account-tie</v-icon>
+                                                Manager Information
+                                            </div>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <v-card variant="outlined" class="pa-3">
+                                                <div class="text-subtitle-2 text-medium-emphasis mb-2">Username</div>
+                                                <div class="text-body-1 font-weight-medium">{{
+                                                    selectedSprintDetails.manager.username }}
+                                                </div>
+                                            </v-card>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <v-card variant="outlined" class="pa-3">
+                                                <div class="text-subtitle-2 text-medium-emphasis mb-2">Full Name</div>
+                                                <div class="text-body-1 font-weight-medium">
+                                                    {{ selectedSprintDetails.manager.firstName }} {{
+                                                        selectedSprintDetails.manager.lastName
+                                                    }}
+                                                </div>
+                                            </v-card>
+                                        </v-col>
+
+                                        <v-col cols="12">
+                                            <v-divider class="mb-3"></v-divider>
+                                            <div class="text-subtitle-1 mb-3 d-flex align-center">
+                                                <v-icon class="me-2" color="primary">mdi-account-group</v-icon>
+                                                Team Information
+                                            </div>
+                                        </v-col>
+
+                                        <v-col cols="12">
+                                            <v-card variant="outlined" class="pa-3">
+                                                <div class="text-subtitle-2 text-medium-emphasis mb-2">Team Name</div>
+                                                <v-chip color="success" variant="tonal" size="large">
+                                                    <v-icon start>mdi-account-group</v-icon>
+                                                    {{ selectedSprintDetails.team.name }}
+                                                </v-chip>
+                                            </v-card>
+                                        </v-col>
+
+                                        <v-col cols="12">
+                                            <v-divider class="mb-3"></v-divider>
+                                            <div class="text-subtitle-1 mb-3 d-flex align-center">
+                                                <v-icon class="me-2" color="primary">mdi-folder-multiple</v-icon>
+                                                Project Information
+                                            </div>
+                                        </v-col>
+
+                                        <v-col cols="12">
+                                            <v-card variant="outlined" class="pa-3 mb-3">
+                                                <div class="text-subtitle-2 text-medium-emphasis mb-2">Project Name
+                                                </div>
+                                                <v-chip color="info" variant="tonal" size="large">
+                                                    <v-icon start>mdi-folder</v-icon>
+                                                    {{ selectedSprintDetails.project.name }}
+                                                </v-chip>
+                                            </v-card>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <v-card variant="outlined" class="pa-3">
+                                                <div class="text-subtitle-2 text-medium-emphasis mb-2">Project Start
+                                                </div>
+                                                <div class="text-body-1">{{
+                                                    formatDate(selectedSprintDetails.project.startDate) }}</div>
+                                            </v-card>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <v-card variant="outlined" class="pa-3">
+                                                <div class="text-subtitle-2 text-medium-emphasis mb-2">Project End</div>
+                                                <div class="text-body-1">{{
+                                                    formatDate(selectedSprintDetails.project.endDate) }}</div>
+                                            </v-card>
+                                        </v-col>
+                                    </v-row>
+                                </v-container>
+                            </v-card-text>
+
+                            <v-divider></v-divider>
+
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="primary" text="Close" @click="detailsDialog = false"></v-btn>
+                            </v-card-actions>
+                        </v-card>
+
+                        <v-card v-else-if="isLoadingDetails">
+                            <v-card-text class="text-center py-8">
+                                <v-progress-circular indeterminate size="48" color="primary"></v-progress-circular>
+                                <div class="mt-3">Loading sprint details...</div>
+                            </v-card-text>
+                        </v-card>
+
+                        <v-card v-else>
+                            <v-card-text class="text-center py-8">
+                                <v-icon size="48" color="error" class="mb-3">mdi-alert-circle</v-icon>
+                                <div class="text-h6">Failed to load sprint details</div>
+                                <v-btn color="primary" variant="text" class="mt-3" @click="detailsDialog = false">
+                                    Close
+                                </v-btn>
+                            </v-card-text>
+                        </v-card>
+                    </v-dialog>
+
                     <v-dialog v-if="isAdmin" v-model="confirmDeleteDialog" max-width="400px">
                         <v-card>
                             <v-card-title class="text-h6">Confirm Deletion</v-card-title>
@@ -130,7 +341,7 @@
 import { useAsyncData } from '@/composables/useAsyncData';
 import authService from '@/services/authService';
 import sprintsService from '@/services/sprintsService';
-import type { Sprint } from '@/types';
+import type { SprintExt } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref, toRef, computed } from 'vue';
 
@@ -152,38 +363,33 @@ const tableTitle = computed(() => {
     return 'Sprints';
 });
 
-// Warunkowe headery - dla managera ukrywamy Manager ID
 const headers = computed(() => {
     const baseHeaders: any[] = [
-        { title: 'Name', key: 'name', align: "start" as const },
+        { title: 'Sprint Name', key: 'name', align: "start" as const },
+        { title: 'Team', key: 'team.name' },
+        { title: 'Project', key: 'project.name' },
         { title: 'Start Date', key: 'startDate' },
         { title: 'End Date', key: 'endDate' },
-        { title: 'Team ID', key: 'teamId' },
     ];
 
-    // Dodaj Manager ID tylko dla administratora
     if (isAdmin.value) {
-        baseHeaders.push({ title: 'Manager ID', key: 'managerId' });
+        baseHeaders.push({ title: 'Manager', key: 'manager.username' });
     }
 
-    baseHeaders.push(
-        { title: 'Project ID', key: 'projectId' },
-        { title: 'Actions', key: 'actions', align: 'start' as const, sortable: false }
-    );
+    baseHeaders.push({ title: 'Actions', key: 'actions', align: 'start' as const, sortable: false });
 
     return baseHeaders;
 });
 
-// Warunkowe ładowanie danych
 const {
     data: sprints,
     load: refreshSprints
-} = useAsyncData<Sprint[]>({
+} = useAsyncData<SprintExt[]>({
     fetchFunction: (signal) => {
         if (isAdmin.value) {
-            return sprintsService.getSprints(signal);
+            return sprintsService.getSprintsExt(signal);
         } else if (isManager.value && currentUser?.id) {
-            return sprintsService.getByManager(currentUser.id, signal);
+            return sprintsService.getByManagerExt(currentUser.id, signal);
         } else {
             throw new Error('User not authorized to view sprints');
         }
@@ -193,17 +399,20 @@ const {
 
 const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
+const detailsDialog = ref(false);
 const formModel = ref<any>(createNewRecord());
 const sprintNameToDelete = ref('');
+const selectedSprintDetails = ref<SprintExt | null>(null);
+const isLoadingDetails = ref(false);
 
 function createNewRecord(): any {
     return {
         id: '',
         name: '',
-        startDate: new Date().toISOString().split('T')[0], // Format YYYY-MM-DD
+        startDate: new Date().toISOString().split('T')[0],
         endDate: new Date().toISOString().split('T')[0],
         teamId: '',
-        managerId: isManager.value ? currentUser?.id || '' : '', // Auto-assign dla managera
+        managerId: isManager.value ? currentUser?.id || '' : '',
         projectId: ''
     };
 }
@@ -218,14 +427,15 @@ function addNewSprint() {
 function editSprint(id: string) {
     const sprint = sprints.value?.find(s => s.id === id);
     if (sprint) {
-        formModel.value = { ...sprint };
-        // Konwersja dat do formatu YYYY-MM-DD dla inputów
-        if (formModel.value.startDate) {
-            (formModel.value as any).startDate = new Date(formModel.value.startDate).toISOString().split('T')[0];
-        }
-        if (formModel.value.endDate) {
-            (formModel.value as any).endDate = new Date(formModel.value.endDate).toISOString().split('T')[0];
-        }
+        formModel.value = {
+            id: sprint.id,
+            name: sprint.name,
+            startDate: new Date(sprint.startDate).toISOString().split('T')[0],
+            endDate: new Date(sprint.endDate).toISOString().split('T')[0],
+            teamId: sprint.team.id,
+            managerId: sprint.manager.id,
+            projectId: sprint.project.id
+        };
         newEditDialog.value = true;
     } else {
         logger.error(`Sprint with ID ${id} not found.`);
@@ -296,8 +506,6 @@ function save() {
         logger.error('Team ID and Project ID are required.');
         return;
     }
-
-    // Automatyczne przypisanie managerId dla managera
     if (isManager.value && currentUser?.id) {
         formModel.value.managerId = currentUser.id;
     }
@@ -307,7 +515,6 @@ function save() {
         return;
     }
 
-    // Walidacja dat
     const startDate = new Date(formModel.value.startDate);
     const endDate = new Date(formModel.value.endDate);
 
@@ -328,6 +535,44 @@ function save() {
 
     logger.log(`Sprint ${isEditing.value ? 'updated' : 'created'}:`, formModel.value);
     newEditDialog.value = false;
+}
+
+async function showSprintDetails(id: string) {
+    detailsDialog.value = true;
+    isLoadingDetails.value = true;
+    selectedSprintDetails.value = null;
+
+    try {
+        selectedSprintDetails.value = await sprintsService.getSprintExtById(id);
+        logger.log('Loaded extended sprint details:', selectedSprintDetails.value);
+    } catch (err) {
+        logger.error('Failed to load sprint details:', err);
+    } finally {
+        isLoadingDetails.value = false;
+    }
+}
+
+function formatDate(date: Date | string): string {
+    if (!date) return '';
+
+    const d = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(d.getTime())) return '';
+
+    return d.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+function calculateSprintDuration(startDate: Date | string, endDate: Date | string): number {
+    const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
+    const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
+
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
 }
 </script>
 

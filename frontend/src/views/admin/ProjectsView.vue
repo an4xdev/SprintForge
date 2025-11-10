@@ -39,6 +39,11 @@
 
                             <template v-slot:item.actions="{ item }">
                                 <div class="d-flex ga-2 justify-end">
+                                    <v-btn size="small" color="info" variant="tonal" prepend-icon="mdi-information"
+                                        @click="showProjectDetails(item.id)">
+                                        Details
+                                    </v-btn>
+
                                     <v-icon color="medium-emphasis" icon="mdi-pencil" size="small"
                                         @click="editProject(item.id)"></v-icon>
 
@@ -92,6 +97,97 @@
                         </v-card>
                     </v-dialog>
 
+                    <v-dialog v-model="detailsDialog" max-width="600">
+                        <v-card v-if="selectedProjectDetails">
+                            <v-card-title class="d-flex align-center">
+                                <v-icon class="me-3" color="primary">mdi-folder-multiple</v-icon>
+                                Project Details
+                            </v-card-title>
+
+                            <v-card-text>
+                                <v-container>
+                                    <v-row>
+                                        <v-col cols="12">
+                                            <v-chip color="primary" variant="tonal" size="large" class="mb-4">
+                                                {{ selectedProjectDetails.name }}
+                                            </v-chip>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <div class="text-subtitle-2 text-medium-emphasis mb-1">Start Date</div>
+                                            <div class="text-body-1">{{
+                                                formatDateForDisplay(selectedProjectDetails.startDate) }}</div>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <div class="text-subtitle-2 text-medium-emphasis mb-1">End Date</div>
+                                            <div class="text-body-1">{{
+                                                formatDateForDisplay(selectedProjectDetails.endDate) }}</div>
+                                        </v-col>
+
+                                        <v-col cols="12">
+                                            <v-divider class="my-2"></v-divider>
+                                            <div class="text-subtitle-1 mb-3">
+                                                <v-icon class="me-2" size="small">mdi-domain</v-icon>
+                                                Company Information
+                                            </div>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <div class="text-subtitle-2 text-medium-emphasis mb-1">Company ID</div>
+                                            <div class="text-body-1">{{ selectedProjectDetails.company.id }}</div>
+                                        </v-col>
+
+                                        <v-col cols="12" md="6">
+                                            <div class="text-subtitle-2 text-medium-emphasis mb-1">Company Name</div>
+                                            <div class="text-body-1">
+                                                <v-chip color="success" variant="tonal">
+                                                    {{ selectedProjectDetails.company.name }}
+                                                </v-chip>
+                                            </div>
+                                        </v-col>
+
+                                        <v-col cols="12">
+                                            <v-divider class="my-2"></v-divider>
+                                            <div class="text-subtitle-2 text-medium-emphasis mb-2">Project Duration
+                                            </div>
+                                            <div class="text-body-1">
+                                                {{ calculateProjectDuration(selectedProjectDetails.startDate,
+                                                selectedProjectDetails.endDate) }} days
+                                            </div>
+                                        </v-col>
+                                    </v-row>
+                                </v-container>
+                            </v-card-text>
+
+                            <v-divider></v-divider>
+
+                            <v-card-actions>
+                                <v-spacer></v-spacer>
+                                <v-btn color="primary" text="Close" @click="detailsDialog = false"></v-btn>
+                            </v-card-actions>
+                        </v-card>
+
+                        <!-- Loading state for details -->
+                        <v-card v-else-if="isLoadingDetails">
+                            <v-card-text class="text-center py-8">
+                                <v-progress-circular indeterminate size="48" color="primary"></v-progress-circular>
+                                <div class="mt-3">Loading project details...</div>
+                            </v-card-text>
+                        </v-card>
+
+                        <!-- Error state for details -->
+                        <v-card v-else>
+                            <v-card-text class="text-center py-8">
+                                <v-icon size="48" color="error" class="mb-3">mdi-alert-circle</v-icon>
+                                <div class="text-h6">Failed to load project details</div>
+                                <v-btn color="primary" variant="text" class="mt-3" @click="detailsDialog = false">
+                                    Close
+                                </v-btn>
+                            </v-card-text>
+                        </v-card>
+                    </v-dialog>
+
                     <v-dialog v-model="confirmDeleteDialog" max-width="400px">
                         <v-card>
                             <v-card-title class="text-h6">Confirm Deletion</v-card-title>
@@ -115,7 +211,7 @@
 import { useAsyncData } from '@/composables/useAsyncData';
 import projectsService from '@/services/projectsService';
 import companyService from '@/services/companyService';
-import type { Project, Company } from '@/types';
+import type { Project, Company, ProjectExt } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { formatDate } from '@/utils/dateFormatter';
 import { ref, computed } from 'vue';
@@ -153,10 +249,13 @@ const {
 
 const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
+const detailsDialog = ref(false);
 const formModel = ref(createNewRecord());
 const projectNameToDelete = ref('');
 const projectIdToDelete = ref('');
 const selectedCompanyId = ref<number | null>(null);
+const selectedProjectDetails = ref<ProjectExt | null>(null);
+const isLoadingDetails = ref(false);
 
 const startDateStr = computed({
     get: () => {
@@ -365,6 +464,31 @@ async function save() {
     } catch (err) {
         logger.error('Failed to save project:', err);
     }
+}
+
+async function showProjectDetails(id: string) {
+    detailsDialog.value = true;
+    isLoadingDetails.value = true;
+    selectedProjectDetails.value = null;
+
+    try {
+        selectedProjectDetails.value = await projectsService.getProjectExtById(id);
+        logger.log('Loaded extended project details:', selectedProjectDetails.value);
+    } catch (err) {
+        logger.error('Failed to load project details:', err);
+    } finally {
+        isLoadingDetails.value = false;
+    }
+}
+
+function calculateProjectDuration(startDate: Date | string, endDate: Date | string): number {
+    const start = typeof startDate === 'string' ? new Date(startDate) : startDate;
+    const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
+
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    return diffDays;
 }
 </script>
 

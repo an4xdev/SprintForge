@@ -61,6 +61,16 @@ class TeamsService {
             throw new Error('Failed to fetch teams by manager');
         }
     }
+
+    async getTeamByManager(managerId: string, signal?: AbortSignal): Promise<Team> {
+        try {
+            const response = await apiService.get<ApiResponse<Team>>(`/teams/manager/${managerId}`, signal);
+            return response.data;
+        } catch (error) {
+            teamLogger.error('Error fetching team by manager:', error);
+            throw new Error('Failed to fetch team by manager');
+        }
+    }
 }
 
 export default new TeamsService();
