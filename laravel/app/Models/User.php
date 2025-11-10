@@ -9,6 +9,8 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Class User
@@ -22,11 +24,15 @@ use Illuminate\Database\Eloquent\Model;
  * @property string|null $Avatar
  * @property string $PasswordSalt
  * @property uuid|null $TeamId
- * @property bool $NeedsPasswordChange
+ * @property bool $NeedResetPassword
+ * @property string $Email
+ * @property string $FirstName
+ * @property string $LastName
  *
  * @property Team|null $team
  * @property Collection|Task[] $tasks
  * @property Collection|Sprint[] $sprints
+ * @property Collection|Team[] $teams
  *
  * @package App\Models
  */
@@ -41,14 +47,16 @@ class User extends Model
 	protected $casts = [
 		'Id' => 'string',
 		'RefreshTokenExpiryTime' => 'datetime',
-		'TeamId' => 'string'
+		'TeamId' => 'string',
+		'NeedResetPassword' => 'bool'
 	];
 
 	protected $hidden = [
 		'PasswordHash',
 		'RefreshToken',
 		'RefreshTokenExpiryTime',
-		'PasswordSalt'
+		'PasswordSalt',
+		'NeedResetPassword'
 	];
 
 	protected $fillable = [
@@ -60,16 +68,29 @@ class User extends Model
 		'Avatar',
 		'PasswordSalt',
 		'TeamId',
-		'NeedsPasswordChange'
+		'NeedResetPassword',
+		'Email',
+		'FirstName',
+		'LastName'
 	];
 
-	public function tasks(): User|\Illuminate\Database\Eloquent\Relations\HasMany
+	public function team(): BelongsTo
+    {
+		return $this->belongsTo(Team::class, 'TeamId');
+	}
+
+	public function tasks(): User|HasMany
     {
 		return $this->hasMany(Task::class, 'DeveloperId');
 	}
 
-	public function sprints(): User|\Illuminate\Database\Eloquent\Relations\HasMany
+	public function sprints(): User|HasMany
     {
 		return $this->hasMany(Sprint::class, 'ManagerId');
+	}
+
+	public function teams(): User|HasMany
+    {
+		return $this->hasMany(Team::class, 'ManagerId');
 	}
 }

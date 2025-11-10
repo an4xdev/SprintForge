@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Sprint
- * 
+ *
  * @property uuid $Id
  * @property string $Name
  * @property Carbon $StartDate
@@ -20,7 +20,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property uuid $ManagerId
  * @property uuid|null $ProjectId
  * @property uuid $TeamId
- * 
+ *
  * @property User $user
  * @property Project|null $project
  * @property Team $team
@@ -30,7 +30,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Sprint extends Model
 {
-	protected $keyType = 'string';
 	protected $table = 'Sprints';
 	protected $primaryKey = 'Id';
 	public $incrementing = false;
@@ -58,6 +57,11 @@ class Sprint extends Model
 	public function user()
 	{
 		return $this->belongsTo(User::class, 'ManagerId');
+	}
+
+	public function team()
+	{
+		return $this->belongsTo(Team::class, 'TeamId');
 	}
 
 	public function tasks()

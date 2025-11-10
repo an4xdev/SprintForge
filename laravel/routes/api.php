@@ -16,3 +16,4 @@ Route::get('tasks/unassigned/project/{projectId}', 'App\Http\Controllers\API\Tas
 Route::get('tasks/unassigned/sprint/{sprintId}', 'App\Http\Controllers\API\TaskController@getUnassignedTasksInSprint');
 Route::get('tasks/assigned/sprint/{sprintId}', 'App\Http\Controllers\API\TaskController@getAssignedTasksInSprintAndDeveloper');
 Route::get('tasks/developer/{developerId}', 'App\Http\Controllers\API\TaskController@getTasksAssignedToDeveloper');
+Route::get('tasks/manager/{managerId}', 'App\Http\Controllers\API\TaskController@getTasksByManagerId');

@@ -15,6 +15,16 @@ class UsersService {
         }
     }
 
+    async getUser(id: string, signal?: AbortSignal): Promise<User> {
+        try {
+            const response = await apiService.get<ApiResponse<User>>(`/users/${id}`, signal);
+            return response.data;
+        } catch (error) {
+            profileLogger.error('Error fetching user:', error);
+            throw new Error('Failed to fetch user');
+        }
+    }
+
     async getProfile(id: string, signal?: AbortSignal): Promise<Profile> {
         try {
             const response = await apiService.get<ApiResponse<Profile>>(`/users/profile/${id}`, signal);
@@ -99,6 +109,16 @@ class UsersService {
         } catch (error) {
             profileLogger.error('Error updating avatar:', error);
             throw new Error('Failed to update avatar');
+        }
+    }
+
+    async updateProfile(id: string, request: Omit<UpdateUser, 'role'>, signal?: AbortSignal): Promise<User> {
+        try {
+            const response = await apiService.post<ApiResponse<User>>(`/users/${id}/update`, request, signal);
+            return response.data;
+        } catch (error) {
+            profileLogger.error('Error updating profile:', error);
+            throw new Error('Failed to update profile');
         }
     }
 }

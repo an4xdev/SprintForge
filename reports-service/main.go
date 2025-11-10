@@ -736,7 +736,7 @@ func getAuditLogs(c *gin.Context) {
 		return
 	}
 
-	if err := db.Order("timestamp DESC").Limit(limit).Offset(offset).Find(&auditLogs).Error; err != nil {
+	if err := db.Order("\"Timestamp\" DESC").Limit(limit).Offset(offset).Find(&auditLogs).Error; err != nil {
 		c.JSON(500, ApiResponse{Message: "Database error: " + err.Error()})
 		return
 	}

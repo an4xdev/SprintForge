@@ -301,6 +301,7 @@ return [
             'Sprints',
             'Users',
             'TaskTypes',
+            'Teams',
         ],
 
         /*
