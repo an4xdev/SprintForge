@@ -9,4 +9,5 @@ public class CreateTaskDto
     [JsonPropertyName("developerId")] public Guid? DeveloperId { get; set; }
     [JsonPropertyName("sprintId")] public Guid? SprintId { get; set; }
     [JsonPropertyName("taskTypeId")] public int? TaskTypeId { get; set; }
+    [JsonPropertyName("projectId")] public Guid? ProjectId { get; set; }
 }

@@ -38,6 +38,115 @@ class TaskController extends Controller
         return response()->json($response);
     }
 
+    public function storeByManager(Request $request, string $managerId)
+    {
+        Log::info('TaskController::storeByManager - Starting task creation', [
+            'managerId' => $managerId,
+            'request_data' => $request->all()
+        ]);
+
+        try {
+            $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string|max:255',
+                'taskTypeId' => 'required|integer|exists:TaskTypes,Id',
+            ]);
+
+            Log::info('TaskController::storeByManager - Validation passed');
+
+            $manager = User::where('Id', $managerId)->first();
+            if (!$manager) {
+                Log::warning('TaskController::storeByManager - Manager not found');
+                $this->auditService->logAction('CREATE_FAILED', 'Task', 'Manager not found');
+                $response = ApiResponse::BadRequest('Manager not found');
+                return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
+            }
+
+            $team = \App\Models\Team::where('ManagerId', $managerId)->first();
+            if (!$team || !$team->ProjectId) {
+                Log::warning('TaskController::storeByManager - Manager has no team or project assigned');
+                $this->auditService->logAction('CREATE_FAILED', 'Task', 'Manager has no team or project assigned');
+                $response = ApiResponse::BadRequest('Manager has no team or project assigned');
+                return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
+            }
+
+            $projectId = $team->ProjectId;
+            Log::info('TaskController::storeByManager - Found project', ['projectId' => $projectId]);
+
+            if ($request->has('taskStatusId')) {
+                Log::warning('TaskController::storeByManager - taskStatusId provided in request');
+                $this->auditService->logAction('CREATE_FAILED', 'Task', 'Task status ID provided in request');
+                $response = ApiResponse::BadRequest('Task status ID automatically assigned to `Created` status. Do not provide it in the request.');
+                return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
+            }
+
+            $statusId = TaskStatus::where('Name', 'Created')->value('Id');
+            Log::info('TaskController::storeByManager - Found status ID', ['statusId' => $statusId]);
+
+            if (!$statusId) {
+                Log::error('TaskController::storeByManager - Default task status "Created" not found');
+                $this->auditService->logAction('CREATE_FAILED', 'Task', 'Default task status "Created" not found');
+                $response = ApiResponse::InternalError('Default task status "Created" not found');
+                return response()->json($response, ResponseAlias::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            if ($request->has('developerId') && $request->input('developerId') !== null) {
+                Log::info('TaskController::storeByManager - Checking developer', ['developerId' => $request->input('developerId')]);
+                if (User::where('Id', $request->input('developerId'))->doesntExist()) {
+                    Log::warning('TaskController::storeByManager - Developer not found');
+                    $this->auditService->logAction('CREATE_FAILED', 'Task', 'Developer not found');
+                    $response = ApiResponse::BadRequest('Developer not found');
+                    return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
+                }
+                $assignedStatusId = TaskStatus::where('Name', 'Assigned')->value('Id');
+                if ($assignedStatusId) {
+                    $statusId = $assignedStatusId;
+                    Log::info('TaskController::storeByManager - Developer assigned, changing status to Assigned');
+                }
+            }
+
+            if ($request->has('sprintId') && $request->input('sprintId') !== null) {
+                Log::info('TaskController::storeByManager - Checking sprint', ['sprintId' => $request->input('sprintId')]);
+                if (Sprint::where('Id', $request->input('sprintId'))->doesntExist()) {
+                    Log::warning('TaskController::storeByManager - Sprint not found');
+                    $this->auditService->logAction('CREATE_FAILED', 'Task', 'Sprint not found');
+                    $response = ApiResponse::BadRequest('Sprint not found');
+                    return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
+                }
+            }
+
+            $taskData = [
+                'Id' => Str::uuid()->toString(),
+                'Name' => $request->input('name'),
+                'Description' => $request->input('description', null),
+                'TaskTypeId' => $request->input('taskTypeId'),
+                'TaskStatusId' => $statusId,
+                'DeveloperId' => $request->input('developerId', null),
+                'SprintId' => $request->input('sprintId', null),
+                'ProjectId' => $projectId,
+            ];
+
+            Log::info('TaskController::storeByManager - Creating task', ['taskData' => $taskData]);
+
+            $task = Task::create($taskData);
+
+            Log::info('TaskController::storeByManager - Task created successfully', ['taskId' => $task->Id]);
+
+            $this->auditService->logAction('CREATE_SUCCESS', 'Task', 'Created new task: ' . $request->input('name'));
+
+            $response = ApiResponse::Created('Task created successfully', $task);
+            return response()->json($response, Response::HTTP_CREATED);
+        } catch (\Exception $e) {
+            Log::error('TaskController::storeByManager - Exception occurred', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
+    }
+
     /**
      * Store a newly created resource in storage.
      */
@@ -98,6 +207,16 @@ class TaskController extends Controller
                 }
             }
 
+            if ($request->has('projectId') && $request->input('projectId') !== null) {
+                Log::info('TaskController::store - Checking project', ['projectId' => $request->input('projectId')]);
+                if (Project::where('Id', $request->input('projectId'))->doesntExist()) {
+                    Log::warning('TaskController::store - Project not found');
+                    $this->auditService->logAction('CREATE_FAILED', 'Task', 'Project not found');
+                    $response = ApiResponse::BadRequest('Project not found');
+                    return response()->json($response, ResponseAlias::HTTP_BAD_REQUEST);
+                }
+            }
+
             $taskData = [
                 'Id' => Str::uuid()->toString(),
                 'Name' => $request->input('name'),
@@ -105,7 +224,8 @@ class TaskController extends Controller
                 'TaskTypeId' => $request->input('taskTypeId'),
                 'TaskStatusId' => $statusId,
                 'DeveloperId' => $request->input('developerId', null),
-                'SprintId' => null,
+                'SprintId' => $request->input('sprintId', null),
+                'ProjectId' => $request->input('projectId', null),
             ];
 
             Log::info('TaskController::store - Creating task', ['taskData' => $taskData]);

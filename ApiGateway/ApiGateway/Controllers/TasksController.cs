@@ -29,11 +29,20 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
     }
 
     [HttpPost]
-    [Authorize(Roles = "admin,manager")]
-    public async Task<ActionResult<ApiResponse<TaskDto>>> CreateTask(CreateTaskDto createTaskDto)
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<TaskDto>>> CreateTaskByAdmin(CreateTaskDto createTaskDto)
     {
         return await sendRequestService.SendRequestAsync<ApiResponse<TaskDto>>(HttpMethod.Post,
             "/tasks",
+            ServiceType.LaravelService, body: createTaskDto);
+    }
+
+    [HttpPost("manager/{managerId:guid}")]
+    [Authorize(Roles = "admin,manager")]
+    public async Task<ActionResult<ApiResponse<TaskDto>>> CreateTask(Guid managerId, CreateTaskDto createTaskDto)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<TaskDto>>(HttpMethod.Post,
+            $"/tasks/manager/{managerId}",
             ServiceType.LaravelService, body: createTaskDto);
     }
 
@@ -137,7 +146,7 @@ public class TasksController(ISendRequestService sendRequestService) : Controlle
             }
 
             var tasksData = ApiResponseExtensions.GetResultDataReference(tasksResponse);
-            
+
             if (tasksData == null || tasksData.Count == 0)
             {
                 return Result<List<TaskExtDto>>.Success(new List<TaskExtDto>(), "No tasks found for this developer")
