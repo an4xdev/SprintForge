@@ -7,6 +7,16 @@
                     <h1 class="text-h4">Task History</h1>
                 </div>
 
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
+
                 <div class="py-1">
                     <v-sheet border rounded>
                         <v-data-table :headers="headers"
@@ -109,7 +119,7 @@
                                                             </v-chip>
                                                         </td>
                                                         <td class="text-caption">{{ formatDateTime(history.change_date)
-                                                        }}</td>
+                                                            }}</td>
                                                     </tr>
                                                 </tbody>
                                             </v-table>
@@ -140,6 +150,7 @@
 import { ref, computed } from 'vue';
 import { useAsyncData } from '@/composables/useAsyncData';
 import tasksService from '@/services/tasksService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { TaskHistoryExt, TaskExt } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import TaskDetailsModal from '@/components/modals/TaskDetailsModal.vue';
@@ -149,6 +160,10 @@ const logger = new DevelopmentLogger({ prefix: '[AdminTaskHistoryView]' });
 
 const expanded = ref<string[]>([]);
 const historySortOrder = ref<'asc' | 'desc'>('desc');
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 const headers = [
     { title: 'Task', key: 'task', align: 'start' as const, sortable: false },
@@ -233,8 +248,12 @@ const viewTaskDetails = async (taskId: string) => {
         const task = await tasksService.getTaskExtById(taskId);
         selectedTaskDetails.value = task;
         taskDetailsDialog.value = true;
-    } catch (error) {
-        logger.error('Error loading task details:', error);
+        error.value = '';
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Error loading task details:', err);
     }
 };
 </script>

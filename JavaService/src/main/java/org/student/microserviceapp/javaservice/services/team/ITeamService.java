@@ -21,4 +21,8 @@ public interface ITeamService {
     Result<Long> getCount();
 
     Result<TeamDTO> getTeamByManagerId(UUID managerId);
+
+    Result<Void> addDeveloperToTeam(UUID teamId, UUID developerId);
+
+    Result<Void> removeDeveloperFromTeam(UUID teamId, UUID developerId);
 }

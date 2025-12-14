@@ -1,5 +1,6 @@
 import { profileLogger } from '@/utils/logger';
 import apiService from './apiService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { ApiResponse, AvatarChangeResponse, Profile, RegisterCredentials, UpdateUser, User } from '@/types';
 import axios from 'axios';
 
@@ -11,7 +12,8 @@ class UsersService {
             return response.data;
         } catch (error) {
             profileLogger.error('Error fetching users:', error);
-            throw new Error('Failed to fetch users');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -21,7 +23,8 @@ class UsersService {
             return response.data;
         } catch (error) {
             profileLogger.error('Error fetching user:', error);
-            throw new Error('Failed to fetch user');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -31,7 +34,8 @@ class UsersService {
             return response.data;
         } catch (error) {
             profileLogger.error('Error fetching profile:', error);
-            throw new Error('Failed to fetch profile');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -41,7 +45,8 @@ class UsersService {
             return response.data;
         } catch (error) {
             profileLogger.error('Error registering user:', error);
-            throw new Error('Failed to register user');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -51,7 +56,8 @@ class UsersService {
             return response.data;
         } catch (error) {
             profileLogger.error('Error fetching users by role:', error);
-            throw new Error('Failed to fetch users by role');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -61,7 +67,8 @@ class UsersService {
             return response.data;
         } catch (error) {
             profileLogger.error('Error updating user:', error);
-            throw new Error('Failed to update user');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -70,7 +77,8 @@ class UsersService {
             await apiService.delete(`/users/${id}`, signal);
         } catch (error) {
             profileLogger.error('Error deleting user:', error);
-            throw new Error('Failed to delete user');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -80,7 +88,8 @@ class UsersService {
             return response.data;
         } catch (error) {
             profileLogger.error('Error fetching developers by team:', error);
-            throw new Error('Failed to fetch developers by team');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -108,7 +117,8 @@ class UsersService {
             return { path: response.data.data.path };
         } catch (error) {
             profileLogger.error('Error updating avatar:', error);
-            throw new Error('Failed to update avatar');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -118,7 +128,8 @@ class UsersService {
             return response.data;
         } catch (error) {
             profileLogger.error('Error updating profile:', error);
-            throw new Error('Failed to update profile');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 }

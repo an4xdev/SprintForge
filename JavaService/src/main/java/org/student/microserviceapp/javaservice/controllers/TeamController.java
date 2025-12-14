@@ -65,4 +65,16 @@ public class TeamController {
 
     }
 
+    @PostMapping("/{teamId}/developers/{developerId}")
+    public ResponseEntity<ApiResponse<Void>> addDeveloperToTeam(@PathVariable UUID teamId, @PathVariable UUID developerId) {
+        var result = teamService.addDeveloperToTeam(teamId, developerId);
+        return result.toResponseEntity();
+    }
+
+    @DeleteMapping("/{teamId}/developers/{developerId}")
+    public ResponseEntity<ApiResponse<Void>> removeDeveloperFromTeam(@PathVariable UUID teamId, @PathVariable UUID developerId) {
+        var result = teamService.removeDeveloperFromTeam(teamId, developerId);
+        return result.toResponseEntity();
+    }
+
 }

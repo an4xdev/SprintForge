@@ -3,6 +3,12 @@
         <v-main class="min-h-screen">
             <v-container fluid class="pa-6">
                 <h1 class="text-h4 mb-6">User Profile</h1>
+
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
                 <v-row justify="center">
                     <v-col cols="12" md="8" lg="6">
                         <v-card class="mb-4">
@@ -77,11 +83,13 @@
                     <v-progress-circular color="primary" indeterminate size="64" />
                 </v-overlay>
 
-                <v-alert v-if="error" type="error" class="mt-4" dismissible @click:close="error = null">
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
                     {{ error }}
-                </v-alert>
+                </v-snackbar>
 
-                <v-snackbar v-model="showSuccess" color="success" timeout="3000">
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
                     {{ successMessage }}
                 </v-snackbar>
             </v-container>
@@ -93,6 +101,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import profileService from '@/services/usersService'
+import { extractErrorMessage } from '@/utils/errorHandler'
 import type { Profile, User } from '@/types'
 
 const authStore = useAuthStore()
@@ -104,6 +113,7 @@ const isLoading = ref(false)
 const isUploadingAvatar = ref(false)
 const isUpdatingProfile = ref(false)
 const error = ref<string | null>(null)
+const showError = ref(false)
 const showSuccess = ref(false)
 const successMessage = ref('')
 const avatarForm = ref()
@@ -191,7 +201,9 @@ const loadProfile = async () => {
             };
         }
     } catch (err) {
-        error.value = 'Failed to load profile';
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
         console.error('Error loading profile:', err);
     } finally {
         isLoading.value = false;
@@ -224,7 +236,9 @@ const handleAvatarUpload = async () => {
 
         avatarForm.value.reset();
     } catch (err) {
-        error.value = 'Failed to update avatar';
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
         console.error('Error updating avatar:', err);
     } finally {
         isUploadingAvatar.value = false;
@@ -260,7 +274,9 @@ const handleUpdateProfile = async () => {
         successMessage.value = 'Profile updated successfully!';
         showSuccess.value = true;
     } catch (err) {
-        error.value = 'Failed to update profile';
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
         console.error('Error updating profile:', err);
     } finally {
         isUpdatingProfile.value = false;

@@ -7,6 +7,16 @@
                     <h1 class="text-h4">Team Task History</h1>
                 </div>
 
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
+
                 <v-alert v-if="!currentTeam" type="info" variant="tonal" class="mb-4">
                     <v-alert-title>No Team Assigned</v-alert-title>
                     You need to have a team assigned to view task history.
@@ -126,7 +136,7 @@
                                                             </v-chip>
                                                         </td>
                                                         <td class="text-caption">{{ formatDateTime(history.change_date)
-                                                        }}</td>
+                                                            }}</td>
                                                     </tr>
                                                 </tbody>
                                             </v-table>
@@ -158,6 +168,7 @@
 import { ref, computed, onMounted } from 'vue';
 import tasksService from '@/services/tasksService';
 import teamsService from '@/services/teamsService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { TaskHistoryExt, TaskExt, Team } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import TaskDetailsModal from '@/components/modals/TaskDetailsModal.vue';
@@ -169,6 +180,10 @@ const authStore = useAuthStore();
 
 const expanded = ref<string[]>([]);
 const historySortOrder = ref<'asc' | 'desc'>('desc');
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 const headers = [
     { title: 'Task', key: 'task', align: 'start' as const, sortable: false },
@@ -239,8 +254,11 @@ const refreshHistory = async () => {
     loadingHistory.value = true;
     try {
         taskHistories.value = await tasksService.getTaskHistoriesByManagerExt(authStore.user.id);
-    } catch (error) {
-        logger.error('Error loading task histories:', error);
+        error.value = '';
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        logger.error('Error loading task histories:', err);
         taskHistories.value = [];
     } finally {
         loadingHistory.value = false;
@@ -253,8 +271,12 @@ const loadTeamData = async () => {
     loadingTeam.value = true;
     try {
         currentTeam.value = await teamsService.getTeamByManager(authStore.user.id);
-    } catch (error) {
-        logger.error('Error loading team data:', error);
+        error.value = '';
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Error loading team data:', err);
         currentTeam.value = null;
     } finally {
         loadingTeam.value = false;
@@ -285,8 +307,12 @@ const viewTaskDetails = async (taskId: string) => {
         const task = await tasksService.getTaskExtById(taskId);
         selectedTaskDetails.value = task;
         taskDetailsDialog.value = true;
-    } catch (error) {
-        logger.error('Error loading task details:', error);
+        error.value = '';
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Error loading task details:', err);
     }
 };
 

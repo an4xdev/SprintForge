@@ -7,4 +7,5 @@ import java.util.UUID;
 
 public interface IUserService {
     Optional<User> findById(UUID id);
+    User save(User user);
 }

@@ -4,6 +4,16 @@
             <v-container fluid class="pa-6">
                 <h1 class="text-h4 mb-6">Tasks Management</h1>
 
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
+
                 <div class="py-1">
                     <v-sheet border rounded>
                         <v-data-table :headers="headers" :hide-default-footer="tasks !== null && tasks.length < 11"
@@ -56,6 +66,7 @@
 <script setup lang="ts">
 import authService from '@/services/authService';
 import tasksService from '@/services/tasksService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { TaskExt } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { getTaskStatusColor, getTaskTypeColor } from '@/utils/taskColors';
@@ -73,6 +84,10 @@ const headers = [
 ];
 
 const tasks = ref<TaskExt[] | null>(null);
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 onMounted(async () => {
     await loadTasks();
@@ -82,9 +97,13 @@ async function loadTasks() {
     try {
         const currentUser = authService.getStoredUser();
         tasks.value = await tasksService.getTasksByDeveloperExt(currentUser!.id);
+        error.value = '';
         logger.log('Loaded extended tasks:', tasks.value);
-    } catch (error) {
-        logger.error('Error loading tasks:', error);
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Error loading tasks:', err);
     }
 }
 

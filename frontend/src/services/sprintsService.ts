@@ -1,5 +1,6 @@
 import { sprintsLogger } from '@/utils/logger';
 import apiService from './apiService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { ApiResponse, Sprint, SprintExt } from '@/types';
 
 class SprintsService {
@@ -9,7 +10,8 @@ class SprintsService {
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error fetching sprints:', error);
-            throw new Error('Failed to fetch sprints');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -19,7 +21,8 @@ class SprintsService {
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error fetching sprint:', error);
-            throw new Error('Failed to fetch sprint');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -29,7 +32,8 @@ class SprintsService {
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error creating sprint:', error);
-            throw new Error('Failed to create sprint');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -39,7 +43,8 @@ class SprintsService {
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error updating sprint:', error);
-            throw new Error('Failed to update sprint');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -48,7 +53,8 @@ class SprintsService {
             await apiService.delete(`/sprints/${id}`, signal);
         } catch (error) {
             sprintsLogger.error('Error deleting sprint:', error);
-            throw new Error('Failed to delete sprint');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -58,7 +64,8 @@ class SprintsService {
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error fetching sprints by manager:', error);
-            throw new Error('Failed to fetch sprints by manager');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -68,7 +75,8 @@ class SprintsService {
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error fetching last sprint by manager:', error);
-            throw new Error('Failed to fetch last sprint by manager');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -78,7 +86,8 @@ class SprintsService {
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error fetching extended sprints:', error);
-            throw new Error('Failed to fetch extended sprints');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -88,7 +97,8 @@ class SprintsService {
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error fetching extended sprint:', error);
-            throw new Error('Failed to fetch extended sprint');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -98,7 +108,8 @@ class SprintsService {
             return response.data;
         } catch (error) {
             sprintsLogger.error('Error fetching extended sprints by manager:', error);
-            throw new Error('Failed to fetch extended sprints by manager');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 }

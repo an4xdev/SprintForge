@@ -4,6 +4,16 @@
             <v-container fluid class="pa-6">
                 <h1 class="text-h4 mb-6">Users Management</h1>
 
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
+
                 <div class="py-1">
                     <v-sheet border rounded>
                         <v-data-table :headers="headers" :hide-default-footer="users !== null && users.length < 11"
@@ -134,6 +144,7 @@
 <script setup lang="ts">
 import { useAsyncData } from '@/composables/useAsyncData';
 import usersService from '@/services/usersService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { RegisterCredentials, UpdateUser, User } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref } from 'vue';
@@ -166,6 +177,10 @@ const userNameToDelete = ref('');
 const userIdToDelete = ref('');
 const userIdToEdit = ref('');
 const isEditing = ref(false);
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 function createNewRegistrationRecord(): RegisterCredentials {
     return {
@@ -228,6 +243,7 @@ function showDeleteConfirmation(id: string) {
 async function confirmDelete() {
     if (!userIdToDelete.value) {
         logger.error('No user selected for deletion.');
+        error.value = 'No user selected for deletion';
         return;
     }
 
@@ -235,13 +251,15 @@ async function confirmDelete() {
         await usersService.deleteUser(userIdToDelete.value);
         await refreshUsers();
         logger.log(`Successfully deleted user: ${userNameToDelete.value}`);
-    } catch (error) {
-        logger.error(`Failed to delete user with ID ${userIdToDelete.value}:`, error);
+        error.value = '';
+    } catch (err) {
+        logger.error(`Failed to delete user with ID ${userIdToDelete.value}:`, err);
+        error.value = (err instanceof Error ? err.message : 'Failed to delete user');
+    } finally {
+        userNameToDelete.value = '';
+        userIdToDelete.value = '';
+        confirmDeleteDialog.value = false;
     }
-
-    userNameToDelete.value = '';
-    userIdToDelete.value = '';
-    confirmDeleteDialog.value = false;
 }
 
 function cancelDelete() {
@@ -255,11 +273,13 @@ async function save() {
         // Editing user
         if (!editFormModel.value.username) {
             logger.error('User username is required.');
+            error.value = 'User username is required';
             return;
         }
 
         if (!userIdToEdit.value) {
             logger.error('No user selected for editing.');
+            error.value = 'No user selected for editing';
             return;
         }
 
@@ -267,18 +287,22 @@ async function save() {
             await usersService.editUser(userIdToEdit.value, editFormModel.value);
             await refreshUsers();
             logger.log(`Successfully updated user: ${editFormModel.value.username}`);
-        } catch (error) {
-            logger.error('Failed to update user:', error);
+            error.value = '';
+        } catch (err) {
+            logger.error('Failed to update user:', err);
+            error.value = (err instanceof Error ? err.message : 'Failed to update user');
         }
     } else {
         // Registering new user
         if (!registrationFormModel.value.username) {
             logger.error('User username is required.');
+            error.value = 'User username is required';
             return;
         }
 
         if (!registrationFormModel.value.password) {
             logger.error('User password is required.');
+            error.value = 'User password is required';
             return;
         }
 
@@ -286,8 +310,10 @@ async function save() {
             await usersService.registerUser(registrationFormModel.value);
             await refreshUsers();
             logger.log(`Successfully registered user: ${registrationFormModel.value.username}`);
-        } catch (error) {
-            logger.error('Failed to register user:', error);
+            error.value = '';
+        } catch (err) {
+            logger.error('Failed to register user:', err);
+            error.value = (err instanceof Error ? err.message : 'Failed to register user');
         }
     }
 

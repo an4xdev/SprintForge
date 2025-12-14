@@ -2,7 +2,17 @@
     <v-layout>
         <v-main class="min-h-screen">
             <v-container fluid class="pa-6">
-                <h1 class="text-h4 mb-6">Task types Management</h1>
+                <h1 class="text-h4 mb-6">Task Types Management</h1>
+
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
 
                 <div class="py-1">
                     <v-sheet border rounded>
@@ -90,6 +100,7 @@
 <script setup lang="ts">
 import type { TaskType } from '@/types';
 import { useAsyncData } from '@/composables/useAsyncData';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref, computed } from 'vue';
 import taskTypesService from '@/services/taskTypesService';
@@ -118,6 +129,10 @@ const taskTypeNameToDelete = ref('');
 const taskTypeIdToDelete = ref<number | null>(null);
 const saving = ref(false);
 const deleting = ref(false);
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 function createNewRecord() {
     return {
@@ -166,6 +181,7 @@ function showDeleteConfirmation(id: number) {
 async function confirmDelete() {
     if (taskTypeIdToDelete.value == null) {
         logger.error('No task type selected for deletion.');
+        error.value = 'No task type selected for deletion';
         return;
     }
 
@@ -174,8 +190,10 @@ async function confirmDelete() {
         await taskTypesService.deleteTaskType(taskTypeIdToDelete.value);
         await refreshTaskTypes();
         logger.log(`Deleted task type id=${taskTypeIdToDelete.value}`);
+        error.value = '';
     } catch (err) {
         logger.error('Failed to delete task type:', err);
+        error.value = (err instanceof Error ? err.message : 'Failed to delete task type');
     } finally {
         deleting.value = false;
         taskTypeIdToDelete.value = null;
@@ -192,6 +210,7 @@ function cancelDelete() {
 async function save() {
     if (!formModel.value.name) {
         logger.error('Task Type name is required.');
+        error.value = 'Task Type name is required';
         return;
     }
 
@@ -207,8 +226,10 @@ async function save() {
 
         await refreshTaskTypes();
         newEditDialog.value = false;
+        error.value = '';
     } catch (err) {
         logger.error('Failed to save task type:', err);
+        error.value = (err instanceof Error ? err.message : 'Failed to save task type');
     } finally {
         saving.value = false;
     }

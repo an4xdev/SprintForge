@@ -276,4 +276,20 @@ public class TeamsController(ISendRequestService sendRequestService) : Controlle
             return Result<TeamExtDto>.InternalError("An unexpected error occurred while retrieving team").ToActionResult();
         }
     }
+
+    [HttpPost("{teamId:guid}/developers/{developerId:guid}")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<object?>>> AddDeveloperToTeam(Guid teamId, Guid developerId)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Post,
+            $"/teams/{teamId}/developers/{developerId}", ServiceType.SpringService);
+    }
+
+    [HttpDelete("{teamId:guid}/developers/{developerId:guid}")]
+    [Authorize(Roles = "admin")]
+    public async Task<ActionResult<ApiResponse<object?>>> RemoveDeveloperFromTeam(Guid teamId, Guid developerId)
+    {
+        return await sendRequestService.SendRequestAsync<ApiResponse<object?>>(HttpMethod.Delete,
+            $"/teams/{teamId}/developers/{developerId}", ServiceType.SpringService);
+    }
 }

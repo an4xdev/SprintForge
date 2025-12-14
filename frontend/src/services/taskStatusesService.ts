@@ -1,5 +1,6 @@
 import { taskStatusesLogger } from '@/utils/logger';
 import apiService from './apiService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { ApiResponse, TaskStatus } from '@/types';
 
 class TaskStatusesService {
@@ -9,7 +10,8 @@ class TaskStatusesService {
             return response.data;
         } catch (error) {
             taskStatusesLogger.error('Error fetching task statuses:', error);
-            throw new Error('Failed to fetch task statuses');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -19,7 +21,8 @@ class TaskStatusesService {
             return response.data;
         } catch (error) {
             taskStatusesLogger.error('Error fetching task status:', error);
-            throw new Error('Failed to fetch task status');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -29,7 +32,8 @@ class TaskStatusesService {
             return response.data;
         } catch (error) {
             taskStatusesLogger.error('Error creating task status:', error);
-            throw new Error('Failed to create task status');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -39,7 +43,8 @@ class TaskStatusesService {
             return response.data;
         } catch (error) {
             taskStatusesLogger.error('Error updating task status:', error);
-            throw new Error('Failed to update task status');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -48,7 +53,8 @@ class TaskStatusesService {
             await apiService.delete(`/taskStatuses/${id}`, signal);
         } catch (error) {
             taskStatusesLogger.error('Error deleting task status:', error);
-            throw new Error('Failed to delete task status');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 }

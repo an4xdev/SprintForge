@@ -2,6 +2,7 @@ import axios, { type AxiosResponse } from 'axios';
 import { jwtDecode } from 'jwt-decode';
 import type { ApiResponse, AuthResponse, JwtPayload, LoginCredentials, MinimalUser, User } from '@/types';
 import { authLogger } from '@/utils/logger';
+import { extractErrorMessage } from '@/utils/errorHandler';
 
 class AuthService {
     private baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -25,7 +26,8 @@ class AuthService {
             return response.data.data;
         } catch (error) {
             authLogger.error('Login failed', error);
-            throw new Error('Login failed');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -68,7 +70,8 @@ class AuthService {
             return mappedUser;
         } catch (error) {
             authLogger.error('Token decoding error', error);
-            throw new Error('Invalid JWT token');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message || 'Invalid JWT token');
         }
     }
 

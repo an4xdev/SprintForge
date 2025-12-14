@@ -19,7 +19,7 @@
             <v-col cols="12" md="4">
                 <div class="text-h6 mb-3 text-orange-darken-1 font-weight-bold">To Do</div>
                 <v-card v-for="task in todoTasks" :key="task.id" variant="outlined" class="mb-3"
-                    color="orange-lighten-4" elevation="2">
+                    color="orange-lighten-4" elevation="2" @click="$emit('task-click', task)" style="cursor: pointer;">
                     <v-card-text>
                         <div class="font-weight-bold text-high-emphasis text-body-1">{{ task.name }}</div>
                         <div class="text-body-2 text-medium-emphasis mt-1">{{ task.description }}</div>
@@ -34,7 +34,7 @@
             <v-col cols="12" md="4">
                 <div class="text-h6 mb-3 text-primary-darken-1 font-weight-bold">In Progress</div>
                 <v-card v-for="task in inProgressTasks" :key="task.id" variant="outlined" class="mb-3"
-                    color="blue-lighten-4" elevation="2">
+                    color="blue-lighten-4" elevation="2" @click="$emit('task-click', task)" style="cursor: pointer;">
                     <v-card-text>
                         <div class="font-weight-bold text-high-emphasis text-body-1">{{ task.name }}</div>
                         <div class="text-body-2 text-medium-emphasis mt-1">{{ task.description }}</div>
@@ -49,7 +49,7 @@
             <v-col cols="12" md="4">
                 <div class="text-h6 mb-3 text-success-darken-2 font-weight-bold">Completed</div>
                 <v-card v-for="task in doneTasks" :key="task.id" variant="outlined" class="mb-3" color="green-lighten-4"
-                    elevation="2">
+                    elevation="2" @click="$emit('task-click', task)" style="cursor: pointer;">
                     <v-card-text>
                         <div class="font-weight-bold text-high-emphasis text-body-1">{{ task.name }}</div>
                         <div class="text-body-2 text-medium-emphasis mt-1">{{ task.description }}</div>
@@ -79,16 +79,20 @@ const props = withDefaults(defineProps<Props>(), {
     tasks: () => []
 });
 
-const todoTasks = computed(() =>
-    props.tasks.filter(task => task.taskStatusId === 1)
-);
+const emit = defineEmits<{
+    'task-click': [task: Task]
+}>();
+
+const todoTasks = computed(() => {
+    return props.tasks.filter(task => task.taskStatusId === 1 || task.taskStatusId === 2)
+});
 
 const inProgressTasks = computed(() =>
-    props.tasks.filter(task => task.taskStatusId === 2)
+    props.tasks.filter(task => task.taskStatusId === 3 || task.taskStatusId === 4 || task.taskStatusId === 5)
 );
 
 const doneTasks = computed(() =>
-    props.tasks.filter(task => task.taskStatusId === 3)
+    props.tasks.filter(task => task.taskStatusId === 6)
 );
 </script>
 

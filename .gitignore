@@ -7,3 +7,4 @@ laravel/scribe.txt
 laravel/.scribe/endpoints/00.yaml
 laravel/.scribe/endpoints.cache/00.yaml
 ApiGateway/.idea/.idea.ApiGateway/.idea/data_source_mapping.xml
+ApiGateway/.idea/.idea.ApiGateway/.idea/queries/*

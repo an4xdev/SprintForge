@@ -1,9 +1,9 @@
-FROM composer:2 AS build
+FROM composer:2.7 AS build
 
 WORKDIR /app
 
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction --optimize-autoloader --ignore-platform-req=ext-sockets
+RUN composer install --no-dev --no-scripts --prefer-dist --no-interaction --optimize-autoloader --ignore-platform-req=ext-sockets --ignore-platform-req=php
 
 COPY . .
 

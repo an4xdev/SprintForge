@@ -2,7 +2,17 @@
     <v-layout>
         <v-main class="min-h-screen">
             <v-container fluid class="pa-6">
-                <h1 class="text-h4 mb-6">Task statuses Management</h1>
+                <h1 class="text-h4 mb-6">Task Statuses Management</h1>
+
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
 
                 <div class="py-1">
                     <v-sheet border rounded>
@@ -93,6 +103,7 @@
 <script setup lang="ts">
 import type { TaskStatus } from '@/types';
 import { useAsyncData } from '@/composables/useAsyncData';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref, toRef } from 'vue';
 import taskStatusesService from '@/services/taskStatusesService';
@@ -118,6 +129,11 @@ const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
 const formModel = ref(createNewRecord());
 const taskStatusNameToDelete = ref('');
+const taskStatusIdToDelete = ref<number | null>(null);
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 function createNewRecord() {
     return {
@@ -148,29 +164,34 @@ function showDeleteConfirmation(id: number) {
     if (taskStatus) {
         logger.log('Delete task status:', taskStatus);
         taskStatusNameToDelete.value = taskStatus.name;
+        taskStatusIdToDelete.value = taskStatus.id;
         confirmDeleteDialog.value = true;
     } else {
         logger.error(`Task Status with ID ${id} not found.`);
+        error.value = `Task status ${id} not found`;
     }
 }
 
-function confirmDelete() {
-
-    if (taskStatuses.value == null) {
-        logger.error('Task Statuses data is not loaded yet.');
-        return;
-    }
-
-    if (!taskStatusNameToDelete.value) {
+async function confirmDelete() {
+    if (taskStatusIdToDelete.value == null) {
         logger.error('No task status selected for deletion.');
+        error.value = 'No task status selected for deletion';
         return;
     }
 
-    taskStatuses.value = taskStatuses.value.filter(st => st.name !== taskStatusNameToDelete.value);
-    taskStatusNameToDelete.value = '';
-
-    logger.log(`Confirmed deletion of task status: ${taskStatusNameToDelete.value}`);
-    confirmDeleteDialog.value = false;
+    try {
+        await taskStatusesService.deleteTaskStatus(taskStatusIdToDelete.value);
+        await refreshTaskStatuses();
+        logger.log(`Confirmed deletion of task status: ${taskStatusNameToDelete.value}`);
+        error.value = '';
+    } catch (err) {
+        logger.error('Failed to delete task status:', err);
+        error.value = (err instanceof Error ? err.message : 'Failed to delete task status');
+    } finally {
+        taskStatusIdToDelete.value = null;
+        taskStatusNameToDelete.value = '';
+        confirmDeleteDialog.value = false;
+    }
 }
 
 function cancelDelete() {
@@ -178,28 +199,29 @@ function cancelDelete() {
     taskStatusNameToDelete.value = '';
 }
 
-function save() {
-    if (taskStatuses.value === null) {
-        logger.error('Task Statuses data is not loaded yet.');
-        return;
-    }
-
+async function save() {
     if (!formModel.value.name) {
         logger.error('Task Status name is required.');
+        error.value = 'Task Status name is required';
         return;
     }
 
-    if (isEditing.value) {
-        const index = taskStatuses.value.findIndex(taskStatus => taskStatus.id === formModel.value.id)
-        taskStatuses.value[index] = formModel.value
+    try {
+        if (isEditing.value) {
+            await taskStatusesService.updateTaskStatus(formModel.value.id, { name: formModel.value.name });
+            logger.log('Updated task status', formModel.value);
+        } else {
+            await taskStatusesService.createTaskStatus({ name: formModel.value.name });
+            logger.log('Created task status', formModel.value.name);
+        }
 
-    } else {
-        formModel.value.id = taskStatuses.value.length + 1
-        taskStatuses.value.push(formModel.value)
-
+        await refreshTaskStatuses();
+        newEditDialog.value = false;
+        error.value = '';
+    } catch (err) {
+        logger.error('Failed to save task status:', err);
+        error.value = (err instanceof Error ? err.message : 'Failed to save task status');
     }
-
-    newEditDialog.value = false
 }
 
 </script>

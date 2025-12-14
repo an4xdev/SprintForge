@@ -1,5 +1,6 @@
 import { projectsLogger } from '@/utils/logger';
 import apiService from './apiService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { ApiResponse, Project, ProjectExt } from '@/types';
 
 class ProjectsService {
@@ -9,7 +10,8 @@ class ProjectsService {
             return response.data;
         } catch (error) {
             projectsLogger.error('Error fetching projects:', error);
-            throw new Error('Failed to fetch projects');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -19,7 +21,8 @@ class ProjectsService {
             return response.data;
         } catch (error) {
             projectsLogger.error('Error fetching project:', error);
-            throw new Error('Failed to fetch project');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -29,7 +32,8 @@ class ProjectsService {
             return response.data;
         } catch (error) {
             projectsLogger.error('Error creating project:', error);
-            throw new Error('Failed to create project');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -39,7 +43,8 @@ class ProjectsService {
             return response.data;
         } catch (error) {
             projectsLogger.error('Error updating project:', error);
-            throw new Error('Failed to update project');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -48,7 +53,8 @@ class ProjectsService {
             await apiService.delete(`/projects/${id}`, signal);
         } catch (error) {
             projectsLogger.error('Error deleting project:', error);
-            throw new Error('Failed to delete project');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -58,7 +64,8 @@ class ProjectsService {
             return response.data || null;
         } catch (error) {
             projectsLogger.error('Error fetching current project by manager ID:', error);
-            throw new Error('Failed to fetch current project');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -68,7 +75,8 @@ class ProjectsService {
             return response.data;
         } catch (error) {
             projectsLogger.error('Error fetching extended projects:', error);
-            throw new Error('Failed to fetch extended projects');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -78,7 +86,8 @@ class ProjectsService {
             return response.data;
         } catch (error) {
             projectsLogger.error('Error fetching extended project:', error);
-            throw new Error('Failed to fetch extended project');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 }

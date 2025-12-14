@@ -1,5 +1,6 @@
 import { teamLogger } from '@/utils/logger';
 import apiService from './apiService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { ApiResponse, CreateTeam, Team, UpdateTeam } from '@/types';
 
 class TeamsService {
@@ -9,7 +10,8 @@ class TeamsService {
             return response.data;
         } catch (error) {
             teamLogger.error('Error fetching teams:', error);
-            throw new Error('Failed to fetch teams');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -19,7 +21,8 @@ class TeamsService {
             return response.data;
         } catch (error) {
             teamLogger.error('Error fetching team:', error);
-            throw new Error('Failed to fetch team');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -29,7 +32,8 @@ class TeamsService {
             return response.data;
         } catch (error) {
             teamLogger.error('Error creating team:', error);
-            throw new Error('Failed to create team');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -39,7 +43,8 @@ class TeamsService {
             return response.data;
         } catch (error) {
             teamLogger.error('Error updating team:', error);
-            throw new Error('Failed to update team');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -48,7 +53,8 @@ class TeamsService {
             await apiService.delete(`/teams/${id}`);
         } catch (error) {
             teamLogger.error('Error deleting team:', error);
-            throw new Error('Failed to delete team');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -58,7 +64,8 @@ class TeamsService {
             return response.data;
         } catch (error) {
             teamLogger.error('Error fetching teams by manager:', error);
-            throw new Error('Failed to fetch teams by manager');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -68,7 +75,30 @@ class TeamsService {
             return response.data;
         } catch (error) {
             teamLogger.error('Error fetching team by manager:', error);
-            throw new Error('Failed to fetch team by manager');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
+        }
+    }
+
+    async addDeveloperToTeam(teamId: string, developerId: string): Promise<void> {
+        try {
+            await apiService.post(`/teams/${teamId}/developers/${developerId}`, {});
+            teamLogger.log(`Developer ${developerId} added to team ${teamId}`);
+        } catch (error) {
+            teamLogger.error('Error adding developer to team:', error);
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
+        }
+    }
+
+    async removeDeveloperFromTeam(teamId: string, developerId: string): Promise<void> {
+        try {
+            await apiService.delete(`/teams/${teamId}/developers/${developerId}`);
+            teamLogger.log(`Developer ${developerId} removed from team ${teamId}`);
+        } catch (error) {
+            teamLogger.error('Error removing developer from team:', error);
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 }

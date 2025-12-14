@@ -1,5 +1,6 @@
 import { companyLogger } from '@/utils/logger';
 import apiService from './apiService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { ApiResponse, Company } from '@/types';
 
 class CompanyService {
@@ -9,7 +10,8 @@ class CompanyService {
             return response.data;
         } catch (error) {
             companyLogger.error('Error fetching companies:', error);
-            throw new Error('Failed to fetch companies');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -19,7 +21,8 @@ class CompanyService {
             return response.data;
         } catch (error) {
             companyLogger.error('Error fetching company:', error);
-            throw new Error('Failed to fetch company');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -29,7 +32,8 @@ class CompanyService {
             return response.data;
         } catch (error) {
             companyLogger.error('Error creating company:', error);
-            throw new Error('Failed to create company');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -39,7 +43,8 @@ class CompanyService {
             return response.data;
         } catch (error) {
             companyLogger.error('Error updating company:', error);
-            throw new Error('Failed to update company');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -48,7 +53,8 @@ class CompanyService {
             await apiService.delete(`/companies/${id}`, signal);
         } catch (error) {
             companyLogger.error('Error deleting company:', error);
-            throw new Error('Failed to delete company');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 }
