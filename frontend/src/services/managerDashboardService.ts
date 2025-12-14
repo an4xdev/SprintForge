@@ -1,5 +1,6 @@
 import { managerDashboardLogger } from '@/utils/logger';
 import apiService from './apiService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { ApiResponse, ManagerDashboardInfoDto } from '@/types';
 
 class ManagerDashboardService {
@@ -16,7 +17,8 @@ class ManagerDashboardService {
             return response.data;
         } catch (error) {
             managerDashboardLogger.error('Error fetching dashboard info:', error);
-            throw new Error('Failed to fetch dashboard info');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 }

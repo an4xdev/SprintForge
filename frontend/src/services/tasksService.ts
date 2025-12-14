@@ -1,5 +1,6 @@
 import { tasksLogger } from '@/utils/logger';
 import apiService from './apiService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { ApiResponse, Task, DeveloperTask, CreateTask, TaskExt, TaskHistory, TaskHistoryExt } from '@/types';
 
 class TasksService {
@@ -9,7 +10,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching tasks:', error);
-            throw new Error('Failed to fetch tasks');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -19,17 +21,19 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching task:', error);
-            throw new Error('Failed to fetch task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
-    async createTask(task: CreateTask, signal?: AbortSignal): Promise<Task> {
+    async createTask(task: CreateTask, managerId: string, signal?: AbortSignal): Promise<Task> {
         try {
-            const response = await apiService.post<ApiResponse<Task>>('/tasks', task, signal);
+            const response = await apiService.post<ApiResponse<Task>>(`/tasks/manager/${managerId}`, task, signal);
             return response.data;
         } catch (error) {
             tasksLogger.error('Error creating task:', error);
-            throw new Error('Failed to create task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -39,7 +43,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error updating task:', error);
-            throw new Error('Failed to update task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -48,7 +53,8 @@ class TasksService {
             await apiService.delete(`/tasks/${id}`, signal);
         } catch (error) {
             tasksLogger.error('Error deleting task:', error);
-            throw new Error('Failed to delete task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -58,7 +64,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching unassigned tasks by project:', error);
-            throw new Error('Failed to fetch unassigned tasks by project');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -68,7 +75,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching unassigned tasks by sprint:', error);
-            throw new Error('Failed to fetch unassigned tasks by sprint');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -78,7 +86,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching assigned tasks by sprint:', error);
-            throw new Error('Failed to fetch assigned tasks by sprint');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -88,7 +97,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching tasks by developer:', error);
-            throw new Error('Failed to fetch tasks by developer');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -98,7 +108,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching extended tasks by developer:', error);
-            throw new Error('Failed to fetch extended tasks by developer');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -108,7 +119,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error assigning developer to task:', error);
-            throw new Error('Failed to assign developer to task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -118,7 +130,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error moving task to sprint:', error);
-            throw new Error('Failed to move task to sprint');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -141,7 +154,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching task time:', error);
-            throw new Error('Failed to fetch task time');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -151,7 +165,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching developer task times:', error);
-            throw new Error('Failed to fetch developer task times');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -175,7 +190,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error starting task:', error);
-            throw new Error('Failed to start task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -185,7 +201,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error pausing task:', error);
-            throw new Error('Failed to pause task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -195,7 +212,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error stopping task:', error);
-            throw new Error('Failed to stop task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -205,7 +223,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching extended tasks:', error);
-            throw new Error('Failed to fetch extended tasks');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -215,7 +234,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching extended task:', error);
-            throw new Error('Failed to fetch extended task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
     async getAllTaskHistories(signal?: AbortSignal): Promise<TaskHistory[]> {
@@ -224,7 +244,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching task histories:', error);
-            throw new Error('Failed to fetch task histories');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -234,7 +255,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching extended task histories:', error);
-            throw new Error('Failed to fetch extended task histories');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -244,7 +266,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching task histories by task:', error);
-            throw new Error('Failed to fetch task histories by task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -254,7 +277,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching extended task histories by task:', error);
-            throw new Error('Failed to fetch extended task histories by task');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -264,7 +288,8 @@ class TasksService {
             return response.data;
         } catch (error) {
             tasksLogger.error('Error fetching extended task histories by manager:', error);
-            throw new Error('Failed to fetch extended task histories by manager');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 }

@@ -4,7 +4,17 @@
             <v-container fluid class="pa-6">
                 <h1 class="text-h4 mb-6">{{ pageTitle }}</h1>
 
-                <div class="py-1">
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
+
+                <div class="py-1\">
                     <v-sheet border rounded>
                         <v-data-table :headers="headers" :hide-default-footer="sprints !== null && sprints.length < 11"
                             :items="sprints ?? []">
@@ -110,30 +120,88 @@
                                     </v-col>
 
                                     <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.teamId" label="Team ID"
-                                            required></v-text-field>
+                                        <v-select v-model="formModel.teamId" :items="teams" item-title="name"
+                                            item-value="id" label="Team" prepend-inner-icon="mdi-account-group"
+                                            :loading="isLoadingOptions" required variant="outlined"
+                                            density="comfortable" :disabled="isManager"
+                                            :hint="isManager ? 'Automatically assigned to your team' : ''"
+                                            :persistent-hint="isManager">
+                                            <template v-slot:item="{ props, item }">
+                                                <v-list-item v-bind="props">
+                                                    <template v-slot:prepend>
+                                                        <v-icon color="success">mdi-account-group</v-icon>
+                                                    </template>
+                                                </v-list-item>
+                                            </template>
+                                        </v-select>
                                     </v-col>
 
                                     <v-col v-if="isAdmin" cols="12" md="6">
-                                        <v-text-field v-model="formModel.managerId" label="Manager ID" required
-                                            hint="Select which manager will oversee this sprint"></v-text-field>
+                                        <v-select v-model="formModel.managerId" :items="managers" item-title="username"
+                                            item-value="id" label="Manager" prepend-inner-icon="mdi-account-tie"
+                                            :loading="isLoadingOptions" required variant="outlined"
+                                            density="comfortable" hint="Select which manager will oversee this sprint"
+                                            persistent-hint>
+                                            <template v-slot:item="{ props, item }">
+                                                <v-list-item v-bind="props">
+                                                    <template v-slot:prepend>
+                                                        <v-avatar color="primary" size="32">
+                                                            <span class="text-caption">{{ item.raw.firstName?.charAt(0)
+                                                                }}{{ item.raw.lastName?.charAt(0) }}</span>
+                                                        </v-avatar>
+                                                    </template>
+                                                    <template v-slot:subtitle>
+                                                        {{ item.raw.firstName }} {{ item.raw.lastName }}
+                                                    </template>
+                                                </v-list-item>
+                                            </template>
+                                        </v-select>
                                     </v-col>
 
                                     <v-col v-if="isManager" cols="12" md="6">
-                                        <v-text-field :model-value="currentUser?.id" label="Manager ID" readonly
-                                            hint="Automatically assigned to you" persistent-hint></v-text-field>
+                                        <v-select :model-value="currentUser?.id" :items="[currentUser]"
+                                            item-title="username" item-value="id" label="Manager"
+                                            prepend-inner-icon="mdi-account-tie" disabled variant="outlined"
+                                            density="comfortable" hint="Automatically assigned to you" persistent-hint>
+                                            <template v-slot:selection="{ item }">
+                                                <div class="d-flex align-center">
+                                                    <v-avatar color="primary" size="24" class="me-2">
+                                                        <span class="text-caption">{{ currentUser?.firstName?.charAt(0)
+                                                            }}{{ currentUser?.lastName?.charAt(0) }}</span>
+                                                    </v-avatar>
+                                                    <span>{{ currentUser?.username }}</span>
+                                                </div>
+                                            </template>
+                                        </v-select>
                                     </v-col>
 
                                     <v-col cols="12" md="6">
-                                        <v-text-field v-model="formModel.projectId" label="Project ID"
-                                            required></v-text-field>
+                                        <v-select v-model="formModel.projectId" :items="projects" item-title="name"
+                                            item-value="id" label="Project" prepend-inner-icon="mdi-folder"
+                                            :loading="isLoadingOptions" required variant="outlined"
+                                            density="comfortable" :disabled="isManager"
+                                            :hint="isManager ? 'Automatically assigned to your project' : ''"
+                                            :persistent-hint="isManager">
+                                            <template v-slot:item="{ props, item }">
+                                                <v-list-item v-bind="props">
+                                                    <template v-slot:prepend>
+                                                        <v-icon color="info">mdi-folder</v-icon>
+                                                    </template>
+                                                    <template v-slot:subtitle>
+                                                        {{ formatDate(item.raw.startDate) }} - {{
+                                                            formatDate(item.raw.endDate) }}
+                                                    </template>
+                                                </v-list-item>
+                                            </template>
+                                        </v-select>
                                     </v-col>
 
                                     <v-col v-if="isManager && !isEditing" cols="12">
                                         <v-alert type="info" variant="tonal">
                                             <div class="text-subtitle-2 mb-1">Auto Assignment</div>
                                             <div class="text-body-2">
-                                                This sprint will be automatically assigned to you as the manager.
+                                                This sprint will be automatically assigned to you as the manager, your
+                                                team, and your project.
                                             </div>
                                         </v-alert>
                                     </v-col>
@@ -143,11 +211,13 @@
                             <v-divider></v-divider>
 
                             <v-card-actions class="bg-surface-light">
-                                <v-btn text="Cancel" variant="plain" @click="newEditDialog = false"></v-btn>
+                                <v-btn text="Cancel" variant="plain" @click="newEditDialog = false"
+                                    :disabled="isSaving"></v-btn>
 
                                 <v-spacer></v-spacer>
 
-                                <v-btn text="Save" color="primary" @click="save"></v-btn>
+                                <v-btn text="Save" color="primary" @click="save" :loading="isSaving"
+                                    :disabled="isSaving"></v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
@@ -327,10 +397,15 @@
                             <v-card-actions class="bg-surface-light">
                                 <v-btn text="Cancel" color="success" @click="cancelDelete"></v-btn>
                                 <v-spacer></v-spacer>
-                                <v-btn text="Confirm" color="error" @click="confirmDelete"></v-btn>
+                                <v-btn text="Confirm" color="error" @click="confirmDelete"
+                                    :loading="isDeleting"></v-btn>
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
+
+                    <v-snackbar v-model="showSnackbar" :color="snackbarColor" :timeout="3000">
+                        {{ snackbarMessage }}
+                    </v-snackbar>
                 </div>
             </v-container>
         </v-main>
@@ -341,9 +416,12 @@
 import { useAsyncData } from '@/composables/useAsyncData';
 import authService from '@/services/authService';
 import sprintsService from '@/services/sprintsService';
-import type { SprintExt } from '@/types';
+import teamsService from '@/services/teamsService';
+import usersService from '@/services/usersService';
+import projectsService from '@/services/projectsService';
+import type { SprintExt, Team, User, Project } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
-import { ref, toRef, computed } from 'vue';
+import { ref, toRef, computed, onMounted } from 'vue';
 
 const logger = new DevelopmentLogger({ prefix: '[SprintsView]' });
 
@@ -383,6 +461,7 @@ const headers = computed(() => {
 
 const {
     data: sprints,
+    error: asyncError,
     load: refreshSprints
 } = useAsyncData<SprintExt[]>({
     fetchFunction: (signal) => {
@@ -397,13 +476,13 @@ const {
     loggerPrefix: '[SprintsView]'
 });
 
-const newEditDialog = ref(false);
-const confirmDeleteDialog = ref(false);
-const detailsDialog = ref(false);
-const formModel = ref<any>(createNewRecord());
-const sprintNameToDelete = ref('');
-const selectedSprintDetails = ref<SprintExt | null>(null);
-const isLoadingDetails = ref(false);
+// Dane dla list wyboru (muszą być zadeklarowane przed createNewRecord)
+const teams = ref<Team[]>([]);
+const managers = ref<User[]>([]);
+const projects = ref<Project[]>([]);
+const managerProjectId = ref<string>('');
+const managerTeamId = ref<string>('');
+const isLoadingOptions = ref(false);
 
 function createNewRecord(): any {
     return {
@@ -411,11 +490,29 @@ function createNewRecord(): any {
         name: '',
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date().toISOString().split('T')[0],
-        teamId: '',
+        teamId: isManager.value ? managerTeamId.value : '',
         managerId: isManager.value ? currentUser?.id || '' : '',
-        projectId: ''
+        projectId: isManager.value ? managerProjectId.value : ''
     };
 }
+
+const newEditDialog = ref(false);
+const confirmDeleteDialog = ref(false);
+const detailsDialog = ref(false);
+const formModel = ref<any>(createNewRecord());
+const sprintNameToDelete = ref('');
+const sprintIdToDelete = ref('');
+const selectedSprintDetails = ref<SprintExt | null>(null);
+const isLoadingDetails = ref(false);
+const isSaving = ref(false);
+const isDeleting = ref(false);
+const showSnackbar = ref(false);
+const snackbarMessage = ref('');
+const error = ref('');
+const snackbarColor = ref<'success' | 'error' | 'info'>('success');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 const isEditing = toRef(() => !!formModel.value.id);
 
@@ -445,6 +542,7 @@ function editSprint(id: string) {
 function showDeleteConfirmation(id: string) {
     if (!isAdmin.value) {
         logger.error('Only administrators can delete sprints');
+        showNotification('Only administrators can delete sprints', 'error');
         return;
     }
 
@@ -452,33 +550,44 @@ function showDeleteConfirmation(id: string) {
     if (sprint) {
         logger.log('Delete sprint:', sprint);
         sprintNameToDelete.value = sprint.name;
+        sprintIdToDelete.value = sprint.id;
         confirmDeleteDialog.value = true;
     } else {
         logger.error(`Sprint with ID ${id} not found.`);
+        showNotification('Sprint not found', 'error');
     }
 }
 
-function confirmDelete() {
+async function confirmDelete() {
     if (!isAdmin.value) {
         logger.error('Only administrators can delete sprints');
+        showNotification('Only administrators can delete sprints', 'error');
         return;
     }
 
-    if (sprints.value == null) {
-        logger.error('Sprints data is not loaded yet.');
-        return;
-    }
-
-    if (!sprintNameToDelete.value) {
+    if (!sprintIdToDelete.value) {
         logger.error('No sprint selected for deletion.');
+        showNotification('No sprint selected for deletion', 'error');
         return;
     }
 
-    sprints.value = sprints.value.filter(s => s.name !== sprintNameToDelete.value);
-    sprintNameToDelete.value = '';
+    isDeleting.value = true;
+    try {
+        await sprintsService.deleteSprint(sprintIdToDelete.value);
+        logger.log(`Successfully deleted sprint: ${sprintNameToDelete.value}`);
+        showNotification(`Sprint "${sprintNameToDelete.value}" deleted successfully`, 'success');
 
-    logger.log(`Confirmed deletion of sprint: ${sprintNameToDelete.value}`);
-    confirmDeleteDialog.value = false;
+        await refreshSprints();
+
+        confirmDeleteDialog.value = false;
+        sprintNameToDelete.value = '';
+        sprintIdToDelete.value = '';
+    } catch (error) {
+        logger.error('Failed to delete sprint:', error);
+        showNotification('Failed to delete sprint. Please try again.', 'error');
+    } finally {
+        isDeleting.value = false;
+    }
 }
 
 function cancelDelete() {
@@ -486,32 +595,28 @@ function cancelDelete() {
     sprintNameToDelete.value = '';
 }
 
-function save() {
-    if (sprints.value === null) {
-        logger.error('Sprints data is not loaded yet.');
-        return;
-    }
-
+async function save() {
     if (!formModel.value.name) {
-        logger.error('Sprint name is required.');
+        showNotification('Sprint name is required', 'error');
         return;
     }
 
     if (!formModel.value.startDate || !formModel.value.endDate) {
-        logger.error('Start and end dates are required.');
+        showNotification('Start and end dates are required', 'error');
         return;
     }
 
     if (!formModel.value.teamId || !formModel.value.projectId) {
-        logger.error('Team ID and Project ID are required.');
+        showNotification('Team ID and Project ID are required', 'error');
         return;
     }
+
     if (isManager.value && currentUser?.id) {
         formModel.value.managerId = currentUser.id;
     }
 
     if (!formModel.value.managerId) {
-        logger.error('Manager ID is required.');
+        showNotification('Manager ID is required', 'error');
         return;
     }
 
@@ -519,22 +624,44 @@ function save() {
     const endDate = new Date(formModel.value.endDate);
 
     if (endDate <= startDate) {
-        logger.error('End date must be after start date.');
+        showNotification('End date must be after start date', 'error');
         return;
     }
 
-    if (isEditing.value) {
-        const index = sprints.value.findIndex(sprint => sprint.id === formModel.value.id);
-        if (index !== -1) {
-            sprints.value[index] = { ...formModel.value };
-        }
-    } else {
-        formModel.value.id = `${Date.now()}`; // fake ID for demo
-        sprints.value.push({ ...formModel.value });
-    }
+    isSaving.value = true;
+    try {
+        const sprintData = {
+            name: formModel.value.name,
+            startDate: startDate,
+            endDate: endDate,
+            teamId: formModel.value.teamId,
+            managerId: formModel.value.managerId,
+            projectId: formModel.value.projectId
+        };
 
-    logger.log(`Sprint ${isEditing.value ? 'updated' : 'created'}:`, formModel.value);
-    newEditDialog.value = false;
+        if (isEditing.value) {
+            await sprintsService.updateSprint(formModel.value.id, sprintData);
+            logger.log('Sprint updated successfully:', formModel.value);
+            showNotification('Sprint updated successfully', 'success');
+        } else {
+            await sprintsService.createSprint(sprintData);
+            logger.log('Sprint created successfully:', formModel.value);
+            showNotification('Sprint created successfully', 'success');
+        }
+
+        // Odśwież listę sprintów
+        await refreshSprints();
+
+        newEditDialog.value = false;
+    } catch (error) {
+        logger.error(`Failed to ${isEditing.value ? 'update' : 'create'} sprint:`, error);
+        showNotification(
+            `Failed to ${isEditing.value ? 'update' : 'create'} sprint. Please try again.`,
+            'error'
+        );
+    } finally {
+        isSaving.value = false;
+    }
 }
 
 async function showSprintDetails(id: string) {
@@ -574,6 +701,58 @@ function calculateSprintDuration(startDate: Date | string, endDate: Date | strin
 
     return diffDays;
 }
+
+function showNotification(message: string, color: 'success' | 'error' | 'info' = 'info') {
+    snackbarMessage.value = message;
+    snackbarColor.value = color;
+    showSnackbar.value = true;
+}
+
+async function loadFormOptions() {
+    isLoadingOptions.value = true;
+    try {
+        if (isAdmin.value) {
+            const [teamsData, managersData, projectsData] = await Promise.all([
+                teamsService.getTeams(),
+                usersService.getUsersByRole('manager'),
+                projectsService.getProjects()
+            ]);
+
+            teams.value = teamsData;
+            managers.value = managersData;
+            projects.value = projectsData;
+            logger.log('Loaded form options:', { teams: teamsData.length, managers: managersData.length, projects: projectsData.length });
+        } else if (isManager.value && currentUser?.id) {
+            const [teamData, projectIdData] = await Promise.all([
+                teamsService.getTeamByManager(currentUser.id),
+                projectsService.getCurrentProjectByManagerId(currentUser.id)
+            ]);
+
+            managerTeamId.value = teamData?.id || '';
+            managerProjectId.value = projectIdData || '';
+
+            if (teamData) {
+                teams.value = [teamData];
+            }
+
+            if (managerProjectId.value) {
+                const project = await projectsService.getProjectById(managerProjectId.value);
+                projects.value = [project];
+            }
+
+            logger.log('Loaded form options:', { managerTeamId: managerTeamId.value, managerProjectId: managerProjectId.value });
+        }
+    } catch (err) {
+        logger.error('Failed to load form options:', err);
+        showNotification('Failed to load form data. Please refresh the page.', 'error');
+    } finally {
+        isLoadingOptions.value = false;
+    }
+}
+
+onMounted(() => {
+    loadFormOptions();
+});
 </script>
 
 <style scoped></style>

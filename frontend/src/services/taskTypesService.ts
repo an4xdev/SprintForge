@@ -1,5 +1,6 @@
 import { taskTypesLogger } from '@/utils/logger';
 import apiService from './apiService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { ApiResponse, TaskType } from '@/types';
 
 class TaskTypesService {
@@ -9,7 +10,8 @@ class TaskTypesService {
             return response.data;
         } catch (error) {
             taskTypesLogger.error('Error fetching task types:', error);
-            throw new Error('Failed to fetch task types');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -19,7 +21,8 @@ class TaskTypesService {
             return response.data;
         } catch (error) {
             taskTypesLogger.error('Error fetching task type:', error);
-            throw new Error('Failed to fetch task type');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -29,7 +32,8 @@ class TaskTypesService {
             return response.data;
         } catch (error) {
             taskTypesLogger.error('Error creating task type:', error);
-            throw new Error('Failed to create task type');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -39,7 +43,8 @@ class TaskTypesService {
             return response.data;
         } catch (error) {
             taskTypesLogger.error('Error updating task type:', error);
-            throw new Error('Failed to update task type');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 
@@ -48,7 +53,8 @@ class TaskTypesService {
             await apiService.delete(`/taskTypes/${id}`, signal);
         } catch (error) {
             taskTypesLogger.error('Error deleting task type:', error);
-            throw new Error('Failed to delete task type');
+            const errorDetails = extractErrorMessage(error);
+            throw new Error(errorDetails.message);
         }
     }
 }

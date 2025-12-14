@@ -53,8 +53,18 @@
                 </v-col>
             </v-row>
 
+            <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                <v-icon start>mdi-alert-circle</v-icon>
+                {{ errorMessage }}
+            </v-snackbar>
+
+            <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                <v-icon start>mdi-check-circle</v-icon>
+                {{ successMessage }}
+            </v-snackbar>
+
             <!-- Reports Tabs -->
-            <template v-else-if="!isLoading">
+            <template v-if="!isLoading">
                 <v-card elevation="3">
                     <v-tabs v-model="activeTab" bg-color="primary" align-tabs="center">
                         <v-tab value="teams">
@@ -296,6 +306,10 @@ const authStore = useAuthStore();
 
 const isLoading = ref(false);
 const error = ref<string | null>(null);
+const errorMessage = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 const activeTab = ref('teams');
 const dateFilters = ref<ReportFilters>({});
 

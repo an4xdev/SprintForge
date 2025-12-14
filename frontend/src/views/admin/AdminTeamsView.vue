@@ -4,6 +4,16 @@
             <v-container fluid class="pa-6">
                 <h1 class="text-h4 mb-6">Team Management</h1>
 
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
+
                 <div class="py-1">
                     <v-sheet border rounded>
                         <v-data-table :headers="headers" :hide-default-footer="teams !== null && teams.length < 11"
@@ -31,6 +41,9 @@
 
                             <template v-slot:item.actions="{ item }">
                                 <div class="d-flex ga-2 justify-end">
+                                    <v-icon color="medium-emphasis" icon="mdi-account-multiple" size="small"
+                                        @click="manageDevelopers(item.id)" title="Manage Developers"></v-icon>
+
                                     <v-icon color="medium-emphasis" icon="mdi-pencil" size="small"
                                         @click="editTeam(item.id)"></v-icon>
 
@@ -91,6 +104,71 @@
                             </v-card-actions>
                         </v-card>
                     </v-dialog>
+
+                    <v-dialog v-model="developersDialog" max-width="700">
+                        <v-card title="Manage Team Developers">
+                            <template v-slot:text>
+                                <v-row>
+                                    <v-col cols="12">
+                                        <h3 class="text-subtitle-1 mb-3">Current Team Members</h3>
+                                        <v-list v-if="currentTeamDevelopers.length > 0">
+                                            <v-list-item v-for="dev in currentTeamDevelopers" :key="dev.id">
+                                                <template v-slot:prepend>
+                                                    <v-avatar color="primary">
+                                                        <span class="text-white">{{
+                                                            dev.username?.charAt(0).toUpperCase() }}</span>
+                                                    </v-avatar>
+                                                </template>
+                                                <v-list-item-title>{{ dev.username }}</v-list-item-title>
+                                                <v-list-item-subtitle>{{ dev.firstName }} {{ dev.lastName
+                                                }}</v-list-item-subtitle>
+                                                <template v-slot:append>
+                                                    <v-btn icon="mdi-close" variant="text" color="error"
+                                                        @click="removeDeveloperFromTeam(dev.id)"></v-btn>
+                                                </template>
+                                            </v-list-item>
+                                        </v-list>
+                                        <v-alert v-else type="info" variant="tonal">
+                                            No developers assigned to this team yet.
+                                        </v-alert>
+                                    </v-col>
+
+                                    <v-col cols="12">
+                                        <v-divider class="my-4"></v-divider>
+                                        <h3 class="text-subtitle-1 mb-3">Add Developer to Team</h3>
+                                        <v-select :items="availableDevelopers" item-title="username" item-value="id"
+                                            label="Select Developer" v-model="selectedDeveloperId"
+                                            :return-object="false" clearable dense>
+                                            <template v-slot:item="{ props, item }">
+                                                <v-list-item v-bind="props">
+                                                    <template v-slot:prepend>
+                                                        <v-avatar color="secondary" size="small">
+                                                            <span class="text-white">{{
+                                                                item.raw.username?.charAt(0).toUpperCase() }}</span>
+                                                        </v-avatar>
+                                                    </template>
+                                                    <v-list-item-title>{{ item.raw.username }}</v-list-item-title>
+                                                    <v-list-item-subtitle>{{ item.raw.firstName }} {{ item.raw.lastName
+                                                    }}</v-list-item-subtitle>
+                                                </v-list-item>
+                                            </template>
+                                        </v-select>
+                                        <v-btn color="primary" class="mt-2" @click="addDeveloperToTeam"
+                                            :disabled="!selectedDeveloperId">
+                                            Add Developer
+                                        </v-btn>
+                                    </v-col>
+                                </v-row>
+                            </template>
+
+                            <v-divider></v-divider>
+
+                            <v-card-actions class="bg-surface-light">
+                                <v-spacer></v-spacer>
+                                <v-btn text="Close" @click="developersDialog = false"></v-btn>
+                            </v-card-actions>
+                        </v-card>
+                    </v-dialog>
                 </div>
             </v-container>
         </v-main>
@@ -102,7 +180,8 @@ import { useAsyncData } from '@/composables/useAsyncData';
 import teamService from '@/services/teamsService';
 import usersService from '@/services/usersService';
 import projectsService from '@/services/projectsService';
-import type { CreateTeam, MinimalUser, Team, Project, UpdateTeam } from '@/types';
+import { extractErrorMessage } from '@/utils/errorHandler';
+import type { CreateTeam, MinimalUser, Team, Project, UpdateTeam, User } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref, computed } from 'vue';
 
@@ -142,11 +221,20 @@ const {
 
 const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
+const developersDialog = ref(false);
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 const formModel = ref(createNewRecord());
 const selectedManagerId = ref('');
 const selectedProjectId = ref<string | null>(null);
 const teamNameToDelete = ref('');
 const teamIdToDelete = ref('');
+const currentTeamId = ref('');
+const currentTeamDevelopers = ref<User[]>([]);
+const availableDevelopers = ref<User[]>([]);
+const selectedDeveloperId = ref<string | null>(null);
 
 function createNewRecord() {
     return {
@@ -198,9 +286,15 @@ function confirmDelete() {
     teamService.deleteTeam(teamIdToDelete.value)
         .then(() => {
             logger.log(`Deleted team id=${teamIdToDelete.value}`);
+            error.value = '';
+            successMessage.value = 'Team deleted successfully!';
+            showSuccess.value = true;
             refreshTeams();
         })
         .catch(err => {
+            const errorDetails = extractErrorMessage(err);
+            error.value = errorDetails.message;
+            showError.value = true;
             logger.error('Failed to delete team:', err);
         })
         .finally(() => {
@@ -237,6 +331,7 @@ async function save() {
             };
             await teamService.updateTeam(formModel.value.id, payload);
             logger.log('Updated team', formModel.value.id);
+            successMessage.value = 'Team updated successfully!';
         } else {
 
             if (formModel.value.name.trim() === '') {
@@ -255,12 +350,81 @@ async function save() {
                 projectId: selectedProjectId.value ?? null
             } as CreateTeam);
             logger.log('Created team', created.id);
+            successMessage.value = 'Team created successfully!';
         }
 
+        showSuccess.value = true;
         await refreshTeams();
         newEditDialog.value = false;
     } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
         logger.error('Failed to save team:', err);
+    }
+}
+
+async function manageDevelopers(teamId: string) {
+    currentTeamId.value = teamId;
+
+    try {
+        currentTeamDevelopers.value = await usersService.getDevelopersByTeam(teamId);
+
+        const allDevelopers = await usersService.getUsersByRole('developer');
+
+        availableDevelopers.value = allDevelopers.filter(
+            dev => !currentTeamDevelopers.value.some(teamDev => teamDev.id === dev.id)
+        );
+
+        selectedDeveloperId.value = null;
+        developersDialog.value = true;
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Failed to load developers:', err);
+    }
+}
+
+async function addDeveloperToTeam() {
+    if (!selectedDeveloperId.value || !currentTeamId.value) {
+        logger.error('Developer or team not selected.');
+        return;
+    }
+
+    try {
+        await teamService.addDeveloperToTeam(currentTeamId.value, selectedDeveloperId.value);
+        logger.log(`Added developer ${selectedDeveloperId.value} to team ${currentTeamId.value}`);
+        successMessage.value = 'Developer added successfully!';
+        showSuccess.value = true;
+
+        await manageDevelopers(currentTeamId.value);
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Failed to add developer to team:', err);
+    }
+}
+
+async function removeDeveloperFromTeam(developerId: string) {
+    if (!currentTeamId.value) {
+        logger.error('No team selected.');
+        return;
+    }
+
+    try {
+        await teamService.removeDeveloperFromTeam(currentTeamId.value, developerId);
+        logger.log(`Removed developer ${developerId} from team ${currentTeamId.value}`);
+        successMessage.value = 'Developer removed successfully!';
+        showSuccess.value = true;
+
+        await manageDevelopers(currentTeamId.value);
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Failed to remove developer from team:', err);
     }
 }
 </script>

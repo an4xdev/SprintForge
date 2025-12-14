@@ -21,9 +21,15 @@
                     </div>
                 </div>
 
-                <v-alert v-if="error" type="error" variant="tonal" closable @click:close="error = ''" class="mb-4">
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
                     {{ error }}
-                </v-alert>
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
 
                 <div v-if="tasks.length === 0 && !loading" class="mb-6">
                     <v-sheet class="d-flex flex-column align-center pa-8" elevation="1" rounded>
@@ -231,7 +237,7 @@
                                     <v-icon :color="getActivityColor(activity.action)" size="small" class="me-3">
                                         {{ getActivityIcon(activity.action) }}
                                     </v-icon>
-                                    <div class="flex-grow-1">
+                                    <div class="grow">
                                         <div class="text-body-2">
                                             <strong>{{ activity.taskName }}</strong> - {{
                                                 getActivityText(activity.action) }}
@@ -256,6 +262,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, computed } from 'vue'
 import authService from '@/services/authService'
+import { extractErrorMessage } from '@/utils/errorHandler'
 
 interface TaskInfo {
     id: string
@@ -282,6 +289,9 @@ interface ActivityLogEntry {
 const tasks = ref<TaskInfo[]>([])
 const connectionStatus = ref<'Disconnected' | 'Connecting' | 'Connected' | 'Auth Failed'>('Disconnected')
 const error = ref('')
+const showError = ref(false)
+const successMessage = ref('')
+const showSuccess = ref(false)
 const loading = ref(false)
 const activityLog = ref<ActivityLogEntry[]>([])
 
@@ -333,6 +343,9 @@ const connectWebSocket = async () => {
                 const message = JSON.parse(event.data)
                 handleWebSocketMessage(message)
             } catch (err) {
+                const errorDetails = extractErrorMessage(err);
+                error.value = errorDetails.message;
+                showError.value = true;
                 console.error('Error parsing WebSocket message:', err)
             }
         }
@@ -355,7 +368,9 @@ const connectWebSocket = async () => {
         }
 
     } catch (err) {
-        error.value = 'Failed to connect to WebSocket server'
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
         connectionStatus.value = 'Disconnected'
         console.error('WebSocket connection error:', err)
     }

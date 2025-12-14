@@ -4,7 +4,18 @@
             <v-container fluid class="pa-6">
                 <h1 class="text-h4 mb-6">Projects Management</h1>
 
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
+
                 <div class="py-1">
+
                     <v-sheet border rounded>
                         <v-data-table :headers="headers"
                             :hide-default-footer="projects !== null && projects.length < 11" :items="projects ?? []">
@@ -153,7 +164,7 @@
                                             </div>
                                             <div class="text-body-1">
                                                 {{ calculateProjectDuration(selectedProjectDetails.startDate,
-                                                selectedProjectDetails.endDate) }} days
+                                                    selectedProjectDetails.endDate) }} days
                                             </div>
                                         </v-col>
                                     </v-row>
@@ -211,6 +222,7 @@
 import { useAsyncData } from '@/composables/useAsyncData';
 import projectsService from '@/services/projectsService';
 import companyService from '@/services/companyService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { Project, Company, ProjectExt } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { formatDate } from '@/utils/dateFormatter';
@@ -256,6 +268,10 @@ const projectIdToDelete = ref('');
 const selectedCompanyId = ref<number | null>(null);
 const selectedProjectDetails = ref<ProjectExt | null>(null);
 const isLoadingDetails = ref(false);
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 const startDateStr = computed({
     get: () => {
@@ -410,15 +426,26 @@ function showDeleteConfirmation(id: string) {
 function confirmDelete() {
     if (!projectIdToDelete.value) {
         logger.error('No project selected for deletion.');
+        error.value = 'No project selected for deletion';
+        showError.value = true;
         return;
     }
 
     projectsService.deleteProject(projectIdToDelete.value)
         .then(() => {
             logger.log(`Deleted project id=${projectIdToDelete.value}`);
+            successMessage.value = 'Project deleted successfully!';
+            showSuccess.value = true;
             refreshProjects();
+            error.value = '';
         })
-        .catch(err => logger.error('Failed to delete project:', err))
+        .catch(err => {
+            logger.error('Failed to delete project:', err);
+            const errorDetails = extractErrorMessage(err);
+            error.value = errorDetails.message;
+            showError.value = true;
+            error.value = (err instanceof Error ? err.message : 'Failed to delete project');
+        })
         .finally(() => {
             projectNameToDelete.value = '';
             projectIdToDelete.value = '';
@@ -440,6 +467,7 @@ function formatDateForDisplay(date: Date | string): string {
 async function save() {
     if (!formModel.value.name) {
         logger.error('Project name is required.');
+        error.value = 'Project name is required';
         return;
     }
 
@@ -461,8 +489,10 @@ async function save() {
 
         await refreshProjects();
         newEditDialog.value = false;
+        error.value = '';
     } catch (err) {
         logger.error('Failed to save project:', err);
+        error.value = (err instanceof Error ? err.message : 'Failed to save project');
     }
 }
 

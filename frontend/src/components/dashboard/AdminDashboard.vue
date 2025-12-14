@@ -70,11 +70,11 @@
                                     'text-success': isSuccessAction(log.action),
                                     'text-error': isFailedAction(log.action),
                                     'font-weight-medium': isSuccessAction(log.action) || isFailedAction(log.action)
-                                }" class="flex-grow-1 text-truncate mr-2">
+                                }" class="grow text-truncate mr-2">
                                     {{ log.description }}
                                 </span>
                                 <v-chip size="x-small" variant="outlined" :color="getActionColor(log.action)"
-                                    class="flex-shrink-0">
+                                    class="shrink-0">
                                     {{ log.entity }}
                                 </v-chip>
                             </div>

@@ -166,6 +166,16 @@
                     </v-dialog>
                 </div>
 
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
+
                 <!-- Task Details Modal -->
                 <TaskDetailsModal v-model="taskDetailsDialog" :task="selectedTaskDetails" />
             </v-container>
@@ -180,6 +190,7 @@ import usersService from '@/services/usersService';
 import sprintsService from '@/services/sprintsService';
 import taskStatusesService from '@/services/taskStatusesService';
 import taskTypesService from '@/services/taskTypesService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { Task, CreateTask, User, Sprint, TaskStatus, TaskType, TaskExt } from '@/types';
 import { DevelopmentLogger } from '@/utils/logger';
 import { ref, toRef, computed, onMounted } from 'vue';
@@ -211,6 +222,10 @@ const developers = ref<User[]>([]);
 const sprints = ref<Sprint[]>([]);
 const taskStatuses = ref<TaskStatus[]>([]);
 const taskTypes = ref<TaskType[]>([]);
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 const newEditDialog = ref(false);
 const confirmDeleteDialog = ref(false);
@@ -256,8 +271,12 @@ async function loadReferenceData() {
         sprints.value = sprintsData;
         taskStatuses.value = statusesData;
         taskTypes.value = typesData;
-    } catch (error) {
-        logger.error('Error loading reference data:', error);
+        successMessage.value = '';
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Error loading reference data:', err);
     }
 }
 
@@ -330,8 +349,13 @@ async function save() {
 
         await refreshTasks();
         newEditDialog.value = false;
-    } catch (error) {
-        logger.error('Error saving task:', error);
+        successMessage.value = isEditing ? 'Task updated successfully!' : 'Task created successfully!';
+        showSuccess.value = true;
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Error saving task:', err);
     } finally {
         saving.value = false;
     }
@@ -351,8 +375,13 @@ async function confirmDelete() {
         await refreshTasks();
         confirmDeleteDialog.value = false;
         taskToDelete.value = null;
-    } catch (error) {
-        logger.error('Error deleting task:', error);
+        successMessage.value = 'Task deleted successfully!';
+        showSuccess.value = true;
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Error deleting task:', err);
     } finally {
         deleting.value = false;
     }
@@ -384,8 +413,13 @@ async function assignDeveloper() {
         assignDeveloperDialog.value = false;
         taskToAssign.value = null;
         selectedDeveloperId.value = null;
-    } catch (error) {
-        logger.error('Error assigning developer to task:', error);
+        successMessage.value = 'Developer assigned successfully!';
+        showSuccess.value = true;
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Error assigning developer to task:', err);
     } finally {
         assigning.value = false;
     }
@@ -412,8 +446,13 @@ async function moveTaskToSprint() {
         moveToSprintDialog.value = false;
         taskToMove.value = null;
         selectedSprintId.value = null;
-    } catch (error) {
-        logger.error('Error moving task to sprint:', error);
+        successMessage.value = 'Task moved to sprint successfully!';
+        showSuccess.value = true;
+    } catch (err) {
+        const errorDetails = extractErrorMessage(err);
+        error.value = errorDetails.message;
+        showError.value = true;
+        logger.error('Error moving task to sprint:', err);
     } finally {
         moving.value = false;
     }

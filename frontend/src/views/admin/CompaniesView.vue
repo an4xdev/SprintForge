@@ -4,6 +4,16 @@
             <v-container fluid class="pa-6">
                 <h1 class="text-h4 mb-6">Company Management</h1>
 
+                <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+                    <v-icon start>mdi-alert-circle</v-icon>
+                    {{ error }}
+                </v-snackbar>
+
+                <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+                    <v-icon start>mdi-check-circle</v-icon>
+                    {{ successMessage }}
+                </v-snackbar>
+
                 <div class="py-1">
                     <v-sheet border rounded>
                         <v-data-table :headers="headers"
@@ -88,6 +98,7 @@
 
 <script setup lang="ts">
 import companyService from '@/services/companyService';
+import { extractErrorMessage } from '@/utils/errorHandler';
 import type { Company } from '@/types';
 import { useAsyncData } from '@/composables/useAsyncData';
 import { DevelopmentLogger } from '@/utils/logger';
@@ -114,6 +125,10 @@ const confirmDeleteDialog = ref(false);
 const formModel = ref(createNewRecord());
 const companyNameToDelete = ref('');
 const companyIdToDelete = ref<number | null>(null);
+const error = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 function createNewRecord() {
     return {
@@ -154,6 +169,7 @@ function showDeleteConfirmation(id: number) {
 async function confirmDelete() {
     if (companyIdToDelete.value == null) {
         logger.error('No company selected for deletion.');
+        error.value = 'No company selected for deletion';
         return;
     }
 
@@ -161,8 +177,10 @@ async function confirmDelete() {
         await companyService.deleteCompany(companyIdToDelete.value);
         await refreshCompanies();
         logger.log(`Confirmed deletion of company id: ${companyIdToDelete.value}`);
-    } catch (error) {
-        logger.error('Failed to delete company:', error);
+        error.value = '';
+    } catch (err) {
+        logger.error('Failed to delete company:', err);
+        error.value = (err instanceof Error ? err.message : 'Failed to delete company');
     } finally {
         companyIdToDelete.value = null;
         companyNameToDelete.value = '';
@@ -179,6 +197,7 @@ function cancelDelete() {
 async function save() {
     if (!formModel.value.name) {
         logger.error('Company name is required.');
+        error.value = 'Company name is required';
         return;
     }
 
@@ -192,8 +211,10 @@ async function save() {
         }
 
         newEditDialog.value = false;
-    } catch (error) {
-        logger.error('Failed to save company:', error);
+        error.value = '';
+    } catch (err) {
+        logger.error('Failed to save company:', err);
+        error.value = (err instanceof Error ? err.message : 'Failed to save company');
     }
 }
 

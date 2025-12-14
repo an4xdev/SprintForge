@@ -19,6 +19,16 @@
         <v-alert v-if="error" type="error" variant="tonal" dismissible @click:close="error = ''" class="mt-4">
             {{ error }}
         </v-alert>
+
+        <v-snackbar v-model="showError" color="error" timeout="3000" location="top right">
+            <v-icon start>mdi-alert-circle</v-icon>
+            {{ errorMessage }}
+        </v-snackbar>
+
+        <v-snackbar v-model="showSuccess" color="success" timeout="3000" location="top right">
+            <v-icon start>mdi-check-circle</v-icon>
+            {{ successMessage }}
+        </v-snackbar>
     </v-form>
 </template>
 
@@ -34,6 +44,10 @@ const logger = new DevelopmentLogger({ prefix: '[LoginForm]' });
 const valid = ref(false);
 const showPassword = ref(false);
 const error = ref('');
+const errorMessage = ref('');
+const showError = ref(false);
+const successMessage = ref('');
+const showSuccess = ref(false);
 
 const credentials = reactive<LoginCredentials>({
     username: '',
