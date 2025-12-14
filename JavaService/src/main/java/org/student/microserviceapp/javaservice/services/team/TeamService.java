@@ -189,4 +189,72 @@ public class TeamService implements ITeamService {
 
         return Result.success(teamDTO, "Teams found for the manager");
     }
+
+    @Override
+    @Transactional
+    public Result<Void> addDeveloperToTeam(UUID teamId, UUID developerId) {
+        var team = teamRepository.findById(teamId);
+        if (team.isEmpty()) {
+            auditService.logAction("ADD_DEVELOPER_FAILED", "Team", "Failed to add developer. Reason: Team not found");
+            return Result.notFound("Team not found");
+        }
+
+        var user = userService.findById(developerId);
+        if (user.isEmpty()) {
+            auditService.logAction("ADD_DEVELOPER_FAILED", "Team", "Failed to add developer. Reason: User not found");
+            return Result.notFound("User not found");
+        }
+
+        var existingUser = user.get();
+        if (!Objects.equals(existingUser.getRole(), Roles.DEVELOPER)) {
+            auditService.logAction("ADD_DEVELOPER_FAILED", "Team", "Failed to add developer. Reason: User is not a developer");
+            return Result.badRequest("User is not a developer");
+        }
+
+        if (existingUser.getTeam() != null) {
+            auditService.logAction("ADD_DEVELOPER_FAILED", "Team", "Failed to add developer. Reason: Developer already assigned to a team");
+            return Result.badRequest("Developer already assigned to a team");
+        }
+
+        var existingTeam = team.get();
+        existingUser.setTeam(existingTeam);
+        userService.save(existingUser);
+
+        auditService.logAction("ADD_DEVELOPER_SUCCESS", "Team", "Successfully added developer to team: " + existingTeam.getName());
+        return Result.noContent();
+    }
+
+    @Override
+    @Transactional
+    public Result<Void> removeDeveloperFromTeam(UUID teamId, UUID developerId) {
+        var team = teamRepository.findById(teamId);
+        if (team.isEmpty()) {
+            auditService.logAction("REMOVE_DEVELOPER_FAILED", "Team", "Failed to remove developer. Reason: Team not found");
+            return Result.notFound("Team not found");
+        }
+
+        var user = userService.findById(developerId);
+        if (user.isEmpty()) {
+            auditService.logAction("REMOVE_DEVELOPER_FAILED", "Team", "Failed to remove developer. Reason: User not found");
+            return Result.notFound("User not found");
+        }
+
+        var existingUser = user.get();
+        if (!Objects.equals(existingUser.getRole(), Roles.DEVELOPER)) {
+            auditService.logAction("REMOVE_DEVELOPER_FAILED", "Team", "Failed to remove developer. Reason: User is not a developer");
+            return Result.badRequest("User is not a developer");
+        }
+
+        if (existingUser.getTeam() == null || !existingUser.getTeam().getId().equals(teamId)) {
+            auditService.logAction("REMOVE_DEVELOPER_FAILED", "Team", "Failed to remove developer. Reason: Developer not in this team");
+            return Result.badRequest("Developer not in this team");
+        }
+
+        existingUser.setTeam(null);
+        userService.save(existingUser);
+
+        var existingTeam = team.get();
+        auditService.logAction("REMOVE_DEVELOPER_SUCCESS", "Team", "Successfully removed developer from team: " + existingTeam.getName());
+        return Result.noContent();
+    }
 }
